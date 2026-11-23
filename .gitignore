@@ -48,3 +48,9 @@ app.*.map.json
 # the project, so they stay out of version control.
 android/maps.properties
 ios/Flutter/Secrets.xcconfig
+
+# Firebase project keys. Not secret, but they differ per environment and the
+# Android Gradle plugin is applied only when the file is present, so a wrong
+# one silently points a build at the wrong project.
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
