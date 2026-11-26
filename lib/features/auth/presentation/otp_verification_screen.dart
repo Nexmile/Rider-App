@@ -143,9 +143,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final bool canResend = _secondsLeft == 0 && !isBusy;
     final OtpChallenge? challenge = auth.challenge;
 
+    final bool byEmail = widget.args.identifier.isEmail;
+
     return AuthScaffold(
       title: l10n.otpTitle,
       subtitle: l10n.otpSubtitle(widget.args.identifier.display),
+      icon: byEmail ? Icons.mark_email_read_rounded : Icons.sms_rounded,
       children: <Widget>[
         OtpInput(
           controller: _code,
@@ -196,7 +199,60 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             onUse: () => _code.text = challenge.debugCode!,
           ),
         ],
+        const SizedBox(height: 20),
+        _HelpCard(byEmail: byEmail),
       ],
+    );
+  }
+}
+
+/// What to do when the code does not come, before the rider gives up: the
+/// three reasons it usually hasn't.
+class _HelpCard extends StatelessWidget {
+  const _HelpCard({required this.byEmail});
+
+  final bool byEmail;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color accent = isDark ? AppColors.greenLight : AppColors.greenDeep;
+
+    Widget tip(IconData icon, String text) => Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(icon, size: 18, color: accent),
+              const SizedBox(width: 10),
+              Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
+            ],
+          ),
+        );
+
+    return Container(
+      key: const ValueKey<String>('otp-help'),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            l10n.otpHelpTitle,
+            style: theme.textTheme.titleSmall
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          tip(Icons.edit_outlined, l10n.otpHelpCheck),
+          tip(Icons.schedule_rounded, l10n.otpHelpWait),
+          if (byEmail) tip(Icons.mark_email_unread_outlined, l10n.otpHelpSpam),
+        ],
+      ),
     );
   }
 }

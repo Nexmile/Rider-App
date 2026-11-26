@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/localization/app_language.dart';
@@ -15,13 +16,17 @@ import '../../../auth/data/auth_user.dart';
 import '../../../auth/state/auth_controller.dart';
 import '../../data/kyc_models.dart';
 import '../../data/order_models.dart';
+import '../../data/payout_models.dart';
 import '../../data/rider_failure.dart';
 import '../../data/rider_profile.dart';
 import '../../state/order_controller.dart';
+import '../../state/payout_controller.dart';
 import '../../state/rider_controller.dart';
 import '../orders/active_delivery_screen.dart';
 import '../orders/delivery_history_screen.dart';
 import '../orders/order_board_screen.dart';
+import '../orders/order_formatting.dart';
+import '../payouts/payout_formatting.dart';
 import '../payouts/payouts_screen.dart';
 
 /// The main UI, reached only when `can_go_online` is true.
@@ -141,7 +146,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 textDirection: TextDirection.ltr,
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
-                  letterSpacing: -0.2,
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -168,37 +173,30 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           const DeliveryHistoryScreen(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _tab,
-        onDestinationSelected: (int index) => setState(() => _tab = index),
-        destinations: <Widget>[
-          NavigationDestination(
-            icon: const Icon(Icons.bolt_outlined),
-            selectedIcon: const Icon(Icons.bolt_rounded),
-            label: l10n.shiftTab,
+      bottomNavigationBar: _FloatingTabs(
+        index: _tab,
+        carrying: orders.hasActiveOrder,
+        onSelect: (int index) {
+          if (index != _tab) HapticFeedback.selectionClick();
+          setState(() => _tab = index);
+        },
+        items: <_TabData>[
+          _TabData(l10n.shiftTab, Icons.bolt_outlined, Icons.bolt_rounded),
+          _TabData(
+            l10n.ordersTab,
+            Icons.list_alt_outlined,
+            Icons.list_alt_rounded,
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.list_alt_outlined),
-            selectedIcon: const Icon(Icons.list_alt_rounded),
-            label: l10n.ordersTab,
+          _TabData(
+            l10n.deliveryTab,
+            Icons.delivery_dining_outlined,
+            Icons.delivery_dining_rounded,
+            carriesBadge: true,
           ),
-          NavigationDestination(
-            // The dot is the whole point of the badge: a rider glancing down
-            // needs to know they are carrying something, not how many.
-            icon: Badge(
-              isLabelVisible: orders.hasActiveOrder,
-              child: const Icon(Icons.delivery_dining_outlined),
-            ),
-            selectedIcon: Badge(
-              isLabelVisible: orders.hasActiveOrder,
-              child: const Icon(Icons.delivery_dining_rounded),
-            ),
-            label: l10n.deliveryTab,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.history_outlined),
-            selectedIcon: const Icon(Icons.history_rounded),
-            label: l10n.historyTab,
+          _TabData(
+            l10n.historyTab,
+            Icons.history_outlined,
+            Icons.history_rounded,
           ),
         ],
       ),
@@ -208,12 +206,29 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
 /// The shift tab: who the rider is, whether they are working, and what that
 /// has earned them so far.
-class _ShiftTab extends StatelessWidget {
+class _ShiftTab extends StatefulWidget {
   const _ShiftTab({required this.onOpenDelivery});
 
   /// Brings the delivery tab forward. Passed down rather than reached for,
   /// so the card below does not have to know it lives inside a tab shell.
   final VoidCallback onOpenDelivery;
+
+  @override
+  State<_ShiftTab> createState() => _ShiftTabState();
+}
+
+class _ShiftTabState extends State<_ShiftTab> {
+  @override
+  void initState() {
+    super.initState();
+    // The latest payout, for the earnings card. Read once; the payouts
+    // screen and a pull re-read it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final PayoutController payouts = context.read<PayoutController>();
+      if (!payouts.hasLoaded && !payouts.isLoading) payouts.load();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -225,67 +240,63 @@ class _ShiftTab extends StatelessWidget {
     final OrderController orders = context.watch<OrderController>();
     final RiderProfile? profile = rider.profile;
 
+    final Widget languageRow = InfoTile(
+      icon: Icons.translate_rounded,
+      label: l10n.appLanguageLabel,
+      value: language.nativeName,
+      valueDirection: language.textDirection,
+      onTap: () => Navigator.of(context).pushNamed(
+        AppRoutes.language,
+        arguments: false,
+      ),
+    );
+
     return RefreshIndicator(
       onRefresh: () async {
         await rider.refresh();
         await orders.loadActive(silent: true);
+        if (context.mounted) await context.read<PayoutController>().load();
       },
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         physics: const AlwaysScrollableScrollPhysics(),
         children: <Widget>[
           ...entranceGroup(<Widget>[
             if (user != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  l10n.greetingNamed(
-                    profile?.fullName.isNotEmpty ?? false
-                        ? profile!.fullName.split(' ').first
-                        : user.firstName,
-                  ),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+              Text(
+                l10n.greetingNamed(
+                  profile?.fullName.isNotEmpty ?? false
+                      ? profile!.fullName.split(' ').first
+                      : user.firstName,
+                ),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             Text(
               l10n.riderHomeTitle,
-              style: theme.textTheme.displaySmall?.copyWith(
-                letterSpacing: -0.8,
-              ),
+              style: theme.textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.w800),
             ),
-            const Padding(
-              padding: EdgeInsets.only(top: 12, bottom: 12),
-              child: BrandRule(),
-            ),
-            Text(l10n.riderHomeSubtitle, style: theme.textTheme.bodyLarge),
           ]),
-          const SizedBox(height: 22),
+          const SizedBox(height: 16),
           if (profile != null) ...<Widget>[
-            EntranceFade(index: 4, child: _DutyCard(profile: profile)),
-            const SizedBox(height: 16),
+            EntranceFade(index: 2, child: _DutyCard(profile: profile)),
+            const SizedBox(height: 12),
             if (orders.active != null) ...<Widget>[
               EntranceFade(
-                index: 5,
+                index: 3,
                 child: _ActiveOrderSummary(
                   order: orders.active!,
-                  onTap: onOpenDelivery,
+                  onTap: widget.onOpenDelivery,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
             ],
-            EntranceFade(index: 6, child: _StatsRow(profile: profile)),
-            const SizedBox(height: 16),
-            InfoTile(
-              icon: Icons.account_balance_wallet_outlined,
-              label: l10n.payoutsTitle,
-              value: l10n.payoutsEntryValue,
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const PayoutsScreen()),
-              ),
-            ),
+            EntranceFade(index: 4, child: const _EarningsCard()),
             const SizedBox(height: 12),
+            EntranceFade(index: 5, child: _StatsRow(profile: profile)),
+            const SizedBox(height: 16),
             InfoTile(
               icon: Icons.two_wheeler_outlined,
               label: l10n.vehicleLabel,
@@ -293,7 +304,7 @@ class _ShiftTab extends StatelessWidget {
               emphasise: profile.vehicleNumber != null,
               valueDirection: TextDirection.ltr,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             InfoTile(
               icon: Icons.verified_user_outlined,
               label: l10n.kycStatusLabel,
@@ -307,18 +318,9 @@ class _ShiftTab extends StatelessWidget {
                     : StatusTone.warning,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
-          InfoTile(
-            icon: Icons.translate_rounded,
-            label: l10n.appLanguageLabel,
-            value: language.nativeName,
-            valueDirection: language.textDirection,
-            onTap: () => Navigator.of(context).pushNamed(
-              AppRoutes.language,
-              arguments: false,
-            ),
-          ),
+          languageRow,
         ],
       ),
     );
@@ -354,23 +356,42 @@ class _ActiveOrderSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
-    // Orange, not green: this is the one thing on the shift tab that is
-    // waiting on the rider rather than reporting a steady state.
-    const Color accent = AppColors.orangeDeep;
+    // Orange, not green, and filled: this is the one thing on the shift tab
+    // that is waiting on the rider rather than reporting a steady state.
+    const Color ink = Colors.white;
 
-    return SurfaceCard(
-      accent: accent,
-      radius: AppSurface.radiusLarge,
-      onTap: onTap,
-      child: Row(
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSurface.radiusLarge),
+          gradient: const LinearGradient(
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+            colors: <Color>[AppColors.orange, AppColors.orangeDeep],
+          ),
+          boxShadow: AppSurface.hero(context, AppColors.orangeDeep),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppSurface.radiusLarge),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
+            child: Row(
               children: <Widget>[
                 // The one moving thing on the shift tab while an order is in
                 // hand, so the eye lands here first.
-                SizedBox(
-                  width: 34,
-                  height: 34,
-                  child: Center(
-                    child: BreathingDot(colour: accent, size: 10, spread: 14),
+                Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: ink.withValues(alpha: 0.18),
+                  ),
+                  child: const Icon(
+                    Icons.delivery_dining_rounded,
+                    color: ink,
+                    size: 26,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -380,31 +401,36 @@ class _ActiveOrderSummary extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       Text(
-                        l10n.orderNumberLabel(order.orderNumber),
-                        maxLines: 1,
+                        order.status.isCollected
+                            ? l10n.deliverToCustomer
+                            : l10n.headToRestaurant,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall?.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: ink,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        order.status.isCollected
-                            ? l10n.deliverToCustomer
-                            : l10n.headToRestaurant,
+                        l10n.orderNumberLabel(order.orderNumber),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: accent,
-                          fontWeight: FontWeight.w700,
+                          color: ink.withValues(alpha: 0.9),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded, color: accent),
+                const BreathingDot(colour: ink, size: 9, spread: 13),
+                const Icon(Icons.chevron_right_rounded, color: ink),
               ],
             ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -461,23 +487,36 @@ class _DutyCard extends StatelessWidget {
               // Only breathes while receiving. A dot that pulses at an
               // offline rider is telling them something that is not true —
               // and it would keep every widget test from ever settling.
-              SizedBox(
-                width: 30,
-                height: 30,
-                child: Center(
-                  child: online
-                      ? BreathingDot(colour: accent, size: 11, spread: 17)
-                      : Container(
-                          width: 11,
-                          height: 11,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: accent,
-                          ),
-                        ),
+              AnimatedContainer(
+                duration: AppMotion.medium,
+                curve: AppMotion.change,
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: accent.withValues(alpha: live ? 0.16 : 0.10),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: <Widget>[
+                    Icon(
+                      onBreak
+                          ? Icons.free_breakfast_rounded
+                          : Icons.power_settings_new_rounded,
+                      size: 28,
+                      color: accent,
+                    ),
+                    if (online)
+                      PositionedDirectional(
+                        top: 2,
+                        end: 2,
+                        child: BreathingDot(colour: accent, size: 9, spread: 12),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -493,10 +532,10 @@ class _DutyCard extends StatelessWidget {
                     AnimatedDefaultTextStyle(
                       duration: AppMotion.quick,
                       curve: AppMotion.change,
-                      style: theme.textTheme.titleLarge!.copyWith(
+                      style: theme.textTheme.headlineSmall!.copyWith(
                         fontWeight: FontWeight.w800,
                         color: accent,
-                        letterSpacing: -0.2,
+                        letterSpacing: 0,
                       ),
                       child: Text(
                         online
@@ -712,87 +751,6 @@ class _BlockedNotice extends StatelessWidget {
   }
 }
 
-/// Pulsing dot while online, flat while not. The one piece of motion on the
-/// screen, so "am I receiving orders?" is answerable at a glance from a bike
-/// mount.
-class _Beacon extends StatefulWidget {
-  const _Beacon({required this.active, required this.colour});
-
-  final bool active;
-  final Color colour;
-
-  @override
-  State<_Beacon> createState() => _BeaconState();
-}
-
-class _BeaconState extends State<_Beacon>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1400),
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.active) _c.repeat();
-  }
-
-  @override
-  void didUpdateWidget(_Beacon oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.active && !_c.isAnimating) {
-      _c.repeat();
-    } else if (!widget.active && _c.isAnimating) {
-      _c
-        ..stop()
-        ..value = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 22,
-      height: 22,
-      child: AnimatedBuilder(
-        animation: _c,
-        builder: (BuildContext context, _) {
-          final double t = _c.value;
-          return Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              if (widget.active)
-                Container(
-                  width: 10 + 12 * t,
-                  height: 10 + 12 * t,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: widget.colour.withValues(alpha: 0.30 * (1 - t)),
-                  ),
-                ),
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: widget.colour,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
 class _StatsRow extends StatelessWidget {
   const _StatsRow({required this.profile});
 
@@ -851,7 +809,7 @@ class _StatTile extends StatelessWidget {
 
     final TextStyle? figure = theme.textTheme.headlineMedium?.copyWith(
       fontWeight: FontWeight.w800,
-      letterSpacing: -0.6,
+      letterSpacing: 0,
       color: muted
           ? theme.colorScheme.onSurfaceVariant
           : theme.colorScheme.onSurface,
@@ -899,6 +857,317 @@ class _StatTile extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The latest week's pay, on the tab a rider opens first. Tapping it opens
+/// every week.
+class _EarningsCard extends StatelessWidget {
+  const _EarningsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final PayoutController payouts = context.watch<PayoutController>();
+    final Payout? latest =
+        payouts.payouts.isEmpty ? null : payouts.payouts.first;
+    const Color ink = Colors.white;
+
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSurface.radiusLarge),
+          gradient: const LinearGradient(
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+            colors: <Color>[Color(0xFF1F6E08), AppColors.greenDeep],
+          ),
+          boxShadow: AppSurface.hero(context, AppColors.greenDeep),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppSurface.radiusLarge),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const PayoutsScreen()),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 12, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: ink.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: const Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 18,
+                        color: ink,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.payoutsTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: ink,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    if (latest != null) _StatusPill(payout: latest),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: ink.withValues(alpha: 0.85),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if (latest == null)
+                  Text(
+                    l10n.payoutsEntryValue,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: ink.withValues(alpha: 0.9),
+                    ),
+                  )
+                else ...<Widget>[
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      formatAmount(l10n, latest.net),
+                      maxLines: 1,
+                      textDirection: TextDirection.ltr,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${l10n.payoutNetLabel} · ${latest.periodText(context, l10n)}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: ink.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The payout status on the green card, where the usual chip colours would
+/// vanish into the background.
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.payout});
+
+  final Payout payout;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 120),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: payout.isPaid
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: Text(
+          payout.statusText(l10n),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: payout.isPaid ? AppColors.greenDeep : Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+@immutable
+class _TabData {
+  const _TabData(
+    this.label,
+    this.icon,
+    this.selectedIcon, {
+    this.carriesBadge = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final IconData selectedIcon;
+
+  /// Shows the dot while an order is in hand.
+  final bool carriesBadge;
+}
+
+/// The tab bar, as a pill floating over the bottom edge. The delivery tab
+/// wears a dot while an order is in hand, so the way back to it is never in
+/// doubt.
+class _FloatingTabs extends StatelessWidget {
+  const _FloatingTabs({
+    required this.index,
+    required this.items,
+    required this.carrying,
+    required this.onSelect,
+  });
+
+  final int index;
+  final List<_TabData> items;
+  final bool carrying;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 10),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 4, 14, 0),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: AppSurface.line(context)),
+            boxShadow: <BoxShadow>[
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(6),
+            child: Row(
+              children: <Widget>[
+                for (int i = 0; i < items.length; i++)
+                  Expanded(
+                    child: _TabButton(
+                      data: items[i],
+                      selected: i == index,
+                      badge: items[i].carriesBadge && carrying,
+                      onTap: () => onSelect(i),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  const _TabButton({
+    required this.data,
+    required this.selected,
+    required this.badge,
+    required this.onTap,
+  });
+
+  final _TabData data;
+  final bool selected;
+  final bool badge;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color active = isDark ? AppColors.greenLight : AppColors.greenDeep;
+    final Color colour =
+        selected ? active : theme.colorScheme.onSurfaceVariant;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: AppMotion.quick,
+          curve: AppMotion.change,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: selected
+                ? active.withValues(alpha: isDark ? 0.18 : 0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Stack(
+                clipBehavior: Clip.none,
+                children: <Widget>[
+                  Icon(
+                    selected ? data.selectedIcon : data.icon,
+                    size: 24,
+                    color: colour,
+                  ),
+                  if (badge)
+                    PositionedDirectional(
+                      top: -2,
+                      end: -4,
+                      child: Container(
+                        key: const ValueKey<String>('tab-badge'),
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: AppColors.orangeDeep,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.surfaceContainerLowest,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  data.label,
+                  maxLines: 1,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: colour,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -320,6 +320,30 @@ abstract class AppLocalizations {
   /// **'Enter the 6-digit code we sent to {target}'**
   String otpSubtitle(String target);
 
+  /// Heading of the help card under the code boxes.
+  ///
+  /// In en, this message translates to:
+  /// **'Didn\'t get the code?'**
+  String get otpHelpTitle;
+
+  /// Help card tip: the code may have gone to a mistyped number or email.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the number or email above. Tap back to change it.'**
+  String get otpHelpCheck;
+
+  /// Help card tip about waiting for the code and the resend timer.
+  ///
+  /// In en, this message translates to:
+  /// **'A code can take up to a minute to arrive. When the timer ends you can ask for a new one.'**
+  String get otpHelpWait;
+
+  /// Help card tip, shown only when the code was sent by email.
+  ///
+  /// In en, this message translates to:
+  /// **'For email, look in your spam folder too.'**
+  String get otpHelpSpam;
+
   /// Primary button on the code verification screen.
   ///
   /// In en, this message translates to:
@@ -409,6 +433,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile'**
   String get profileTitle;
+
+  /// Heading over the name, email, mobile and account status rows on the profile page.
+  ///
+  /// In en, this message translates to:
+  /// **'Your details'**
+  String get profileSectionDetails;
+
+  /// Heading over verification, vehicle and payouts on the profile page.
+  ///
+  /// In en, this message translates to:
+  /// **'Work'**
+  String get profileSectionWork;
+
+  /// Heading over the app language row on the profile page.
+  ///
+  /// In en, this message translates to:
+  /// **'App settings'**
+  String get profileSectionApp;
 
   /// Dashboard action that opens the profile screen.
   ///
@@ -1484,6 +1526,48 @@ abstract class AppLocalizations {
   /// **'Delivered'**
   String get confirmDeliveryButton;
 
+  /// Delivery tracker step 1, a few words under a small circle: ride to the restaurant.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach restaurant'**
+  String get stepReachRestaurant;
+
+  /// Delivery tracker step 2: collect the food at the counter.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick up'**
+  String get stepPickUp;
+
+  /// Delivery tracker step 3: ride to the customer.
+  ///
+  /// In en, this message translates to:
+  /// **'Reach customer'**
+  String get stepReachCustomer;
+
+  /// Delivery tracker step 4: hand the food over.
+  ///
+  /// In en, this message translates to:
+  /// **'Deliver'**
+  String get stepDeliver;
+
+  /// Label on the slider the rider drags across once the food is in the bag. Opens the pickup code sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe when collected'**
+  String get swipePickUp;
+
+  /// Label on the slider the rider drags across to mark the order delivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe to deliver'**
+  String get swipeDeliver;
+
+  /// Small label above the big cash amount the rider must collect at the door.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash to collect'**
+  String get cashToCollectLabel;
+
   /// Title of the confirmation dialog before closing an order.
   ///
   /// In en, this message translates to:
@@ -1597,6 +1681,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Orders you have completed will be listed here.'**
   String get historyEmptyBody;
+
+  /// Hint in the search box on the past deliveries tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Search order or restaurant'**
+  String get historySearchHint;
+
+  /// Day heading over today's deliveries in the history list.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get historyToday;
+
+  /// Day heading over yesterday's deliveries in the history list.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get historyYesterday;
+
+  /// Heading over past orders the server sent no date for.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get historyEarlier;
+
+  /// Beside a day heading in the history list: how many orders were delivered that day, and what the rider earned for them.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 delivery} other{{count} deliveries}} · {amount}'**
+  String historyDaySummary(int count, String amount);
+
+  /// Shown when a search of past deliveries finds nothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing matches “{query}”.'**
+  String historyNoMatch(String query);
+
+  /// Small note on a past cash order: the cash the rider took at the door.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash {amount}'**
+  String historyCashTaken(String amount);
 
   /// Order status: completed.
   ///
@@ -1807,6 +1933,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Deductions'**
   String get payoutDeductions;
+
+  /// Label on the summary card at the top of the payouts screen, over the most recent week's amount.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest week'**
+  String get payoutsLatestWeek;
+
+  /// Summary card: the total of weeks whose transfer has gone through.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid so far'**
+  String get payoutsPaidSoFar;
+
+  /// Summary card: the total of weeks worked out but not yet transferred. Must not suggest the money was sent.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet sent'**
+  String get payoutsNotYetSent;
+
+  /// Payout tracker step 1: the week's earnings have been calculated.
+  ///
+  /// In en, this message translates to:
+  /// **'Worked out'**
+  String get payoutStepWorkedOut;
+
+  /// Payout tracker step 2: the bank transfer is in progress.
+  ///
+  /// In en, this message translates to:
+  /// **'Being sent'**
+  String get payoutStepSending;
+
+  /// Payout tracker step 3: the money has reached the rider's bank. Shown greyed out until it has.
+  ///
+  /// In en, this message translates to:
+  /// **'In your bank'**
+  String get payoutStepInBank;
 
   /// Navigation header while riding to the pickup.
   ///

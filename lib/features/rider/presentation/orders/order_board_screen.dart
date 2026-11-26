@@ -147,7 +147,7 @@ class _OrderBoardScreenState extends State<OrderBoardScreen>
             Text(
               l10n.orderBoardTitle,
               style: theme.textTheme.headlineMedium?.copyWith(
-                letterSpacing: -0.6,
+                letterSpacing: 0,
               ),
             ),
             const Padding(

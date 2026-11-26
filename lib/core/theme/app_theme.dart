@@ -104,6 +104,7 @@ class AppTheme {
 
     return ThemeData(
       useMaterial3: true,
+      fontFamily: AppTypography.family,
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
       textTheme: text,

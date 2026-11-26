@@ -239,7 +239,7 @@ class _Header extends StatelessWidget {
                   textDirection: TextDirection.ltr,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.2,
+                    letterSpacing: 0,
                   ),
                 ),
               ),

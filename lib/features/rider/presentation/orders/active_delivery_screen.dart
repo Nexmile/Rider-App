@@ -5,8 +5,9 @@ import '../../../../core/motion/app_motion.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_surface.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/gradient_button.dart';
 import '../../../../core/widgets/info_tile.dart';
+import '../../../../core/widgets/step_tracker.dart';
+import '../../../../core/widgets/swipe_to_confirm.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/order_models.dart';
 import '../../data/rider_failure.dart';
@@ -71,7 +72,7 @@ class ActiveDeliveryScreen extends StatelessWidget {
       child: ListView(
         // Room at the end, so the main button can always be scrolled clear of
         // a message bar such as "Picked up. Deliver to the customer."
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 96),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
         physics: const AlwaysScrollableScrollPhysics(),
         children: <Widget>[
           Row(
@@ -91,12 +92,12 @@ class ActiveDeliveryScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          // Two stages, and which one the rider is in. The whole screen is
-          // "what now?", so answering it above the fold — before the cash, the
-          // addresses or the ticket — is the point.
-          _StageStrip(collected: collected),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
+          // Where the rider is in the journey, and what is next. The whole
+          // screen is "what now?", so answering it above the fold — before the
+          // cash, the addresses or the ticket — is the point.
+          _JourneyCard(order: order),
+          const SizedBox(height: 14),
 
           // Cash first, above the addresses. It is the one number on this
           // screen the rider is personally liable for, and burying it under a
@@ -173,7 +174,7 @@ class ActiveDeliveryScreen extends StatelessWidget {
             OrderItemList(items: order.items),
           ],
 
-          const SizedBox(height: 26),
+          const SizedBox(height: 24),
           _ReachedAction(order: order),
           _PrimaryAction(order: order),
 
@@ -280,11 +281,12 @@ class _ReachedAction extends StatelessWidget {
   }
 }
 
-/// The single button that moves the order along.
+/// The slider that moves the order along.
 ///
 /// Two states only, because there are only ever two things left to do: collect
-/// it, or hand it over. Anything else — a release, a call — is secondary and
-/// sits below or beside the address it belongs to.
+/// it, or hand it over. A swipe rather than a tap, so neither happens from a
+/// pocket or a bumpy road. Anything else — a release, a call — is secondary
+/// and sits below or beside the address it belongs to.
 class _PrimaryAction extends StatelessWidget {
   const _PrimaryAction({required this.order});
 
@@ -296,71 +298,67 @@ class _PrimaryAction extends StatelessWidget {
     final OrderController orders = context.watch<OrderController>();
 
     if (order.status.isCollected) {
-      return GradientButton(
-        label: l10n.confirmDeliveryButton,
-        icon: Icons.check_rounded,
-        onPressed: orders.isActing ? null : () => _deliver(context),
+      return SwipeToConfirm(
+        key: const ValueKey<String>('deliver-swipe'),
+        label: l10n.swipeDeliver,
+        icon: Icons.done_all_rounded,
+        busy: orders.isActing,
+        onConfirmed: () => _deliver(context),
       );
     }
 
-    return GradientButton(
-      label: l10n.confirmPickupButton,
-      icon: Icons.qr_code_2_rounded,
-      onPressed: orders.isActing
-          ? null
-          : () async {
-              final ScaffoldMessengerState messenger =
-                  ScaffoldMessenger.of(context);
-              final AppLocalizations strings = AppLocalizations.of(context);
+    return SwipeToConfirm(
+      key: const ValueKey<String>('pickup-swipe'),
+      label: l10n.swipePickUp,
+      icon: Icons.shopping_bag_rounded,
+      busy: orders.isActing,
+      onConfirmed: () async {
+        final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+        final AppLocalizations strings = AppLocalizations.of(context);
 
-              final bool confirmed =
-                  await PickupCodeSheet.show(context, order.id);
-              if (!confirmed) return;
+        final bool confirmed = await PickupCodeSheet.show(context, order.id);
+        if (!confirmed) return;
 
-              messenger
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  SnackBar(content: Text(strings.pickupConfirmed)),
-                );
-            },
+        messenger
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(strings.pickupConfirmed)));
+      },
     );
   }
 
-  /// Confirming a delivery is irreversible and, on a cash order, is the moment
-  /// the rider becomes liable for the money. So it asks first — and the
-  /// question names the amount, because "did you collect it?" is easier to wave
-  /// through than "did you collect ₹480?".
+  /// Confirming a delivery is irreversible. On a prepaid order the swipe is
+  /// the confirmation. On a cash order it is also the moment the rider becomes
+  /// liable for the money, so it asks once more — and the question names the
+  /// amount, because "did you collect it?" is easier to wave through than "did
+  /// you collect ₹480?".
   Future<void> _deliver(BuildContext context) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final OrderController orders = context.read<OrderController>();
     final RiderController rider = context.read<RiderController>();
 
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: Text(l10n.confirmDeliveryTitle),
-        content: Text(
-          order.isCashOnDelivery
-              ? l10n.confirmDeliveryCashBody(
-                  formatAmount(l10n, order.collectCash),
-                )
-              : l10n.confirmDeliveryBody,
+    if (order.isCashOnDelivery) {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: Text(l10n.confirmDeliveryTitle),
+          content: Text(
+            l10n.confirmDeliveryCashBody(formatAmount(l10n, order.collectCash)),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(l10n.cancelLabel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(l10n.confirmDeliveryButton),
+            ),
+          ],
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancelLabel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(l10n.confirmDeliveryButton),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
+      );
+      if (confirmed != true) return;
+    }
 
     final RiderFailure? failure = await orders.deliver(order.id);
 
@@ -405,36 +403,89 @@ class _CashBanner extends StatelessWidget {
         ? AppColors.orangeDeep
         : (isDark ? AppColors.greenLight : AppColors.greenDeep);
 
+    final Widget badge = Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: base.withValues(alpha: isDark ? 0.24 : 0.16),
+      ),
+      child: Icon(
+        cash ? Icons.payments_rounded : Icons.verified_rounded,
+        color: base,
+        size: 22,
+      ),
+    );
+
+    if (!cash) {
+      return SurfaceCard(
+        accent: base,
+        padding: const EdgeInsets.all(17),
+        child: Row(
+          children: <Widget>[
+            badge,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                l10n.nothingToCollect,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: base,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // The amount as large as anything on the screen: it is read at a door,
+    // with the customer's hand already out.
+    final String amount = formatAmount(l10n, order.collectCash);
     return SurfaceCard(
       accent: base,
-      padding: const EdgeInsets.all(17),
+      padding: const EdgeInsets.fromLTRB(17, 16, 17, 17),
       child: Row(
         children: <Widget>[
-          Container(
-            width: 42,
-            height: 42,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: base.withValues(alpha: isDark ? 0.24 : 0.16),
-            ),
-            child: Icon(
-              cash ? Icons.payments_rounded : Icons.verified_rounded,
-              color: base,
-              size: 22,
-            ),
-          ),
+          badge,
           const SizedBox(width: 14),
           Expanded(
-            child: Text(
-              cash
-                  ? l10n.collectAtDoor(formatAmount(l10n, order.collectCash))
-                  : l10n.nothingToCollect,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: base,
-                height: 1.35,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  l10n.cashToCollectLabel,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: base,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    amount,
+                    maxLines: 1,
+                    textDirection: TextDirection.ltr,
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color: base,
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.collectAtDoor(amount),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -732,105 +783,75 @@ class _VegMark extends StatelessWidget {
   }
 }
 
-/// Where the rider is in the two-step journey, and what is left.
+/// What to do now, over the four steps of the journey.
 ///
-/// Both stages are always shown, the finished one struck through in the
-/// accent rather than hidden: a rider glancing down mid-ride wants to confirm
-/// what they have already done as much as what is next.
-class _StageStrip extends StatelessWidget {
-  const _StageStrip({required this.collected});
+/// Every step stays on screen, the finished ones ticked rather than hidden: a
+/// rider glancing down mid-ride wants to confirm what they have done as much
+/// as what is next. The "reached" steps are optional — pickup and delivery
+/// never wait on them — so a skipped one is ticked once a later step is done.
+class _JourneyCard extends StatelessWidget {
+  const _JourneyCard({required this.order});
 
-  final bool collected;
+  final RiderOrder order;
 
-  @override
-  Widget build(BuildContext context) {
-    final AppLocalizations l10n = AppLocalizations.of(context);
-
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: _Stage(
-            label: l10n.headToRestaurant,
-            icon: Icons.storefront_rounded,
-            state: collected ? _StageState.done : _StageState.live,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _Stage(
-            label: l10n.deliverToCustomer,
-            icon: Icons.location_on_rounded,
-            state: collected ? _StageState.live : _StageState.waiting,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-enum _StageState { done, live, waiting }
-
-class _Stage extends StatelessWidget {
-  const _Stage({
-    required this.label,
-    required this.icon,
-    required this.state,
-  });
-
-  final String label;
-  final IconData icon;
-  final _StageState state;
+  /// The step the rider is on, 0 to 3; 4 once delivered.
+  static int currentStep(RiderOrder order) => switch (order.status) {
+        OrderStatus.assigned => 0,
+        OrderStatus.reachedRestaurant => 1,
+        OrderStatus.pickedUp || OrderStatus.outForDelivery => 2,
+        OrderStatus.reachedCustomer => 3,
+        OrderStatus.delivered => 4,
+        _ => order.status.isCollected ? 2 : 0,
+      };
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-    final Color green = isDark ? AppColors.greenLight : AppColors.greenDeep;
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool collected = order.status.isCollected;
+    final int current = currentStep(order);
 
-    final Color tint = switch (state) {
-      _StageState.done => green,
-      _StageState.live => AppColors.orangeDeep,
-      _StageState.waiting => theme.colorScheme.onSurfaceVariant,
-    };
+    final List<TrackerStep> steps = <TrackerStep>[
+      TrackerStep(l10n.stepReachRestaurant, Icons.storefront_rounded),
+      TrackerStep(l10n.stepPickUp, Icons.shopping_bag_rounded),
+      TrackerStep(l10n.stepReachCustomer, Icons.location_on_rounded),
+      TrackerStep(l10n.stepDeliver, Icons.home_rounded),
+    ];
 
-    final bool filled = state != _StageState.waiting;
-
-    return AnimatedContainer(
-      duration: AppMotion.medium,
-      curve: AppMotion.change,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-      decoration: BoxDecoration(
-        color: filled
-            ? tint.withValues(alpha: isDark ? 0.16 : 0.10)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(AppSurface.radiusSmall),
-        border: Border.all(
-          color: filled
-              ? tint.withValues(alpha: 0.4)
-              : AppSurface.line(context),
-        ),
-      ),
-      child: Row(
+    return SurfaceCard(
+      radius: AppSurface.radiusLarge,
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(
-            state == _StageState.done ? Icons.check_rounded : icon,
-            size: 17,
-            color: tint,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: tint,
-                fontWeight: state == _StageState.live
-                    ? FontWeight.w800
-                    : FontWeight.w600,
-                height: 1.3,
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  collected
+                      ? Icons.location_on_rounded
+                      : Icons.storefront_rounded,
+                  size: 22,
+                  color: AppColors.orangeDeep,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    collected ? l10n.deliverToCustomer : l10n.headToRestaurant,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
+          const SizedBox(height: 16),
+          StepTracker(
+            key: const ValueKey<String>('journey-steps'),
+            steps: steps,
+            done: current,
           ),
         ],
       ),

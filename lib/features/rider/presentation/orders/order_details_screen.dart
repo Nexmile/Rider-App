@@ -64,6 +64,12 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final RiderOrder order = _order;
 
+    // A finished order has nothing left to ride to and no one left to call:
+    // once the food is handed over, the customer's number is not the rider's
+    // business, and a cancelled job is over either way.
+    final bool finished = order.status == OrderStatus.delivered ||
+        order.status == OrderStatus.cancelled;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.orderDetailsTitle),
@@ -128,7 +134,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
               name: order.pickup.name,
               address: order.pickup.address,
               distance: formatDistance(l10n, order.pickup.distanceMetres),
-              actions: ContactActions(
+              actions: finished
+                  ? null
+                  : ContactActions(
                 callLabel: l10n.callRestaurant,
                 directionsLabel: l10n.navStart,
                 onNavigate: NavigationScreen.canNavigate(order, NavTarget.pickup)
@@ -153,7 +161,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
                 details: DropoffDetails.isEmpty(order.dropoff!)
                     ? null
                     : DropoffDetails(dropoff: order.dropoff!),
-                actions: ContactActions(
+                actions: finished
+                    ? null
+                    : ContactActions(
                   callLabel: l10n.callCustomer,
                   directionsLabel: l10n.navStart,
                   onNavigate: NavigationScreen.canNavigate(order, NavTarget.dropoff)
@@ -256,7 +266,7 @@ class _Place extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.address,
-    required this.actions,
+    this.actions,
     this.name,
     this.distance,
     this.details,
@@ -267,7 +277,8 @@ class _Place extends StatelessWidget {
   final String? name;
   final String address;
   final String? distance;
-  final Widget actions;
+  /// Call and directions. Null on a finished order.
+  final Widget? actions;
 
   /// More about the place, under the address: for the drop, the door.
   final Widget? details;
@@ -335,8 +346,10 @@ class _Place extends StatelessWidget {
               child: details!,
             ),
           ],
-          const SizedBox(height: 14),
-          actions,
+          if (actions != null) ...<Widget>[
+            const SizedBox(height: 14),
+            actions!,
+          ],
         ],
       ),
     );

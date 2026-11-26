@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_surface.dart';
-import '../../../../core/widgets/info_tile.dart';
+import '../../../../core/widgets/step_tracker.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/payout_models.dart';
 import '../../state/payout_controller.dart';
@@ -59,7 +59,6 @@ class _PayoutDetailsScreenState extends State<PayoutDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final Payout payout = _payout;
 
@@ -77,29 +76,13 @@ class _PayoutDetailsScreenState extends State<PayoutDetailsScreen> {
       body: RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           physics: const AlwaysScrollableScrollPhysics(),
           children: <Widget>[
-            Row(
-              children: <Widget>[
-                Expanded(
-                  child: Text(
-                    payout.periodText(context, l10n),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                StatusChip(
-                  label: payout.statusText(l10n),
-                  tone: payout.statusTone,
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+            _Hero(payout: payout),
+            const SizedBox(height: 14),
             _TransferPanel(payout: payout),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _Breakdown(payout: payout),
           ],
         ),
@@ -108,7 +91,76 @@ class _PayoutDetailsScreenState extends State<PayoutDetailsScreen> {
   }
 }
 
-/// The amount payable and, above all, whether it has been sent.
+/// The amount payable, the week it is for, and its status.
+class _Hero extends StatelessWidget {
+  const _Hero({required this.payout});
+
+  final Payout payout;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    const Color ink = Colors.white;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSurface.radiusLarge),
+        gradient: const LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: <Color>[Color(0xFF1F6E08), AppColors.greenDeep],
+        ),
+        boxShadow: AppSurface.hero(context, AppColors.greenDeep),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  payout.periodText(context, l10n),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              WhitePill(label: payout.statusText(l10n), solid: payout.isPaid),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            l10n.payoutNetLabel,
+            style: theme.textTheme.labelMedium
+                ?.copyWith(color: ink.withValues(alpha: 0.85)),
+          ),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: Text(
+              formatAmount(l10n, payout.net),
+              maxLines: 1,
+              textDirection: TextDirection.ltr,
+              style: theme.textTheme.displaySmall?.copyWith(
+                color: ink,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Where the money has got to, and, above all, whether it has been sent.
 class _TransferPanel extends StatelessWidget {
   const _TransferPanel({required this.payout});
 
@@ -140,31 +192,22 @@ class _TransferPanel extends StatelessWidget {
 
     return SurfaceCard(
       radius: AppSurface.radiusLarge,
-      accent: accent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(
-            l10n.payoutNetLabel,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          // "In your bank" stays grey until the status says paid: the
+          // tracker never runs ahead of the transfer.
+          StepTracker(
+            key: const ValueKey<String>('payout-steps'),
+            steps: <TrackerStep>[
+              TrackerStep(l10n.payoutStepWorkedOut, Icons.calculate_rounded),
+              TrackerStep(l10n.payoutStepSending, Icons.send_rounded),
+              TrackerStep(l10n.payoutStepInBank, Icons.account_balance_rounded),
+            ],
+            done: payout.isPaid ? 3 : 1,
+            nextIsLive: payout.status == PayoutStatus.processing,
           ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              formatAmount(l10n, payout.net),
-              maxLines: 1,
-              textDirection: TextDirection.ltr,
-              style: theme.textTheme.displaySmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.8,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -256,6 +299,7 @@ class _Breakdown extends StatelessWidget {
                 label: deduction.label,
                 amount: '−${formatAmount(l10n, deduction.amount)}',
                 note: deduction.note,
+                colour: theme.colorScheme.error,
               ),
           ],
           const Divider(height: 24),
@@ -276,12 +320,16 @@ class _Line extends StatelessWidget {
     required this.amount,
     this.note,
     this.strong = false,
+    this.colour,
   });
 
   final String label;
   final String amount;
   final String? note;
   final bool strong;
+
+  /// For the amount only: deductions in red.
+  final Color? colour;
 
   @override
   Widget build(BuildContext context) {
@@ -301,7 +349,11 @@ class _Line extends StatelessWidget {
             children: <Widget>[
               Expanded(child: Text(label, style: style)),
               const SizedBox(width: 12),
-              Text(amount, textDirection: TextDirection.ltr, style: style),
+              Text(
+                amount,
+                textDirection: TextDirection.ltr,
+                style: colour == null ? style : style?.copyWith(color: colour),
+              ),
             ],
           ),
           if (note != null) ...<Widget>[

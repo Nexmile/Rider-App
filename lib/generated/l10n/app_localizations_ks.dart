@@ -80,19 +80,20 @@ class AppLocalizationsKs extends AppLocalizations {
       'صحیح ای میل پتہٕ یا 10 ہندسن ہُند موبائل نمبر لیٚکھِو';
 
   @override
-  String get loginHeadline => 'Deliver with Nexmile. Earn on your own time.';
+  String get loginHeadline =>
+      'Nexmile سٕتؠ ڈیلیوری کرِو۔ پننِس وقتس مطابق کمٲے کرِو۔';
 
   @override
-  String get loginOrSignUp => 'Log in or sign up';
+  String get loginOrSignUp => 'سائن اِن یا سائن اَپ کرِو';
 
   @override
-  String get loginEmailHint => 'Enter your email address';
+  String get loginEmailHint => 'پنُن ای میل پتہٕ لیٚکھِو';
 
   @override
-  String get invalidEmail => 'Enter a valid email address';
+  String get invalidEmail => 'صحیح ای میل پتہٕ لیٚکھِو';
 
   @override
-  String get loginHeroBadge => 'Delivery partner';
+  String get loginHeroBadge => 'ڈیلیوری پارٹنر';
 
   @override
   String get sendCode => 'کوڈ سوزِو';
@@ -108,6 +109,20 @@ class AppLocalizationsKs extends AppLocalizations {
   String otpSubtitle(String target) {
     return '$target پؠٹھٕ سوزنہٕ آمُت 6 ہندسن ہُند کوڈ لیٚکھِو';
   }
+
+  @override
+  String get otpHelpTitle => 'کوڈ میوٚل نہ؟';
+
+  @override
+  String get otpHelpCheck =>
+      'پؠٹھِم نمبر یا ای میل چیک کرِو۔ بدلاونہٕ خٲطرٕ واپس گژھِو۔';
+
+  @override
+  String get otpHelpWait =>
+      'کوڈ واتنس ہیٚکہِ اکھ مِنٹ تام لگِتھ۔ ٹائمر ختم گژھنہٕ پتہٕ ہیٚکِو توہہِ نوٚو کوڈ مَنٛگِتھ۔';
+
+  @override
+  String get otpHelpSpam => 'ای میل خٲطرٕ پنُن سپیم فولڈر تہِ وُچھِو۔';
 
   @override
   String get verifyCode => 'تصدیق کرِو';
@@ -163,6 +178,15 @@ class AppLocalizationsKs extends AppLocalizations {
   String get profileTitle => 'پروفائل';
 
   @override
+  String get profileSectionDetails => 'توہنٛز تفصیل';
+
+  @override
+  String get profileSectionWork => 'کٲم';
+
+  @override
+  String get profileSectionApp => 'ایپ سیٹِنگز';
+
+  @override
   String get viewProfile => 'پروفائل وُچھِو';
 
   @override
@@ -196,154 +220,154 @@ class AppLocalizationsKs extends AppLocalizations {
   String get retry => 'دوبارٕ کوشش کرِو';
 
   @override
-  String get loginRiderNote => 'This app is for Nexmile delivery partners.';
+  String get loginRiderNote => 'یہ ایپ چھےٚ Nexmile ڈیلیوری پارٹنرن خٲطرٕ۔';
 
   @override
-  String get checkingYourAccount => 'Checking your account';
+  String get checkingYourAccount => 'توہنٛد کھاتہٕ چھُ چیک گژھان';
 
   @override
   String get couldNotLoadAccount =>
-      'We could not load your account. Check your connection and try again.';
+      'توہنٛد کھاتہٕ ہیوٚک نہ لوڈ گٔژھِتھ۔ پنُن کنکشن چیک کٔرِتھ دوبارٕ کوشش کرِو۔';
 
   @override
-  String get notARiderAccountTitle => 'This is not a delivery partner account';
+  String get notARiderAccountTitle => 'یہ چھُ نہ ڈیلیوری پارٹنر کھاتہٕ';
 
   @override
   String get notARiderAccount =>
-      'This email or mobile number is already registered on another Nexmile account. Sign out and use a different one to join as a delivery partner.';
+      'یہ ای میل یا موبائل نمبر چھُ برونٛہہ ی Nexmile کِس بیٚیِس کھاتس پؠٹھ رجسٹر۔ ڈیلیوری پارٹنر بنٕنہٕ خٲطرٕ سائن آوٹ کٔرِتھ کانہہ بیٚاکھ استعمال کرِو۔';
 
   @override
   String notARiderAccountFor(String role) {
-    return 'This email or mobile number is already registered as a Nexmile $role. Sign out and use a different one to join as a delivery partner.';
+    return 'یہ ای میل یا موبائل نمبر چھُ برونٛہہ ی Nexmile پؠٹھ $role طورٕ رجسٹر۔ ڈیلیوری پارٹنر بنٕنہٕ خٲطرٕ سائن آوٹ کٔرِتھ کانہہ بیٚاکھ استعمال کرِو۔';
   }
 
   @override
-  String get roleCustomer => 'customer';
+  String get roleCustomer => 'گاہک';
 
   @override
-  String get roleMerchant => 'merchant';
+  String get roleMerchant => 'دُکاندار';
 
   @override
-  String get roleAdmin => 'administrator';
+  String get roleAdmin => 'ایڈمن';
 
   @override
-  String get useAnotherAccount => 'Use another account';
+  String get useAnotherAccount => 'بیٚاکھ کھاتہٕ استعمال کرِو';
 
   @override
-  String get onboardingTitle => 'Become a Nexmile partner';
+  String get onboardingTitle => 'Nexmile پارٹنر بنِو';
 
   @override
   String get onboardingSubtitle =>
-      'A few details and your documents, then our team verifies you. It usually takes up to two working days.';
+      'کینٛہہ تفصیل تہٕ توہنٛدؠ دستاویز، پتہٕ کرِ ساني ٹیم توہنٛز تصدیق۔ امہِ چھُ عام طور زٕ کٲمہٕ دۄہ تام وقت لگان۔';
 
   @override
   String stepOfSteps(int current, int total) {
-    return 'Step $current of $total';
+    return '$total قدمن منٛزٕ $current';
   }
 
   @override
-  String get stepIdentityTitle => 'About you';
+  String get stepIdentityTitle => 'توہنٛدِ بابت';
 
   @override
   String get stepIdentitySubtitle =>
-      'Enter your name exactly as it appears on your Aadhaar card.';
+      'پنُن ناو بالکل تِتھیٚ لیٚکھِو یِتھ کٔنؠ سُہ توہنٛدِس آدھار کارڈس پؠٹھ چھُ۔';
 
   @override
-  String get stepVehicleTitle => 'Your vehicle';
+  String get stepVehicleTitle => 'توہنٛز گٲڑۍ';
 
   @override
   String get stepVehicleSubtitle =>
-      'Tell us what you ride and the number plate it carries.';
+      'اسہِ وَنِو توہہِ کیٚاہ چھِوٕ چلاوان تہٕ امہِ پؠٹھ کیٚاہ نمبر چھُ۔';
 
   @override
-  String get stepIdentityNumbersTitle => 'Identity numbers';
+  String get stepIdentityNumbersTitle => 'شناختی نمبر';
 
   @override
   String get stepIdentityNumbersSubtitle =>
-      'These must match the documents you upload later.';
+      'یِم نمبر گژھن تِمن دستاویزن سٕتؠ مِلُن یِم توہہِ پتہٕ اپلوڈ کرِو۔';
 
   @override
-  String get stepLicenceTitle => 'Licence and insurance';
+  String get stepLicenceTitle => 'لائسنس تہٕ انشورنس';
 
   @override
   String get stepLicenceSubtitle =>
-      'Both must be valid on the day you start delivering.';
+      'یِم دۄشوَے گژھن تَمہِ دۄہہ کارآمد آسُن یَمہِ دۄہہ توہہِ ڈیلیوری شُروع کرِو۔';
 
   @override
-  String get stepBankTitle => 'Where you get paid';
+  String get stepBankTitle => 'توہنٛز کمٲے کۄتہٕ واتِ';
 
   @override
   String get stepBankSubtitle =>
-      'Your earnings are settled to this account. Check it carefully.';
+      'توہنٛز کمٲے یِیہِ امہِ کھاتس منٛز سوزنہٕ۔ احتیاطہٕ سٕتؠ چیک کرِو۔';
 
   @override
-  String get stepDocumentsTitle => 'Your documents';
+  String get stepDocumentsTitle => 'توہنٛدؠ دستاویز';
 
   @override
   String get stepDocumentsSubtitle =>
-      'Photograph each one in good light. JPG, PNG or PDF, up to 5 MB each.';
+      'ہر اکھ جانہِ گاشس منٛز فوٹو کڈِو۔ JPG، PNG یا PDF، ہر اکھ 5 MB تام۔';
 
   @override
-  String get stepReviewTitle => 'Check and submit';
+  String get stepReviewTitle => 'چیک کٔرِتھ جمع کرِو';
 
   @override
   String get stepReviewSubtitle =>
-      'Once you submit, your details are locked until our team has reviewed them.';
+      'جمع کرنہٕ پتہٕ رۄزِ توہنٛز تفصیل لاک، یوتام ساني ٹیم امہِ ہٕنٛز جانچ کرِ۔';
 
   @override
-  String get saveAndContinue => 'Save and continue';
+  String get saveAndContinue => 'محفوظ کٔرِتھ برونہہ گژھِو';
 
   @override
-  String get backLabel => 'Back';
+  String get backLabel => 'واپس';
 
   @override
-  String get fullNameLabel => 'Full name';
+  String get fullNameLabel => 'پورٕ ناو';
 
   @override
-  String get fullNameHint => 'As printed on your Aadhaar';
+  String get fullNameHint => 'یِتھ کٔنؠ آدھارس پؠٹھ چھُ';
 
   @override
-  String get dateOfBirthLabel => 'Date of birth';
+  String get dateOfBirthLabel => 'زامٕژ تاریخ';
 
   @override
-  String get selectDate => 'Select a date';
+  String get selectDate => 'تاریخ ژارٕو';
 
   @override
-  String get vehicleTypeLabel => 'Vehicle type';
+  String get vehicleTypeLabel => 'گٲڑِ ہُند قِسم';
 
   @override
-  String get vehicleMotorcycle => 'Motorcycle';
+  String get vehicleMotorcycle => 'موٹر سائیکل';
 
   @override
-  String get vehicleScooter => 'Scooter';
+  String get vehicleScooter => 'سکوٹر';
 
   @override
-  String get vehicleEv => 'Electric vehicle';
+  String get vehicleEv => 'الیکٹرک گٲڑۍ';
 
   @override
-  String get vehicleBicycle => 'Bicycle';
+  String get vehicleBicycle => 'سائیکل';
 
   @override
-  String get vehicleWalk => 'On foot';
+  String get vehicleWalk => 'پَیدل';
 
   @override
   String get vehicleNoPapersNote =>
-      'No vehicle number or RC needed. You will be asked for Aadhaar and PAN only.';
+      'گٲڑِ ہُند نمبر یا RC چھُ نہ ضروری۔ توہہِ نِشہِ یِیہِ صرف آدھار تہٕ PAN مَنٛگنہٕ۔';
 
   @override
-  String get vehicleNumberLabel => 'Vehicle number';
+  String get vehicleNumberLabel => 'گٲڑِ ہُند نمبر';
 
   @override
   String get vehicleNumberHint => 'TN01AB1234';
 
   @override
-  String get rcNumberLabel => 'RC number';
+  String get rcNumberLabel => 'RC نمبر';
 
   @override
-  String get aadhaarLabel => 'Aadhaar number';
+  String get aadhaarLabel => 'آدھار نمبر';
 
   @override
-  String get aadhaarHint => '12 digits';
+  String get aadhaarHint => '12 ہندسہٕ';
 
   @override
   String get panLabel => 'PAN';
@@ -352,283 +376,283 @@ class AppLocalizationsKs extends AppLocalizations {
   String get panHint => 'ABCDE1234F';
 
   @override
-  String get drivingLicenceNoLabel => 'Driving licence number';
+  String get drivingLicenceNoLabel => 'ڈرائیونگ لائسنس نمبر';
 
   @override
-  String get drivingLicenceExpiryLabel => 'Licence valid until';
+  String get drivingLicenceExpiryLabel => 'لائسنس ختم گژھنٕچ تاریخ';
 
   @override
-  String get insuranceNumberLabel => 'Insurance policy number';
+  String get insuranceNumberLabel => 'انشورنس پالیسی نمبر';
 
   @override
-  String get insuranceExpiryLabel => 'Insurance valid until';
+  String get insuranceExpiryLabel => 'انشورنس ختم گژھنٕچ تاریخ';
 
   @override
-  String get bankAccountNameLabel => 'Account holder name';
+  String get bankAccountNameLabel => 'کھاتہٕ دار سُند ناو';
 
   @override
-  String get bankAccountNumberLabel => 'Account number';
+  String get bankAccountNumberLabel => 'کھاتہٕ نمبر';
 
   @override
-  String get bankIfscLabel => 'IFSC code';
+  String get bankIfscLabel => 'IFSC کوڈ';
 
   @override
   String get bankIfscHint => 'SBIN0001234';
 
   @override
   String documentsProgress(int done, int total) {
-    return '$done of $total uploaded';
+    return '$total منٛزٕ $done اپلوڈ شُدٕ';
   }
 
   @override
-  String get uploadDocument => 'Upload';
+  String get uploadDocument => 'اپلوڈ کرِو';
 
   @override
-  String get replaceDocument => 'Replace';
+  String get replaceDocument => 'بدلاوِو';
 
   @override
-  String get removeDocument => 'Remove';
+  String get removeDocument => 'ہٹاوِو';
 
   @override
-  String get takePhoto => 'Take a photo';
+  String get takePhoto => 'فوٹو کڈِو';
 
   @override
-  String get chooseFromGallery => 'Choose from gallery';
+  String get chooseFromGallery => 'گیلری منٛزٕ ژارٕو';
 
   @override
-  String get chooseFile => 'Choose a file';
+  String get chooseFile => 'فائل ژارٕو';
 
   @override
-  String get uploadingLabel => 'Uploading';
+  String get uploadingLabel => 'اپلوڈ گژھان';
 
   @override
-  String get documentRejected => 'Rejected';
+  String get documentRejected => 'مسترد';
 
   @override
-  String get documentUploaded => 'Uploaded';
+  String get documentUploaded => 'اپلوڈ گو';
 
   @override
-  String get documentApproved => 'Approved';
+  String get documentApproved => 'منظور';
 
   @override
-  String get documentRequired => 'Required';
+  String get documentRequired => 'ضروری';
 
   @override
-  String get documentOptional => 'Optional';
+  String get documentOptional => 'اختیاری';
 
   @override
   String get fileTooLarge =>
-      'That file is over 5 MB. Try a photo instead of a scan.';
+      'یہ فائل چھےٚ 5 MB کھۄتہٕ زیادٕ۔ سکین بجاے فوٹو آزماوِو۔';
 
   @override
-  String get unsupportedFileType => 'Choose a JPG, PNG or PDF.';
+  String get unsupportedFileType => 'JPG، PNG یا PDF ژارٕو۔';
 
   @override
   String get pickerUnavailable =>
-      'We could not open that. Check the app\'s camera and photo permissions.';
+      'یہ ہیوٚک نہ کھُلِتھ۔ ایپ ہٕنٛز کیمرہ تہٕ فوٹو اجازت چیک کرِو۔';
 
   @override
-  String get uploadFailed =>
-      'That upload did not go through. Please try again.';
+  String get uploadFailed => 'یہ اپلوڈ گو نہ۔ مہربٲنی کٔرِتھ دوبارٕ کوشش کرِو۔';
 
   @override
-  String get submitForVerification => 'Submit for verification';
+  String get submitForVerification => 'تصدیق خٲطرٕ جمع کرِو';
 
   @override
-  String get submitConfirmTitle => 'Submit for verification?';
+  String get submitConfirmTitle => 'تصدیق خٲطرٕ جمع کرٕو؟';
 
   @override
   String get submitConfirmBody =>
-      'Your details and documents will be locked while our team reviews them. You cannot change them until a decision is made.';
+      'ییٚلہِ تام ساني ٹیم توہنٛز تفصیل تہٕ دستاویز جانچان آسہِ، تِم رۄزن لاک۔ فیصلہٕ گژھنہٕ تام ہیٚکِو نہ توہہِ تِم بدلٲوِتھ۔';
 
   @override
-  String get cancelLabel => 'Cancel';
+  String get cancelLabel => 'منسوخ کرِو';
 
   @override
   String get completeEverythingBeforeSubmitting =>
-      'Finish every step and upload all the documents before submitting.';
+      'جمع کرنہٕ برونٛہہ ہر قدم مکمل کرِو تہٕ سٲری دستاویز اپلوڈ کرِو۔';
 
   @override
   String get checkTheHighlightedFields =>
-      'Check the highlighted fields and try again.';
+      'نِشان کرنہٕ آمٕتؠ خانہٕ چیک کٔرِتھ دوبارٕ کوشش کرِو۔';
 
   @override
-  String get underReviewTitle => 'We are verifying your documents';
+  String get underReviewTitle => 'أسؠ چھِ توہنٛدؠ دستاویز تصدیق کران';
 
   @override
   String get underReviewBody =>
-      'Our team usually reviews within two working days. We will let you know as soon as you are approved.';
+      'ساني ٹیم چھےٚ عام طور زٕ کٲمہٕ دۄہن اندر جانچ کران۔ منظوری میلنہٕ سٕتی دِمَو أسؠ توہہِ خبر۔';
 
   @override
-  String get checkAgain => 'Check again';
+  String get checkAgain => 'دوبارٕ چیک کرِو';
 
   @override
-  String get stillUnderReview => 'Still under review';
+  String get stillUnderReview => 'جانچ چھےٚ وُنی تہِ جاری';
 
   @override
-  String get rejectedTitle => 'We could not verify you';
+  String get rejectedTitle => 'توہنٛز تصدیق ہیچ نہ گٔژھِتھ';
 
   @override
   String get rejectedBody =>
-      'Fix what our team noted below, then send your documents again.';
+      'ساني ٹیمہِ ہٕنٛدؠ تَل دِتمٕتؠ نوٹ وُچھِتھ ٹھیک کرِو، پتہٕ سوزِو پنٕنؠ دستاویز دوبارٕ۔';
 
   @override
-  String get rejectionReasonLabel => 'Reason';
+  String get rejectionReasonLabel => 'وجہ';
 
   @override
-  String get fixAndResubmit => 'Fix and submit again';
+  String get fixAndResubmit => 'ٹھیک کٔرِتھ دوبارٕ جمع کرِو';
 
   @override
-  String get blockedTitle => 'You cannot go online yet';
+  String get blockedTitle => 'توہہِ ہیٚکِو نہ ناوُ آن لائن گٔژھِتھ';
 
   @override
   String get documentsExpiredMessage =>
-      'Your licence or insurance has expired. Upload current documents to go online.';
+      'توہنٛد لائسنس یا انشورنس چھُ ختم گۆمُت۔ آن لائن گژھنہٕ خٲطرٕ نٔوؠ کارآمد دستاویز اپلوڈ کرِو۔';
 
   @override
   String get awaitingVerificationMessage =>
-      'Your documents are still being verified.';
+      'توہنٛدِن دستاویزن ہٕنٛز تصدیق چھےٚ وُنی جاری۔';
 
   @override
-  String get updateDocuments => 'Update documents';
+  String get updateDocuments => 'دستاویز اپ ڈیٹ کرِو';
 
   @override
-  String get riderHomeTitle => 'Ready to ride';
+  String get riderHomeTitle => 'ڈیلیوری خٲطرٕ تیار';
 
   @override
   String get riderHomeSubtitle =>
-      'Go online and we will send you nearby deliveries.';
+      'آن لائن گژھِو تہٕ أسؠ سوزَو توہہِ نزدیٚکی ڈیلیوری۔';
 
   @override
-  String get dutyStatusLabel => 'Duty status';
+  String get dutyStatusLabel => 'ڈیوٹی حالت';
 
   @override
-  String get dutyOnline => 'Online';
+  String get dutyOnline => 'آن لائن';
 
   @override
-  String get dutyOffline => 'Offline';
+  String get dutyOffline => 'آف لائن';
 
   @override
-  String get dutyOnBreak => 'On a break';
+  String get dutyOnBreak => 'بریک پؠٹھ';
 
   @override
-  String get goOnline => 'Go online';
+  String get goOnline => 'آن لائن گژھِو';
 
   @override
-  String get goOffline => 'Go offline';
+  String get goOffline => 'آف لائن گژھِو';
 
   @override
-  String get takeABreak => 'Take a break';
+  String get takeABreak => 'بریک ہیٚیِو';
 
   @override
-  String get waitingForOrders => 'Waiting for orders nearby';
+  String get waitingForOrders => 'نزدیٚکی آرڈرن ہُند انتظار';
 
   @override
   String get youAreOffline =>
-      'You are offline. No deliveries will be sent to you.';
+      'توہہِ چھِوٕ آف لائن۔ توہہِ یِیہِ نہ کانہہ ڈیلیوری سوزنہٕ۔';
 
   @override
-  String get completedDeliveriesLabel => 'Deliveries completed';
+  String get completedDeliveriesLabel => 'مکمل ڈیلیوری';
 
   @override
-  String get ratingLabel => 'Rating';
+  String get ratingLabel => 'ریٹنگ';
 
   @override
-  String get notRatedYet => 'Not rated yet';
+  String get notRatedYet => 'ناوُ کانہہ ریٹنگ نہ';
 
   @override
-  String get vehicleLabel => 'Vehicle';
+  String get vehicleLabel => 'گٲڑۍ';
 
   @override
-  String get kycStatusLabel => 'Verification';
+  String get kycStatusLabel => 'تصدیق';
 
   @override
-  String get kycPending => 'Not submitted';
+  String get kycPending => 'جمع کرنہٕ آمُت نہ';
 
   @override
-  String get kycSubmitted => 'Under review';
+  String get kycSubmitted => 'جانچ جاری';
 
   @override
-  String get kycVerified => 'Approved';
+  String get kycVerified => 'منظور';
 
   @override
-  String get kycRejected => 'Rejected';
+  String get kycRejected => 'مسترد';
 
   @override
-  String get fieldRequired => 'This is required';
+  String get fieldRequired => 'یہ چھُ ضروری';
 
   @override
-  String get invalidAadhaar => 'Enter the 12 digits of your Aadhaar number';
+  String get invalidAadhaar => 'پننِس آدھار نمبرٕکؠ 12 ہندسہٕ لیٚکھِو';
 
   @override
-  String get invalidPan => 'Enter a valid PAN, like ABCDE1234F';
+  String get invalidPan => 'صحیح PAN لیٚکھِو، مثلاً ABCDE1234F';
 
   @override
-  String get invalidIfsc => 'Enter a valid IFSC code, like SBIN0001234';
+  String get invalidIfsc => 'صحیح IFSC کوڈ لیٚکھِو، مثلاً SBIN0001234';
 
   @override
   String get invalidVehicleNumber =>
-      'Enter the number exactly as it appears on the plate';
+      'نمبر بالکل تِتھیٚ لیٚکھِو یِتھ کٔنؠ سُہ نمبر پلیٹس پؠٹھ چھُ';
 
   @override
-  String get invalidAccountNumber => 'Enter a valid account number';
+  String get invalidAccountNumber => 'صحیح کھاتہٕ نمبر لیٚکھِو';
 
   @override
-  String get dateMustBeFuture => 'This date has already passed';
+  String get dateMustBeFuture => 'یہ تاریخ چھےٚ گُزرمٕژ';
 
   @override
-  String get mustBeEighteen => 'You must be at least 18 years old to deliver';
+  String get mustBeEighteen =>
+      'ڈیلیوری کرنہٕ خٲطرٕ چھےٚ کم از کم 18 ؤری عمر ضروری';
 
   @override
-  String get docAadhaarFront => 'Aadhaar card (front)';
+  String get docAadhaarFront => 'آدھار کارڈ (برونٛہِم پاسہٕ)';
 
   @override
-  String get docAadhaarBack => 'Aadhaar card (back)';
+  String get docAadhaarBack => 'آدھار کارڈ (پتِم پاسہٕ)';
 
   @override
-  String get docDrivingLicence => 'Driving licence';
+  String get docDrivingLicence => 'ڈرائیونگ لائسنس';
 
   @override
-  String get docVehicleRc => 'Vehicle registration certificate';
+  String get docVehicleRc => 'گٲڑِ ہُند رجسٹریشن سرٹیفکیٹ';
 
   @override
-  String get docInsurance => 'Vehicle insurance';
+  String get docInsurance => 'گٲڑِ ہُند انشورنس';
 
   @override
-  String get docProfilePhoto => 'Profile photo';
+  String get docProfilePhoto => 'پروفائل فوٹو';
 
   @override
-  String get docPan => 'PAN card';
+  String get docPan => 'PAN کارڈ';
 
   @override
-  String get docBankProof => 'Cancelled cheque or bank statement';
+  String get docBankProof => 'منسوخ شُدٕ چیک یا بینک سٹیٹمنٹ';
 
   @override
-  String get ordersTab => 'Orders';
+  String get ordersTab => 'آرڈر';
 
   @override
-  String get deliveryTab => 'Delivery';
+  String get deliveryTab => 'ڈیلیوری';
 
   @override
-  String get historyTab => 'History';
+  String get historyTab => 'ہسٹری';
 
   @override
-  String get orderBoardTitle => 'Orders near you';
+  String get orderBoardTitle => 'توہنٛدِن نزدیٚکی آرڈر';
 
   @override
   String get orderBoardSubtitle =>
-      'Nearest restaurant first. The list refreshes on its own.';
+      'سٲری کھۄتہٕ نزدیٚکی ریستوران گۄڈٕ۔ لِسٹ چھےٚ پانے ریفریش گژھان۔';
 
   @override
   String orderNumberLabel(String number) {
-    return 'Order $number';
+    return 'آرڈر $number';
   }
 
   @override
-  String get pickupLabel => 'Pick up';
+  String get pickupLabel => 'پِک اپ';
 
   @override
-  String get dropoffLabel => 'Deliver to';
+  String get dropoffLabel => 'ڈیلیوری پتہٕ';
 
   @override
   String distanceMetres(String metres) {
@@ -645,218 +669,275 @@ class AppLocalizationsKs extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count items',
-      one: '1 item',
+      other: '$count چیزٕ',
+      one: '1 چیز',
     );
     return '$_temp0';
   }
 
   @override
-  String get earningsLabel => 'You earn';
+  String get earningsLabel => 'توہنٛز کمٲے';
 
   @override
-  String get collectCashLabel => 'Collect cash';
+  String get collectCashLabel => 'نقد وصول کرِو';
 
   @override
-  String get prepaidLabel => 'Paid online';
+  String get prepaidLabel => 'آن لائن أدا گۆمُت';
 
   @override
   String collectAtDoor(String amount) {
-    return 'Collect $amount from the customer';
+    return 'گاہکس نِشہِ $amount نقد وصول کرِو';
   }
 
   @override
-  String get nothingToCollect => 'Already paid. Do not ask for money.';
+  String get nothingToCollect =>
+      'أدایگی چھےٚ برونٛہہ ی گۆمٕژ۔ پونسہٕ مہ مَنٛگِو۔';
 
   @override
-  String get acceptOrder => 'Accept';
+  String get acceptOrder => 'قبول کرِو';
 
   @override
-  String get viewOrder => 'View';
+  String get viewOrder => 'وُچھِو';
 
   @override
-  String get orderAccepted => 'Order accepted. Head to the restaurant.';
+  String get orderAccepted => 'آرڈر گو قبول۔ ریستورانس کُن گژھِو۔';
 
   @override
   String get orderAlreadyTaken =>
-      'Another rider took this one. Here is the latest list.';
+      'یہ آرڈر ہیوٚت کُنہِ بیٚیِ رائِڈرن۔ یہ چھےٚ تازٕ لِسٹ۔';
 
   @override
-  String get orderNoLongerYours => 'This order is no longer yours.';
+  String get orderNoLongerYours => 'یہ آرڈر چھُ نہ وُنی توہنٛد۔';
 
   @override
-  String get boardEmptyTitle => 'No orders right now';
+  String get boardEmptyTitle => 'وُنی چھُ نہ کانہہ آرڈر';
 
   @override
   String get boardEmptyBody =>
-      'Stay online. The list updates on its own as restaurants get busy.';
+      'آن لائن رۄزِو۔ ییٚلہِ ریستوران مصروف گژھن، لِسٹ گژھِ پانے اپ ڈیٹ۔';
 
   @override
-  String get boardOfflineTitle => 'You are offline';
+  String get boardOfflineTitle => 'توہہِ چھِوٕ آف لائن';
 
   @override
-  String get boardOfflineBody => 'Go online to start receiving orders.';
+  String get boardOfflineBody => 'آرڈر حٲصل کرنہٕ خٲطرٕ آن لائن گژھِو۔';
 
   @override
-  String get boardBusyTitle => 'Finish your delivery first';
+  String get boardBusyTitle => 'گۄڈٕ پنٕنۍ ڈیلیوری مکمل کرِو';
 
   @override
   String get boardBusyBody =>
-      'You can take another order once this one is delivered.';
+      'یہ آرڈر ڈیلیور گژھنہٕ پتہٕ ہیٚکِو توہہِ بیٚاکھ آرڈر ہیٚتھ۔';
 
   @override
-  String get boardNoLocationTitle => 'We cannot find you';
+  String get boardNoLocationTitle => 'توہنٛز جاے چھےٚ نہ لبنہٕ یِوان';
 
   @override
   String get boardNoLocationBody =>
-      'Orders are sorted by how close the restaurant is, so we need your location to show you anything.';
+      'آرڈر چھِ ریستورانُک فاصلہٕ وُچھِتھ ترتیب دِنہٕ یِوان، تَوَے چھےٚ اسہِ کینٛہہ ہاونہٕ خٲطرٕ توہنٛز جاے ضروری۔';
 
   @override
-  String get boardNotVerifiedTitle => 'Not approved to ride yet';
+  String get boardNotVerifiedTitle =>
+      'ڈیلیوری ہٕنٛز منظوری چھےٚ نہ ناوُ میٚلمٕژ';
 
   @override
-  String get activeDeliveryTitle => 'Your delivery';
+  String get activeDeliveryTitle => 'توہنٛز ڈیلیوری';
 
   @override
-  String get headToRestaurant => 'Head to the restaurant';
+  String get headToRestaurant => 'ریستورانس کُن گژھِو';
 
   @override
-  String get deliverToCustomer => 'Deliver to the customer';
+  String get deliverToCustomer => 'گاہکس تام ڈیلیور کرِو';
 
   @override
-  String get noActiveDeliveryTitle => 'Nothing in hand';
+  String get noActiveDeliveryTitle => 'اتھس منٛز چھُ نہ کینٛہہ';
 
   @override
   String get noActiveDeliveryBody =>
-      'Accept an order from the board and it will show up here.';
+      'آرڈر لِسٹ منٛزٕ کانہہ آرڈر قبول کرِو، سُہ ییٚیہ یَتہِ ہاونہٕ۔';
 
   @override
-  String get confirmPickupButton => 'I have collected it';
+  String get confirmPickupButton => 'مےٚ ہیوٚت آرڈر';
 
   @override
-  String get pickupCodeTitle => 'Pickup code';
+  String get pickupCodeTitle => 'پِک اپ کوڈ';
 
   @override
   String get pickupCodeSubtitle =>
-      'Ask the restaurant for the code and type it here.';
+      'ریستورانس نِشہِ کوڈ پرٛژھِو تہٕ یَتہِ لیٚکھِو۔';
 
   @override
-  String get pickupCodeHint => 'Code';
+  String get pickupCodeHint => 'کوڈ';
 
   @override
   String get wrongPickupCode =>
-      'That code did not match. Check it with the restaurant.';
+      'یہ کوڈ چھُ غلط۔ ریستورانس سٕتؠ دوبارٕ چیک کرِو۔';
 
   @override
-  String get pickupConfirmed => 'Picked up. Deliver to the customer.';
+  String get pickupConfirmed => 'پِک اپ گو۔ گاہکس تام ڈیلیور کرِو۔';
 
   @override
-  String get confirmDeliveryButton => 'Delivered';
+  String get confirmDeliveryButton => 'ڈیلیور گو';
 
   @override
-  String get confirmDeliveryTitle => 'Confirm delivery';
+  String get stepReachRestaurant => 'ریستورانس واتُن';
+
+  @override
+  String get stepPickUp => 'پِک اپ';
+
+  @override
+  String get stepReachCustomer => 'گاہکس واتُن';
+
+  @override
+  String get stepDeliver => 'ڈیلیور کرُن';
+
+  @override
+  String get swipePickUp => 'پِک اپ پتہٕ سوائپ کرِو';
+
+  @override
+  String get swipeDeliver => 'ڈیلیوری خٲطرٕ سوائپ کرِو';
+
+  @override
+  String get cashToCollectLabel => 'نقد وصول کرُن';
+
+  @override
+  String get confirmDeliveryTitle => 'ڈیلیوری تصدیق کرِو';
 
   @override
   String get confirmDeliveryBody =>
-      'Only confirm once the customer has the order in hand.';
+      'ییٚلہِ آرڈر گاہکس اتھس منٛز آسہِ، تیٚلہِ کرِو تصدیق۔';
 
   @override
   String confirmDeliveryCashBody(String amount) {
-    return 'Collect $amount first, then confirm.';
+    return 'گۄڈٕ گاہکس نِشہِ $amount وصول کرِو، پتہٕ کرِو تصدیق۔';
   }
 
   @override
-  String get deliveryConfirmed => 'Delivered. Thanks, you are back online.';
+  String get deliveryConfirmed =>
+      'ڈیلیور گو۔ شکریہ، توہہِ چھِوٕ دوبارٕ آن لائن۔';
 
   @override
-  String get releaseOrderButton => 'Hand it back';
+  String get releaseOrderButton => 'واپس کرِو';
 
   @override
-  String get releaseOrderTitle => 'Hand this order back?';
+  String get releaseOrderTitle => 'یہ آرڈر واپس کرٕو؟';
 
   @override
   String get releaseOrderBody =>
-      'It goes back on the board for another rider. You can only do this before you collect the food.';
+      'یہ گژھِ بیٚیِس رائِڈرس خٲطرٕ دوبارٕ لِسٹس منٛز۔ یہ ہیٚکِو توہہِ صرف کھَنہٕ ہیٚنہٕ برونٛہہ کٔرِتھ۔';
 
   @override
-  String get releaseReasonHint => 'Reason (optional)';
+  String get releaseReasonHint => 'وجہ (اختیاری)';
 
   @override
   String get orderReleased =>
-      'Handed back. It is available to other riders again.';
+      'آرڈر گو واپس۔ یہ چھُ بیٚین رائِڈرن خٲطرٕ دوبارٕ دستیاب۔';
 
   @override
   String get finishCurrentOrderFirst =>
-      'Finish or hand back your current order first.';
+      'گۄڈٕ پنُن موجودٕ آرڈر مکمل یا واپس کرِو۔';
 
   @override
-  String get callRestaurant => 'Call restaurant';
+  String get callRestaurant => 'ریستورانس کال کرِو';
 
   @override
-  String get callCustomer => 'Call customer';
+  String get callCustomer => 'گاہکس کال کرِو';
 
   @override
-  String get openInMaps => 'Directions';
+  String get openInMaps => 'وَتھ وُچھِو';
 
   @override
-  String get customerNoteLabel => 'Note from the customer';
+  String get customerNoteLabel => 'گاہک سُند نوٹ';
 
   @override
-  String get orderItemsLabel => 'What is in the bag';
+  String get orderItemsLabel => 'بیگس منٛز کیٚاہ چھُ';
 
   @override
-  String get orderDetailsTitle => 'Order details';
+  String get orderDetailsTitle => 'آرڈر تفصیل';
 
   @override
-  String get historyTitle => 'Past deliveries';
+  String get historyTitle => 'پرانہٕ ڈیلیوری';
 
   @override
-  String get historyEmptyTitle => 'No deliveries yet';
+  String get historyEmptyTitle => 'ناوُ کانہہ ڈیلیوری نہ';
 
   @override
   String get historyEmptyBody =>
-      'Orders you have completed will be listed here.';
+      'یِم آرڈر توہہِ مکمل کرِو، تِم ییٚنہٕ یَتہِ ہاونہٕ۔';
 
   @override
-  String get orderDelivered => 'Delivered';
+  String get historySearchHint => 'آرڈر یا ریستوران ژھانڈٕو';
 
   @override
-  String get orderCancelled => 'Cancelled';
+  String get historyToday => 'اَز';
 
   @override
-  String get orderPreparing => 'Being prepared';
+  String get historyYesterday => 'راتھ';
 
   @override
-  String get orderReadyForPickup => 'Ready for pickup';
+  String get historyEarlier => 'برونہہ کٕنؠ';
 
   @override
-  String get orderAssigned => 'Assigned to you';
+  String historyDaySummary(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ڈیلیوری',
+      one: '1 ڈیلیوری',
+    );
+    return '$_temp0 · $amount';
+  }
 
   @override
-  String get orderPickedUp => 'Picked up';
+  String historyNoMatch(String query) {
+    return '“$query” سٕتؠ چھُ نہ کینٛہہ میلان۔';
+  }
 
   @override
-  String get orderOutForDelivery => 'On the way';
+  String historyCashTaken(String amount) {
+    return 'نقد وصول $amount';
+  }
 
   @override
-  String get trackingOn => 'Location sharing on';
+  String get orderDelivered => 'ڈیلیور گو';
+
+  @override
+  String get orderCancelled => 'منسوخ گو';
+
+  @override
+  String get orderPreparing => 'تیار گژھان';
+
+  @override
+  String get orderReadyForPickup => 'پِک اپ خٲطرٕ تیار';
+
+  @override
+  String get orderAssigned => 'توہہِ دِنہٕ آمُت';
+
+  @override
+  String get orderPickedUp => 'پِک اپ گو';
+
+  @override
+  String get orderOutForDelivery => 'وَتہِ پؠٹھٕ';
+
+  @override
+  String get trackingOn => 'جاے چھےٚ شیئر گژھان';
 
   @override
   String get locationUnavailableMessage =>
-      'We cannot read your location. Turn on location and allow it for Nexmile Rider.';
+      'توہنٛز جاے چھےٚ نہ لبنہٕ یِوان۔ جاے آن کرِو تہٕ Nexmile Rider خٲطرٕ اجازت دِیِو۔';
 
   @override
-  String get locationPermissionTitle => 'Location needed';
+  String get locationPermissionTitle => 'جاے ضروری';
 
   @override
   String get locationPermissionBody =>
-      'Dispatch sorts orders by how close you are, and the customer follows you on a map. Allow location to go online.';
+      'آرڈر چھِ توہنٛدِس فاصلس مطابق ترتیب دِنہٕ یِوان، تہٕ گاہک چھُ توہہِ نقشس پؠٹھ وُچھان۔ آن لائن گژھنہٕ خٲطرٕ جاے ہٕنٛز اجازت دِیِو۔';
 
   @override
-  String get locationSettingsButton => 'Open settings';
+  String get locationSettingsButton => 'سیٹِنگز کھولٕو';
 
   @override
-  String get enableLocationButton => 'Allow location';
+  String get enableLocationButton => 'جاے ہٕنٛز اجازت دِیِو';
 
   @override
   String amountRupees(String amount) {
@@ -864,23 +945,23 @@ class AppLocalizationsKs extends AppLocalizations {
   }
 
   @override
-  String get shiftTab => 'Shift';
+  String get shiftTab => 'شِفٹ';
 
   @override
-  String get payoutsTitle => 'Payouts';
+  String get payoutsTitle => 'أدایگی';
 
   @override
-  String get payoutsEntryValue => 'Weekly earnings';
+  String get payoutsEntryValue => 'ہفتہٕ وار کمٲے';
 
   @override
-  String get payoutDetailsTitle => 'Weekly payout';
+  String get payoutDetailsTitle => 'ہفتہٕ وار أدایگی';
 
   @override
-  String get payoutsEmptyTitle => 'No payouts yet';
+  String get payoutsEmptyTitle => 'ناوُ کانہہ أدایگی نہ';
 
   @override
   String get payoutsEmptyBody =>
-      'Your earnings for each week will be listed here once the week is worked out.';
+      'ہر ہفتُک حساب گژھنہٕ پتہٕ ییٚیہ توہنٛز کمٲے یَتہِ ہاونہٕ۔';
 
   @override
   String payoutPeriod(String start, String end) {
@@ -888,94 +969,111 @@ class AppLocalizationsKs extends AppLocalizations {
   }
 
   @override
-  String get payoutStatusPending => 'Pending';
+  String get payoutStatusPending => 'زیرِ التوا';
 
   @override
-  String get payoutStatusProcessing => 'Being processed';
+  String get payoutStatusProcessing => 'پروسیس گژھان';
 
   @override
-  String get payoutStatusPaid => 'Paid';
+  String get payoutStatusPaid => 'أدا گو';
 
   @override
   String get payoutNotSentNote =>
-      'Your earnings for this week have been worked out. The money has not been sent to your bank yet.';
+      'امہِ ہفتہٕ ہٕنٛز توہنٛز کمٲے ہُند حساب گو۔ پونسہٕ چھِ نہ ناوُ توہنٛدِس بینکس سوزنہٕ آمٕتؠ۔';
 
   @override
   String payoutPaidOn(String date) {
-    return 'Sent to your bank on $date';
+    return 'پونسہٕ آیہ $date توہنٛدِس بینکس سوزنہٕ';
   }
 
   @override
-  String get payoutPaidNote =>
-      'The bank transfer for this week has gone through.';
+  String get payoutPaidNote => 'امہِ ہفتہٕ ہُند بینک ٹرانسفر گو مکمل۔';
 
   @override
-  String get payoutReferenceLabel => 'Transfer reference';
+  String get payoutReferenceLabel => 'ٹرانسفر ریفرنس';
 
   @override
-  String get payoutNetLabel => 'Amount payable';
+  String get payoutNetLabel => 'توہہِ میلنہٕ وٲلۍ رقم';
 
   @override
-  String get payoutDeliveryEarnings => 'Delivery earnings';
+  String get payoutDeliveryEarnings => 'ڈیلیوری کمٲے';
 
   @override
-  String get payoutReferralEarnings => 'Referral earnings';
+  String get payoutReferralEarnings => 'ریفرل کمٲے';
 
   @override
-  String get payoutCarriedIn => 'From an earlier week';
+  String get payoutCarriedIn => 'برونہہ کِس ہفتس منٛزٕ';
 
   @override
   String get payoutCarriedInNote =>
-      'Amounts under ₹100 are not transferred on their own. They are added to the next week instead.';
+      '₹100 کھۄتہٕ کم رقم چھےٚ نہ الگ سوزنہٕ یِوان۔ سۄ چھےٚ یِنہٕ وٲلِس ہفتس منٛز شٲمِل کرنہٕ یِوان۔';
 
   @override
-  String get payoutGross => 'Total earned';
+  String get payoutGross => 'کُل کمٲے';
 
   @override
-  String get payoutDeductions => 'Deductions';
+  String get payoutDeductions => 'کٹوتی';
 
   @override
-  String get navToRestaurant => 'To the restaurant';
+  String get payoutsLatestWeek => 'تازٕ ہفتہٕ';
 
   @override
-  String get navToCustomer => 'To the customer';
+  String get payoutsPaidSoFar => 'وُنی تام أدا گۆمُت';
+
+  @override
+  String get payoutsNotYetSent => 'ناوُ سوزنہٕ آمُت نہ';
+
+  @override
+  String get payoutStepWorkedOut => 'حساب گو';
+
+  @override
+  String get payoutStepSending => 'سوزنہٕ یِوان';
+
+  @override
+  String get payoutStepInBank => 'توہنٛدِس بینکس منٛز';
+
+  @override
+  String get navToRestaurant => 'ریستورانس کُن';
+
+  @override
+  String get navToCustomer => 'گاہکس کُن';
 
   @override
   String navHeadTowards(String place) {
-    return 'Head towards $place';
+    return '$place کُن گژھِو';
   }
 
   @override
   String navThen(String instruction) {
-    return 'Then: $instruction';
+    return 'پتہٕ: $instruction';
   }
 
   @override
-  String get navArrived => 'You have arrived';
+  String get navArrived => 'توہہِ چھِوٕ واتمٕتؠ';
 
   @override
   String navArrivedAt(String place) {
-    return 'At $place';
+    return '$place پؠٹھ';
   }
 
   @override
-  String get navFindingRoute => 'Finding the best route…';
+  String get navFindingRoute => 'بہترین وَتھ ژھانڈان…';
 
   @override
   String get navNoRoute =>
-      'Road directions aren\'t available. Showing the straight-line distance.';
+      'سڑکہِ ہٕنٛز وَتھ چھےٚ نہ دستیاب۔ سیود فاصلہٕ چھُ ہاونہٕ یِوان۔';
 
   @override
-  String get navFindingLocation => 'Finding your location…';
+  String get navFindingLocation => 'توہنٛز جاے ژھانڈان…';
 
   @override
-  String get navLocationOff => 'Turn on location to navigate.';
+  String get navLocationOff => 'نیویگیشن خٲطرٕ جاے آن کرِو۔';
 
   @override
-  String get navEnd => 'End navigation';
+  String get navEnd => 'نیویگیشن بند کرِو';
 
   @override
-  String get navRecentre => 'Recentre';
+  String get navRecentre => 'دوبارٕ مرکوز کرِو';
 
   @override
   String navRemaining(String distance, String time) {
@@ -984,467 +1082,471 @@ class AppLocalizationsKs extends AppLocalizations {
 
   @override
   String navMinutes(String minutes) {
-    return '$minutes min';
+    return '$minutes مِنٹ';
   }
 
   @override
-  String get navStart => 'Navigate';
+  String get navStart => 'نیویگیٹ کرِو';
 
   @override
-  String get orderReachedRestaurant => 'At the restaurant';
+  String get orderReachedRestaurant => 'ریستورانس پؠٹھ';
 
   @override
-  String get orderReachedCustomer => 'At the customer';
+  String get orderReachedCustomer => 'گاہکس نِش';
 
   @override
-  String get reachedRestaurantButton => 'I\'ve reached the restaurant';
+  String get reachedRestaurantButton => 'بہٕ وۄتُس ریستورانس';
 
   @override
-  String get reachedCustomerButton => 'I\'ve reached the customer';
+  String get reachedCustomerButton => 'بہٕ وۄتُس گاہکس نِش';
 
   @override
-  String get reachedRestaurantDone => 'The kitchen knows you\'re here';
+  String get reachedRestaurantDone =>
+      'باورچی خانس آیہ خبر زِ توہہِ چھِوٕ واتمٕتؠ';
 
   @override
-  String get reachedCustomerDone => 'The customer knows you\'re outside';
+  String get reachedCustomerDone => 'گاہکس آیہ خبر زِ توہہِ چھِوٕ نیٚبر';
 
   @override
-  String get offerTitle => 'New order';
+  String get offerTitle => 'نوٚو آرڈر';
 
   @override
-  String get offerYouEarn => 'You earn';
+  String get offerYouEarn => 'توہنٛز کمٲے';
 
   @override
-  String get offerPickup => 'Pickup';
+  String get offerPickup => 'پِک اپ';
 
   @override
-  String get offerDrop => 'Drop';
+  String get offerDrop => 'ڈراپ';
 
   @override
   String offerAway(String distance) {
-    return '$distance away';
+    return '$distance دُور';
   }
 
   @override
   String offerTrip(String distance) {
-    return '$distance trip';
+    return '$distance سفر';
   }
 
   @override
   String offerItems(String count) {
-    return '$count items';
+    return '$count چیزٕ';
   }
 
   @override
   String offerCollectCash(String amount) {
-    return 'Collect $amount cash';
+    return '$amount نقد وصول کرِو';
   }
 
   @override
-  String get offerPrepaid => 'Prepaid · no cash';
+  String get offerPrepaid => 'أدا گۆمُت · کانہہ نقد نہ';
 
   @override
   String offerFoodReadyIn(String minutes) {
-    return 'Food ready in about $minutes min';
+    return 'کھَنہٕ گژھِ تخمیناً $minutes مِنٹن منٛز تیار';
   }
 
   @override
-  String get offerSwipeToAccept => 'Swipe to accept';
+  String get offerSwipeToAccept => 'قبول کرنہٕ خٲطرٕ سوائپ کرِو';
 
   @override
-  String get offerAccepting => 'Accepting…';
+  String get offerAccepting => 'قبول کران…';
 
   @override
-  String get offerReject => 'Reject';
+  String get offerReject => 'انکار کرِو';
 
   @override
-  String get offerRejectTitle => 'Why are you declining?';
+  String get offerRejectTitle => 'توہہِ کیازِ چھِوٕ انکار کران؟';
 
   @override
-  String get offerReasonTooFar => 'Too far';
+  String get offerReasonTooFar => 'زیادٕ دُور';
 
   @override
-  String get offerReasonBusy => 'Busy right now';
+  String get offerReasonBusy => 'وُنی مصروف';
 
   @override
-  String get offerReasonVehicle => 'Vehicle problem';
+  String get offerReasonVehicle => 'گٲڑِ منٛز خرٲبی';
 
   @override
-  String get offerReasonOther => 'Other reason';
+  String get offerReasonOther => 'بیٚاکھ وجہ';
 
   @override
-  String get offerTaken => 'Order taken by another rider';
+  String get offerTaken => 'آرڈر ہیوٚت بیٚیِ رائِڈرن';
 
   @override
   String get offerAutoOffline =>
-      'You were set offline after missing 3 orders. Go online when you\'re ready.';
+      '3 آرڈرن جواب نہ دِنہٕ پتہٕ آیِو توہہِ آف لائن کرنہٕ۔ ییٚلہِ تیار آسِو، تیٚلہِ گژھِو آن لائن۔';
 
   @override
   String get mockLocationBlocked =>
-      'Turn off any fake-location app to receive orders.';
+      'آرڈر حٲصل کرنہٕ خٲطرٕ کانہہ تہِ فیک لوکیشن ایپ بند کرِو۔';
 
   @override
-  String get dropoffDoorLabel => 'Flat / floor';
+  String get dropoffDoorLabel => 'فلیٹ / منزل';
 
   @override
-  String get dropoffStreetLabel => 'Street';
+  String get dropoffStreetLabel => 'گلی';
 
   @override
-  String get dropoffLandmarkLabel => 'Landmark';
+  String get dropoffLandmarkLabel => 'نِشٲنی';
 
   @override
-  String get doorPhotoLabel => 'Door photo';
+  String get doorPhotoLabel => 'دَروازُک فوٹو';
 
   @override
-  String get doorPhotoHint => 'Tap to see it bigger';
+  String get doorPhotoHint => 'بوٚڈ وُچھنہٕ خٲطرٕ ٹیپ کرِو';
 
   @override
-  String get doorPhotoUnavailable => 'Photo not available right now';
+  String get doorPhotoUnavailable => 'فوٹو چھُ نہ وُنی دستیاب';
 
   @override
   String permStepCount(int step, int total) {
-    return '$step of $total';
+    return '$total منٛزٕ $step';
   }
 
   @override
-  String get permNotNow => 'Not now';
+  String get permNotNow => 'وُنی نہ';
 
   @override
-  String get permLocationTitle => 'Turn on location';
+  String get permLocationTitle => 'جاے آن کرِو';
 
   @override
   String get permLocationBody =>
-      'Orders go to the rider closest to the restaurant, and customers follow their food on the map.';
+      'آرڈر چھِ تَمِس رائِڈرس گژھان یُس ریستورانس سٲری کھۄتہٕ نزدیٚک آسہِ، تہٕ گاہک چھِ پنُن کھَنہٕ نقشس پؠٹھ وُچھان۔';
 
   @override
-  String get permLocationNearTitle => 'Orders near you';
+  String get permLocationNearTitle => 'توہنٛدِن نزدیٚکی آرڈر';
 
   @override
   String get permLocationNearBody =>
-      'We offer you orders from restaurants close by, so you ride less and earn more.';
+      'أسؠ چھِ توہہِ نزدیٚکی ریستورانن ہٕنٛدؠ آرڈر دِوان، تاکہ توہہِ پَیہِ کم سفر کرُن تہٕ کمٲے گژھِ زیادٕ۔';
 
   @override
-  String get permLocationTrackTitle => 'Live tracking';
+  String get permLocationTrackTitle => 'لائیو ٹریکِنگ';
 
   @override
   String get permLocationTrackBody =>
-      'Customers see you on the map, so they call you less.';
+      'گاہک چھِ توہہِ نقشس پؠٹھ وُچھان، تَوَے چھِ تِم توہہِ کم کال کران۔';
 
   @override
-  String get permLocationOnlineTitle => 'Only while you\'re online';
+  String get permLocationOnlineTitle => 'صرف آن لائن آسنہٕ وقتہٕ';
 
   @override
   String get permLocationOnlineBody =>
-      'Go offline and it stops. A notification shows whenever it is in use.';
+      'آف لائن گژھِو تہٕ یہ گژھِ بند۔ ییٚلہِ یہ استعمال گژھان آسہِ، تیٚلہِ چھُ اکھ نوٹیفکیشن ہاونہٕ یِوان۔';
 
   @override
-  String get permLocationAllow => 'Allow location';
+  String get permLocationAllow => 'جاے ہٕنٛز اجازت دِیِو';
 
   @override
-  String get permNotifyTitle => 'Never miss an order';
+  String get permNotifyTitle => 'ہر نوٚو آرڈر وقتس پؠٹھ حٲصل کرِو';
 
   @override
   String get permNotifyBody =>
-      'New orders ring like a phone call, even when your screen is locked.';
+      'نٔوؠ آرڈر چھِ فون کالہِ ہیُو بجان، سکرین لاک آسِتھ تہِ۔';
 
   @override
-  String get permNotifyRingTitle => 'Order alerts that ring';
+  String get permNotifyRingTitle => 'بجن وٲلؠ آرڈر الرٹ';
 
   @override
-  String get permNotifyRingBody => 'Accept or decline straight from the alert.';
+  String get permNotifyRingBody => 'الرٹس پؠٹھٕ سیٚدٕ قبول یا انکار کرِو۔';
 
   @override
-  String get permNotifyUpdatesTitle => 'Payouts and approvals';
+  String get permNotifyUpdatesTitle => 'أدایگی تہٕ منظوری';
 
   @override
   String get permNotifyUpdatesBody =>
-      'Know when your documents are approved and when money is sent.';
+      'زانِو کر توہنٛدؠ دستاویز منظور گژھن تہٕ کر پونسہٕ سوزنہٕ یِن۔';
 
   @override
-  String get permNotifyControlTitle => 'You stay in control';
+  String get permNotifyControlTitle => 'کنٹرول چھُ توہنٛدِس اتھس منٛز';
 
   @override
   String get permNotifyControlBody =>
-      'Change it any time in your phone\'s Settings.';
+      'یہ ہیٚکِو توہہِ کُنہِ تہِ وقتہٕ فونٕکؠ سیٹِنگز منٛز بدلٲوِتھ۔';
 
   @override
-  String get permNotifyAllow => 'Turn on notifications';
+  String get permNotifyAllow => 'نوٹیفکیشن آن کرِو';
 
   @override
-  String get permBatteryTitle => 'Keep orders coming';
+  String get permBatteryTitle => 'آرڈر رۄزن یِوان';
 
   @override
   String get permBatteryBody =>
-      'Phones close apps in the background to save battery. Let Nexmile Rider keep running while you\'re online.';
+      'فون چھِ بیٹری بچاونہٕ خٲطرٕ پس منظرس منٛز ایپ بند کران۔ آن لائن آسنہٕ وقتہٕ ٹھٲوِو Nexmile Rider چلان۔';
 
   @override
-  String get permBatteryOrdersTitle => 'No missed orders';
+  String get permBatteryOrdersTitle => 'کانہہ آرڈر گژھِ نہ ضایع';
 
   @override
   String get permBatteryOrdersBody =>
-      'Offers reach you with the app closed and the phone in your pocket.';
+      'ایپ بند آسِتھ تہٕ فون جیبہِ منٛز آسِتھ تہِ چھِ آرڈر توہہِ تام واتان۔';
 
   @override
-  String get permBatteryLiveTitle => 'Tracking stays live';
+  String get permBatteryLiveTitle => 'ٹریکِنگ رۄزِ لائیو';
 
   @override
   String get permBatteryLiveBody =>
-      'Customers keep seeing you on the map until you deliver.';
+      'ڈیلیوری کرنہٕ تام چھِ گاہک توہہِ نقشس پؠٹھ وُچھان۔';
 
   @override
-  String get permBatteryLightTitle => 'Light on battery';
+  String get permBatteryLightTitle => 'بیٹری ہُند کم خرچ';
 
   @override
-  String get permBatteryLightBody => 'It only works hard while you\'re online.';
+  String get permBatteryLightBody =>
+      'یہ چھُ صرف آن لائن آسنہٕ وقتہٕ زیادٕ کٲم کران۔';
 
   @override
-  String get permBatteryAllow => 'Allow background use';
+  String get permBatteryAllow => 'پس منظرس منٛز استعمالٕچ اجازت دِیِو';
 
   @override
-  String get permFullScreenTitle => 'Orders on your lock screen';
+  String get permFullScreenTitle => 'لاک سکرینس پؠٹھ آرڈر';
 
   @override
   String get permFullScreenBody =>
-      'Let new orders appear over the lock screen, like an incoming call, so you can accept in one tap.';
+      'نٔوؠ آرڈر دِیِو لاک سکرینس پؠٹھ ہاونہٕ، یِوان کالہِ ہیُو، تاکہ توہہِ ہیٚکِو اکِس ٹیپس منٛز قبول کٔرِتھ۔';
 
   @override
-  String get permFullScreenCallTitle => 'Answer like a call';
+  String get permFullScreenCallTitle => 'کالہِ ہیُو جواب دِیِو';
 
   @override
   String get permFullScreenCallBody =>
-      'See the order and accept it without unlocking.';
+      'فون اَن لاک کرنہٕ بغٲر آرڈر وُچھِو تہٕ قبول کرِو۔';
 
   @override
-  String get permFullScreenTimeTitle => 'Respond in time';
+  String get permFullScreenTimeTitle => 'وقتس پؠٹھ جواب دِیِو';
 
   @override
   String get permFullScreenTimeBody =>
-      'An offer you don\'t answer moves on to another rider.';
+      'یَمِس آرڈرس توہہِ جواب دِیِو نہ، سُہ گژھِ بیٚیِس رائِڈرس۔';
 
   @override
-  String get permFullScreenOnlyTitle => 'Only for new orders';
+  String get permFullScreenOnlyTitle => 'صرف نٔوؠ آرڈرن خٲطرٕ';
 
   @override
   String get permFullScreenOnlyBody =>
-      'Nothing else ever appears over your lock screen.';
+      'توہنٛدِس لاک سکرینس پؠٹھ ییٚیہ نہ کُنہِ تہِ وقتہٕ کینٛہہ بیٚاکھ۔';
 
   @override
-  String get setupTitle => 'Phone setup';
+  String get setupTitle => 'فون سیٹ اپ';
 
   @override
   String get setupIntro =>
-      'Finish these so new orders ring even when the app is closed or your phone is locked.';
+      'یِم مکمل کرِو تاکہ نٔوؠ آرڈر بجن، ایپ بند آسِتھ یا فون لاک آسِتھ تہِ۔';
 
   @override
-  String get setupNotifications => 'Notifications';
+  String get setupNotifications => 'نوٹیفکیشن';
 
   @override
-  String get setupNotificationsBody => 'So new orders can ring and show.';
+  String get setupNotificationsBody =>
+      'تاکہ نٔوؠ آرڈر ہیٚکن بٔجِتھ تہٕ نظر یِتھ۔';
 
   @override
-  String get setupFullScreen => 'Full-screen order alerts';
+  String get setupFullScreen => 'فُل سکرین آرڈر الرٹ';
 
   @override
   String get setupFullScreenBody =>
-      'Shows a new order over your lock screen, like a call.';
+      'یہ چھُ نوٚو آرڈر کالہِ ہیُو توہنٛدِس لاک سکرینس پؠٹھ ہاوان۔';
 
   @override
-  String get setupBattery => 'Battery: don\'t optimise';
+  String get setupBattery => 'بیٹری: آپٹمائز مہ کرِو';
 
   @override
   String get setupBatteryBody =>
-      'Stops your phone closing the app while you\'re online.';
+      'امہِ سٕتؠ کرِ نہ توہنٛد فون آن لائن آسنہٕ وقتہٕ ایپ بند۔';
 
   @override
-  String get setupAutostart => 'Autostart';
+  String get setupAutostart => 'آٹو سٹارٹ';
 
   @override
   String setupAutostartBody(String brand) {
-    return '$brand phones also need Autostart on for Nexmile Rider. Open settings, find Autostart, and switch it on.';
+    return '$brand فونن پؠٹھ گژھِ Nexmile Rider خٲطرٕ آٹو سٹارٹ تہِ آن آسُن۔ سیٹِنگز کھولٕو، آٹو سٹارٹ ژھانڈٕو تہٕ آن کرِو۔';
   }
 
   @override
-  String get setupLocation => 'Location';
+  String get setupLocation => 'جاے';
 
   @override
-  String get setupLocationBody => 'Needed to send you orders nearby.';
+  String get setupLocationBody => 'توہہِ نزدیٚکی آرڈر سوزنہٕ خٲطرٕ ضروری۔';
 
   @override
-  String get setupAllow => 'Allow';
+  String get setupAllow => 'اجازت دِیِو';
 
   @override
-  String get setupOpenSettings => 'Open settings';
+  String get setupOpenSettings => 'سیٹِنگز کھولٕو';
 
   @override
-  String get setupMarkDone => 'I\'ve done this';
+  String get setupMarkDone => 'مےٚ کوٚر یہ';
 
   @override
-  String get setupDoneStep => 'Done';
+  String get setupDoneStep => 'مکمل';
 
   @override
-  String get setupBannerTitle => 'Finish phone setup';
+  String get setupBannerTitle => 'فون سیٹ اپ مکمل کرِو';
 
   @override
   String setupBannerBody(String count) {
-    return '$count left so order alerts aren\'t missed';
+    return '$count باقی، تاکہ کانہہ آرڈر الرٹ گژھِ نہ ضایع';
   }
 
   @override
-  String get offerEstimatedEarnings => 'Estimated earnings';
+  String get offerEstimatedEarnings => 'تخمینی کمٲے';
 
   @override
   String offerPickupLine(String name) {
-    return 'Pickup: $name';
+    return 'پِک اپ: $name';
   }
 
   @override
   String offerDropLine(String area) {
-    return 'Drop: $area';
+    return 'ڈراپ: $area';
   }
 
   @override
   String offerFromYou(String distance) {
-    return 'About $distance from you';
+    return 'توہہِ نِشہِ تخمیناً $distance دُور';
   }
 
   @override
-  String get exitTitle => 'Exit Nexmile Rider?';
+  String get exitTitle => 'Nexmile Rider بند کرٕو؟';
 
   @override
-  String get exitBody => 'Are you sure you want to exit the app?';
+  String get exitBody => 'کیٚاہ توہہِ چھِوٕ واقعی ایپ بند کرُن یژھان؟';
 
   @override
-  String get exitConfirm => 'Exit';
+  String get exitConfirm => 'بند کرِو';
 
   @override
-  String get onboardingWelcomeTitle => 'Become a Nexmile delivery partner';
+  String get onboardingWelcomeTitle => 'Nexmile ڈیلیوری پارٹنر بنِو';
 
   @override
   String get onboardingWelcomeSubtitle =>
-      'Deliver in your area, pick your own hours, and get paid every week.';
+      'پننِس علاقس منٛز ڈیلیوری کرِو، پنُن وقت پانہٕ ژارٕو، تہٕ ہر ہفتہٕ أدایگی حٲصل کرِو۔';
 
   @override
-  String get onboardingWelcomeNeed => 'Keep these ready';
+  String get onboardingWelcomeNeed => 'یِم تیار ٹھٲوِو';
 
   @override
-  String get onboardingNeedAadhaar => 'Aadhaar card';
+  String get onboardingNeedAadhaar => 'آدھار کارڈ';
 
   @override
-  String get onboardingNeedPan => 'PAN card';
+  String get onboardingNeedPan => 'PAN کارڈ';
 
   @override
-  String get onboardingNeedLicence => 'Driving licence and vehicle RC';
+  String get onboardingNeedLicence => 'ڈرائیونگ لائسنس تہٕ گٲڑِ ہُند RC';
 
   @override
-  String get onboardingNeedInsurance => 'Vehicle insurance';
+  String get onboardingNeedInsurance => 'گٲڑِ ہُند انشورنس';
 
   @override
-  String get onboardingNeedBank => 'Bank account details';
+  String get onboardingNeedBank => 'بینک کھاتس ہٕنٛز تفصیل';
 
   @override
   String get onboardingNeedNote =>
-      'Riding a bicycle or on foot? You only need Aadhaar, PAN and a bank account.';
+      'سائیکلہِ پؠٹھ یا پَیدل؟ توہہِ چھُ صرف آدھار، PAN تہٕ بینک کھاتہٕ ضروری۔';
 
   @override
-  String get onboardingWelcomeTime => 'Takes about 10 minutes';
+  String get onboardingWelcomeTime => 'تخمیناً 10 مِنٹ چھِ لگان';
 
   @override
-  String get onboardingGetStarted => 'Get started';
+  String get onboardingGetStarted => 'شُروع کرِو';
 
   @override
-  String get onboardingSavedNote => 'Saved securely after every step';
+  String get onboardingSavedNote => 'ہر قدمہٕ پتہٕ حفاظتہٕ سٕتؠ محفوظ';
 
   @override
-  String get docsTip => 'Clear photos in good light get approved fastest.';
+  String get docsTip =>
+      'جانہِ گاشس منٛز صاف فوٹو چھِ سٲری کھۄتہٕ جلدی منظور گژھان۔';
 
   @override
   String get docsAllDone =>
-      'All required documents are in. Continue to review.';
+      'سٲری ضروری دستاویز چھِ اپلوڈ۔ آخری جانچ خٲطرٕ برونہہ گژھِو۔';
 
   @override
-  String get docGroupIdentity => 'Identity proof';
+  String get docGroupIdentity => 'شناختی ثبوت';
 
   @override
-  String get docGroupVehicle => 'Licence and vehicle papers';
+  String get docGroupVehicle => 'لائسنس تہٕ گٲڑِ ہٕنٛدؠ کاغذ';
 
   @override
-  String get docGroupMore => 'More documents';
+  String get docGroupMore => 'بیٚیہ دستاویز';
 
   @override
-  String get docTapToAdd => 'Tap to add';
+  String get docTapToAdd => 'شٲمِل کرنہٕ خٲطرٕ ٹیپ کرِو';
 
   @override
-  String get docUploading => 'Uploading…';
+  String get docUploading => 'اپلوڈ گژھان…';
 
   @override
-  String get docView => 'View';
+  String get docView => 'وُچھِو';
 
   @override
-  String get docSheetSubtitle => 'How to get it approved the first time';
+  String get docSheetSubtitle => 'یہ کِتھ کٔنؠ گژھِ گۄڈنِچہِ لٹہِ منظور';
 
   @override
-  String get docTipCorners => 'All four corners inside the photo';
+  String get docTipCorners => 'ژورٕوَے کونہٕ فوٹوہس اندر';
 
   @override
-  String get docTipGlare => 'Sharp text, no glare or shadows';
+  String get docTipGlare => 'صاف لفظ، نہ چمک نہ سایہٕ';
 
   @override
-  String get docTipOriginal => 'The original document, not a photocopy';
+  String get docTipOriginal => 'اصلی دستاویز، فوٹو کاپی نہ';
 
   @override
-  String get docTipFace => 'Your face clearly visible, looking straight ahead';
+  String get docTipFace => 'توہنٛد بُتھ صاف نظر یِیِ، سیٚدٕ برونٛہہ وُچھان';
 
   @override
-  String get docTipBackground => 'Plain background and good light';
+  String get docTipBackground => 'سادٕ پس منظر تہٕ جان گاش';
 
   @override
-  String get docTipNoCap => 'No cap, mask or sunglasses';
+  String get docTipNoCap => 'ٹوپی، ماسک یا دھوپ چشمہٕ نہ';
 
   @override
-  String get docTipFullPage => 'The full page, with every line readable';
+  String get docTipFullPage => 'پورٕ صفحہٕ، ہر لائن پرنہٕ لایق';
 
   @override
-  String get docSourceCamera => 'Camera';
+  String get docSourceCamera => 'کیمرہ';
 
   @override
-  String get docSourceGallery => 'Gallery';
+  String get docSourceGallery => 'گیلری';
 
   @override
-  String get docSourceFile => 'PDF or file';
+  String get docSourceFile => 'PDF یا فائل';
 
   @override
-  String get reviewSectionDetails => 'Your details';
+  String get reviewSectionDetails => 'توہنٛز تفصیل';
 
   @override
-  String get reviewSectionDocuments => 'Documents';
+  String get reviewSectionDocuments => 'دستاویز';
 
   @override
-  String get reviewSectionBank => 'Bank account';
+  String get reviewSectionBank => 'بینک کھاتہٕ';
 
   @override
-  String get reviewBankHidden => 'Added · hidden for your security';
+  String get reviewBankHidden => 'شٲمِل · حفاظتہٕ خٲطرٕ کھٹاونہٕ آمُت';
 
   @override
-  String get reviewEdit => 'Edit';
+  String get reviewEdit => 'تبدیٖلی کرِو';
 
   @override
-  String get reviewNextTitle => 'What happens next';
+  String get reviewNextTitle => 'پتہٕ کیٚاہ گژھِ';
 
   @override
-  String get reviewNext1 => 'You submit your application';
+  String get reviewNext1 => 'توہہِ کرِو پنٕنۍ درخواست جمع';
 
   @override
-  String get reviewNext2 => 'Our team checks your details and documents';
+  String get reviewNext2 => 'ساني ٹیم کرِ توہنٛز تفصیل تہٕ دستاویز چیک';
 
   @override
-  String get reviewNext3 => 'You\'re notified, go online and start earning';
+  String get reviewNext3 => 'توہہِ میلِ خبر، آن لائن گژھِو تہٕ کمٲے شُروع کرِو';
 
   @override
-  String get kycStepSubmitted => 'Application submitted';
+  String get kycStepSubmitted => 'درخواست آیہ جمع کرنہٕ';
 
   @override
-  String get kycStepVerifying => 'Verifying your documents';
+  String get kycStepVerifying => 'توہنٛدؠ دستاویز چھِ تصدیق گژھان';
 
   @override
-  String get kycStepApproved => 'Approved — go online and start earning';
+  String get kycStepApproved => 'منظور — آن لائن گژھِو تہٕ کمٲے شُروع کرِو';
 }

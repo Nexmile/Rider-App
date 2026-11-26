@@ -23,6 +23,7 @@ class InfoTile extends StatelessWidget {
     this.valueDirection,
     this.trailing,
     this.emphasise = true,
+    this.grouped = false,
   });
 
   final IconData icon;
@@ -37,6 +38,9 @@ class InfoTile extends StatelessWidget {
   /// False renders the value in the muted colour, for placeholders such as
   /// "Not added".
   final bool emphasise;
+
+  /// One row of a [TileGroup]: no card of its own, the group draws it.
+  final bool grouped;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +67,30 @@ class InfoTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
+          // A row that is only a status (no value) puts its chip beside the
+          // label, rather than alone on a second line.
+          if (value.isEmpty)
+            Expanded(
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (trailing != null) ...<Widget>[
+                    const SizedBox(width: 8),
+                    trailing!,
+                  ],
+                ],
+              ),
+            )
+          else
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,6 +148,15 @@ class InfoTile extends StatelessWidget {
         ],
       ),
     );
+
+    if (grouped) {
+      return onTap == null
+          ? content
+          : Material(
+              color: Colors.transparent,
+              child: InkWell(onTap: onTap, child: content),
+            );
+    }
 
     final BorderRadius radius = BorderRadius.circular(AppSurface.radius);
     final BoxDecoration shell = AppSurface.decoration(
@@ -206,3 +243,54 @@ class StatusChip extends StatelessWidget {
 }
 
 enum StatusTone { positive, warning, negative, neutral }
+
+/// Rows that belong together, in one card under a small heading: the way a
+/// settings page reads, rather than a stack of separate cards.
+class TileGroup extends StatelessWidget {
+  const TileGroup({super.key, this.title, required this.children});
+
+  final String? title;
+
+  /// Usually [InfoTile]s with `grouped: true`.
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        if (title != null)
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(6, 0, 6, 8),
+            child: Text(
+              title!,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        DecoratedBox(
+          decoration: AppSurface.decoration(context, radius: AppSurface.radius),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppSurface.radius),
+            child: Column(
+              children: <Widget>[
+                for (int i = 0; i < children.length; i++) ...<Widget>[
+                  if (i > 0)
+                    Divider(
+                      height: 1,
+                      indent: 68,
+                      color: AppSurface.line(context),
+                    ),
+                  children[i],
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}

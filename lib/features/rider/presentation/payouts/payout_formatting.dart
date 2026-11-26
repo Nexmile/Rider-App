@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/info_tile.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/payout_models.dart';
@@ -32,6 +33,38 @@ extension PayoutPresentation on Payout {
     return l10n.payoutPeriod(
       start == null ? '—' : dates.formatShortMonthDay(start),
       end == null ? '—' : dates.formatShortMonthDay(end),
+    );
+  }
+}
+
+/// A status on a green card, where the usual chip colours would vanish into
+/// the background. Solid white once the money has moved.
+class WhitePill extends StatelessWidget {
+  const WhitePill({super.key, required this.label, required this.solid});
+
+  final String label;
+  final bool solid;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 140),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: solid ? Colors.white : Colors.white.withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(99),
+        ),
+        child: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: solid ? AppColors.greenDeep : Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+      ),
     );
   }
 }

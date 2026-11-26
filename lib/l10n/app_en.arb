@@ -149,6 +149,14 @@
       "target": { "type": "String", "example": "9876543210" }
     }
   },
+  "otpHelpTitle": "Didn't get the code?",
+  "@otpHelpTitle": { "description": "Heading of the help card under the code boxes." },
+  "otpHelpCheck": "Check the number or email above. Tap back to change it.",
+  "@otpHelpCheck": { "description": "Help card tip: the code may have gone to a mistyped number or email." },
+  "otpHelpWait": "A code can take up to a minute to arrive. When the timer ends you can ask for a new one.",
+  "@otpHelpWait": { "description": "Help card tip about waiting for the code and the resend timer." },
+  "otpHelpSpam": "For email, look in your spam folder too.",
+  "@otpHelpSpam": { "description": "Help card tip, shown only when the code was sent by email." },
 
   "verifyCode": "Verify",
   "@verifyCode": {
@@ -227,6 +235,12 @@
   "@profileTitle": {
     "description": "Title of the profile screen, and the label of the dashboard row that opens it."
   },
+  "profileSectionDetails": "Your details",
+  "@profileSectionDetails": { "description": "Heading over the name, email, mobile and account status rows on the profile page." },
+  "profileSectionWork": "Work",
+  "@profileSectionWork": { "description": "Heading over verification, vehicle and payouts on the profile page." },
+  "profileSectionApp": "App settings",
+  "@profileSectionApp": { "description": "Heading over the app language row on the profile page." },
 
   "viewProfile": "View profile",
   "@viewProfile": {
@@ -838,6 +852,20 @@
 
   "confirmDeliveryButton": "Delivered",
   "@confirmDeliveryButton": { "description": "Button that closes an order out." },
+  "stepReachRestaurant": "Reach restaurant",
+  "@stepReachRestaurant": { "description": "Delivery tracker step 1, a few words under a small circle: ride to the restaurant." },
+  "stepPickUp": "Pick up",
+  "@stepPickUp": { "description": "Delivery tracker step 2: collect the food at the counter." },
+  "stepReachCustomer": "Reach customer",
+  "@stepReachCustomer": { "description": "Delivery tracker step 3: ride to the customer." },
+  "stepDeliver": "Deliver",
+  "@stepDeliver": { "description": "Delivery tracker step 4: hand the food over." },
+  "swipePickUp": "Swipe when collected",
+  "@swipePickUp": { "description": "Label on the slider the rider drags across once the food is in the bag. Opens the pickup code sheet." },
+  "swipeDeliver": "Swipe to deliver",
+  "@swipeDeliver": { "description": "Label on the slider the rider drags across to mark the order delivered." },
+  "cashToCollectLabel": "Cash to collect",
+  "@cashToCollectLabel": { "description": "Small label above the big cash amount the rider must collect at the door." },
 
   "confirmDeliveryTitle": "Confirm delivery",
   "@confirmDeliveryTitle": { "description": "Title of the confirmation dialog before closing an order." },
@@ -898,6 +926,29 @@
 
   "historyEmptyBody": "Orders you have completed will be listed here.",
   "@historyEmptyBody": { "description": "Supporting copy for the empty history screen." },
+  "historySearchHint": "Search order or restaurant",
+  "@historySearchHint": { "description": "Hint in the search box on the past deliveries tab." },
+  "historyToday": "Today",
+  "@historyToday": { "description": "Day heading over today's deliveries in the history list." },
+  "historyYesterday": "Yesterday",
+  "@historyYesterday": { "description": "Day heading over yesterday's deliveries in the history list." },
+  "historyEarlier": "Earlier",
+  "@historyEarlier": { "description": "Heading over past orders the server sent no date for." },
+  "historyDaySummary": "{count, plural, =1{1 delivery} other{{count} deliveries}} · {amount}",
+  "@historyDaySummary": {
+    "description": "Beside a day heading in the history list: how many orders were delivered that day, and what the rider earned for them.",
+    "placeholders": { "count": { "type": "int" }, "amount": { "type": "String", "example": "₹138" } }
+  },
+  "historyNoMatch": "Nothing matches “{query}”.",
+  "@historyNoMatch": {
+    "description": "Shown when a search of past deliveries finds nothing.",
+    "placeholders": { "query": { "type": "String" } }
+  },
+  "historyCashTaken": "Cash {amount}",
+  "@historyCashTaken": {
+    "description": "Small note on a past cash order: the cash the rider took at the door.",
+    "placeholders": { "amount": { "type": "String", "example": "₹480" } }
+  },
 
   "orderDelivered": "Delivered",
   "@orderDelivered": { "description": "Order status: completed." },
@@ -1015,6 +1066,18 @@
 
   "payoutDeductions": "Deductions",
   "@payoutDeductions": { "description": "Heading for money taken out of the week's earnings, such as tax." },
+  "payoutsLatestWeek": "Latest week",
+  "@payoutsLatestWeek": { "description": "Label on the summary card at the top of the payouts screen, over the most recent week's amount." },
+  "payoutsPaidSoFar": "Paid so far",
+  "@payoutsPaidSoFar": { "description": "Summary card: the total of weeks whose transfer has gone through." },
+  "payoutsNotYetSent": "Not yet sent",
+  "@payoutsNotYetSent": { "description": "Summary card: the total of weeks worked out but not yet transferred. Must not suggest the money was sent." },
+  "payoutStepWorkedOut": "Worked out",
+  "@payoutStepWorkedOut": { "description": "Payout tracker step 1: the week's earnings have been calculated." },
+  "payoutStepSending": "Being sent",
+  "@payoutStepSending": { "description": "Payout tracker step 2: the bank transfer is in progress." },
+  "payoutStepInBank": "In your bank",
+  "@payoutStepInBank": { "description": "Payout tracker step 3: the money has reached the rider's bank. Shown greyed out until it has." },
 
   "navToRestaurant": "To the restaurant",
   "@navToRestaurant": {"description": "Navigation header while riding to the pickup."},

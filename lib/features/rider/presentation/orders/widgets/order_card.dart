@@ -54,7 +54,7 @@ class OrderCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.1,
+                    letterSpacing: 0,
                   ),
                 ),
               ),
@@ -85,40 +85,53 @@ class OrderCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          Divider(color: AppSurface.line(context), height: 1),
-          const SizedBox(height: 14),
 
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: _Figure(
-                  label: l10n.earningsLabel,
-                  value: formatAmount(l10n, order.earnings),
-                  emphasis: true,
-                ),
-              ),
-              Expanded(
-                child: _Figure(
-                  label: order.isCashOnDelivery
-                      ? l10n.collectCashLabel
-                      : l10n.prepaidLabel,
-                  value: order.isCashOnDelivery
-                      ? formatAmount(l10n, order.collectCash)
-                      : null,
-                  // Cash is the one figure here that can cost the rider their
-                  // own money, so it is the one that gets a colour rather than
-                  // blending into the row.
-                  colour: order.isCashOnDelivery ? AppColors.orangeDeep : null,
-                ),
-              ),
-              if (order.itemCount != null)
+          // The money, on its own tinted strip: what the job pays, and what
+          // has to be collected for it.
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            decoration: BoxDecoration(
+              color: (isDark ? AppColors.greenLight : AppColors.greenDeep)
+                  .withValues(alpha: isDark ? 0.10 : 0.07),
+              borderRadius: BorderRadius.circular(AppSurface.radiusSmall),
+            ),
+            child: Row(
+              children: <Widget>[
                 Expanded(
+                  flex: 5,
                   child: _Figure(
-                    label: '',
-                    value: l10n.itemCount(order.itemCount!),
+                    label: l10n.earningsLabel,
+                    value: formatAmount(l10n, order.earnings),
+                    emphasis: true,
+                    large: true,
                   ),
                 ),
-            ],
+                Expanded(
+                  flex: 4,
+                  child: _Figure(
+                    label: order.isCashOnDelivery
+                        ? l10n.collectCashLabel
+                        : l10n.prepaidLabel,
+                    value: order.isCashOnDelivery
+                        ? formatAmount(l10n, order.collectCash)
+                        : null,
+                    // Cash is the one figure here that can cost the rider
+                    // their own money, so it is the one that gets a colour
+                    // rather than blending into the row.
+                    colour:
+                        order.isCashOnDelivery ? AppColors.orangeDeep : null,
+                  ),
+                ),
+                if (order.itemCount != null)
+                  Expanded(
+                    flex: 3,
+                    child: _Figure(
+                      label: '',
+                      value: l10n.itemCount(order.itemCount!),
+                    ),
+                  ),
+              ],
+            ),
           ),
 
           if (onAccept != null) ...<Widget>[
@@ -132,9 +145,15 @@ class OrderCard extends StatelessWidget {
                       isDark ? AppColors.greenLight : AppColors.greenDeep,
                   foregroundColor:
                       isDark ? const Color(0xFF10250A) : AppColors.white,
-                  minimumSize: const Size.fromHeight(52),
+                  minimumSize: const Size.fromHeight(54),
+                  textStyle: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSurface.radiusSmall),
+                  ),
                 ),
-                icon: const Icon(Icons.bolt_rounded, size: 20),
+                icon: const Icon(Icons.bolt_rounded, size: 22),
                 label: Text(
                   l10n.acceptOrder,
                   maxLines: 1,
@@ -372,9 +391,13 @@ class _Figure extends StatelessWidget {
     required this.value,
     this.colour,
     this.emphasis = false,
+    this.large = false,
   });
 
   final String label;
+
+  /// The headline figure on the card: what the job pays.
+  final bool large;
 
   /// Null renders the label alone, which is how "Paid online" reads — there is
   /// no amount to show, and a zero would be read as an amount.
@@ -414,9 +437,12 @@ class _Figure extends StatelessWidget {
             value ?? '—',
             maxLines: 1,
             textDirection: value == null ? null : TextDirection.ltr,
-            style: theme.textTheme.titleMedium?.copyWith(
+            style: (large
+                    ? theme.textTheme.headlineSmall
+                    : theme.textTheme.titleMedium)
+                ?.copyWith(
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
+              letterSpacing: 0,
               color:
                   value == null ? theme.colorScheme.onSurfaceVariant : resolved,
             ),

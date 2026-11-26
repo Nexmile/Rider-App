@@ -271,7 +271,7 @@ class _Header extends StatelessWidget {
                                           ?.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.4,
+                                        letterSpacing: 0,
                                       ),
                                     ),
                                     const SizedBox(height: 6),

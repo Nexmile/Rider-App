@@ -199,7 +199,7 @@ class _Hero extends StatelessWidget {
                       style: theme.textTheme.headlineSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -0.4,
+                        letterSpacing: 0,
                       ),
                     ),
                     const SizedBox(height: 10),

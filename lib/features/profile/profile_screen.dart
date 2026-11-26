@@ -5,6 +5,7 @@ import '../../core/localization/app_language.dart';
 import '../../core/localization/locale_controller.dart';
 import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_surface.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/info_tile.dart';
 import '../../generated/l10n/app_localizations.dart';
@@ -15,6 +16,7 @@ import '../rider/data/kyc_models.dart';
 import '../rider/data/rider_profile.dart';
 import '../rider/state/order_controller.dart';
 import '../rider/state/payout_controller.dart';
+import '../rider/presentation/payouts/payouts_screen.dart';
 import '../rider/state/rider_controller.dart';
 
 /// Rider profile, backed by `GET /v1/profile` and the already-loaded
@@ -111,10 +113,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Always scrollable so pull-to-refresh works even when the content
           // is shorter than the viewport.
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
           children: <Widget>[
-            _ProfileHeader(user: user),
-            const SizedBox(height: 24),
+            _ProfileHeader(user: user, rider: rider),
+            const SizedBox(height: 20),
             if (_failure != null) ...<Widget>[
               _RefreshFailedBanner(
                 message: _failure!.message(l10n),
@@ -122,87 +124,109 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
             ],
-            InfoTile(
-              icon: Icons.person_outline_rounded,
-              label: l10n.nameLabel,
-              value: user.name.trim().isEmpty ? l10n.notProvided : user.name,
-              emphasise: user.name.trim().isNotEmpty,
-            ),
-            const SizedBox(height: 12),
-            InfoTile(
-              icon: Icons.alternate_email_rounded,
-              label: l10n.emailLabel,
-              value: user.email ?? l10n.notProvided,
-              emphasise: user.email != null,
-              // An address is LTR whatever the app's direction is.
-              valueDirection:
-                  user.email == null ? null : TextDirection.ltr,
-            ),
-            const SizedBox(height: 12),
-            InfoTile(
-              icon: Icons.phone_outlined,
-              label: l10n.mobileLabel,
-              value: user.phone ?? l10n.notProvided,
-              emphasise: user.phone != null,
-              valueDirection:
-                  user.phone == null ? null : TextDirection.ltr,
-              trailing: user.phone != null && user.phoneVerified
-                  ? StatusChip(
-                      label: l10n.verifiedLabel,
-                      tone: StatusTone.positive,
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 12),
-            InfoTile(
-              icon: Icons.verified_user_outlined,
-              label: l10n.accountStatusLabel,
-              value: _statusLabel(user.status, l10n),
-              trailing: StatusChip(
-                label: _statusLabel(user.status, l10n),
-                tone: _statusTone(user.status),
-              ),
+            TileGroup(
+              title: l10n.profileSectionDetails,
+              children: <Widget>[
+                InfoTile(
+                  grouped: true,
+                  icon: Icons.person_outline_rounded,
+                  label: l10n.nameLabel,
+                  value:
+                      user.name.trim().isEmpty ? l10n.notProvided : user.name,
+                  emphasise: user.name.trim().isNotEmpty,
+                ),
+                InfoTile(
+                  grouped: true,
+                  icon: Icons.alternate_email_rounded,
+                  label: l10n.emailLabel,
+                  value: user.email ?? l10n.notProvided,
+                  emphasise: user.email != null,
+                  // An address is LTR whatever the app's direction is.
+                  valueDirection:
+                      user.email == null ? null : TextDirection.ltr,
+                ),
+                InfoTile(
+                  grouped: true,
+                  icon: Icons.phone_outlined,
+                  label: l10n.mobileLabel,
+                  value: user.phone ?? l10n.notProvided,
+                  emphasise: user.phone != null,
+                  valueDirection:
+                      user.phone == null ? null : TextDirection.ltr,
+                  trailing: user.phone != null && user.phoneVerified
+                      ? StatusChip(
+                          label: l10n.verifiedLabel,
+                          tone: StatusTone.positive,
+                        )
+                      : null,
+                ),
+                InfoTile(
+                  grouped: true,
+                  icon: Icons.shield_outlined,
+                  label: l10n.accountStatusLabel,
+                  // The chip carries the status on its own.
+                  value: '',
+                  trailing: StatusChip(
+                    label: _statusLabel(user.status, l10n),
+                    tone: _statusTone(user.status),
+                  ),
+                ),
+              ],
             ),
             if (rider != null) ...<Widget>[
-              const SizedBox(height: 12),
-              InfoTile(
-                icon: Icons.verified_user_outlined,
-                label: l10n.kycStatusLabel,
-                // The chip carries the status on its own; repeating it as the
-                // value would put the same word in the row twice.
-                value: '',
-                trailing: StatusChip(
-                  label: _kycLabel(rider.kyc.status, l10n),
-                  tone: _kycTone(rider.kyc.status),
-                ),
-              ),
-              const SizedBox(height: 12),
-              InfoTile(
-                icon: Icons.two_wheeler_outlined,
-                label: l10n.vehicleLabel,
-                value: rider.vehicleNumber ?? l10n.notProvided,
-                emphasise: rider.vehicleNumber != null,
-                valueDirection:
-                    rider.vehicleNumber == null ? null : TextDirection.ltr,
-              ),
-              const SizedBox(height: 12),
-              InfoTile(
-                icon: Icons.local_shipping_outlined,
-                label: l10n.completedDeliveriesLabel,
-                value: '${rider.completedDeliveries}',
-                valueDirection: TextDirection.ltr,
+              const SizedBox(height: 20),
+              TileGroup(
+                title: l10n.profileSectionWork,
+                children: <Widget>[
+                  InfoTile(
+                    grouped: true,
+                    icon: Icons.verified_user_outlined,
+                    label: l10n.kycStatusLabel,
+                    value: '',
+                    trailing: StatusChip(
+                      label: _kycLabel(rider.kyc.status, l10n),
+                      tone: _kycTone(rider.kyc.status),
+                    ),
+                  ),
+                  InfoTile(
+                    grouped: true,
+                    icon: Icons.two_wheeler_outlined,
+                    label: l10n.vehicleLabel,
+                    value: rider.vehicleNumber ?? l10n.notProvided,
+                    emphasise: rider.vehicleNumber != null,
+                    valueDirection:
+                        rider.vehicleNumber == null ? null : TextDirection.ltr,
+                  ),
+                  InfoTile(
+                    grouped: true,
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: l10n.payoutsTitle,
+                    value: l10n.payoutsEntryValue,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const PayoutsScreen(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 12),
-            InfoTile(
-              icon: Icons.translate_rounded,
-              label: l10n.appLanguageLabel,
-              value: language.nativeName,
-              valueDirection: language.textDirection,
-              onTap: () => Navigator.of(context).pushNamed(
-                AppRoutes.language,
-                arguments: false,
-              ),
+            const SizedBox(height: 20),
+            TileGroup(
+              title: l10n.profileSectionApp,
+              children: <Widget>[
+                InfoTile(
+                  grouped: true,
+                  icon: Icons.translate_rounded,
+                  label: l10n.appLanguageLabel,
+                  value: language.nativeName,
+                  valueDirection: language.textDirection,
+                  onTap: () => Navigator.of(context).pushNamed(
+                    AppRoutes.language,
+                    arguments: false,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 28),
             OutlinedButton.icon(
@@ -309,55 +333,144 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
+/// Who the rider is, at a glance: initial, name, how to reach them, and the
+/// two numbers they are judged by.
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.user});
+  const _ProfileHeader({required this.user, this.rider});
 
   final AuthUser user;
+  final RiderProfile? rider;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final String initial =
-        user.firstName.isEmpty ? '?' : user.firstName.characters.first.toUpperCase();
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final String initial = user.firstName.isEmpty
+        ? '?'
+        : user.firstName.characters.first.toUpperCase();
+    const Color ink = Colors.white;
+    final RiderProfile? rider = this.rider;
 
-    return Column(
-      children: <Widget>[
-        Container(
-          width: 84,
-          height: 84,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            gradient: AppColors.greenGradient,
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            initial,
-            style: theme.textTheme.displaySmall?.copyWith(
-              color: AppColors.white,
-              fontWeight: FontWeight.w800,
+    Widget stat(String value, String label, {bool muted = false}) => Expanded(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+            decoration: BoxDecoration(
+              color: ink.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    value,
+                    maxLines: 1,
+                    style: (muted
+                            ? theme.textTheme.titleSmall
+                            : theme.textTheme.titleLarge)
+                        ?.copyWith(color: ink, fontWeight: FontWeight.w800),
+                  ),
+                ),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: ink.withValues(alpha: 0.85)),
+                ),
+              ],
             ),
           ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSurface.radiusLarge),
+        gradient: const LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: <Color>[Color(0xFF1F6E08), AppColors.greenDeep],
         ),
-        const SizedBox(height: 14),
-        Text(
-          user.name.trim().isEmpty
-              ? (user.email ?? user.phone ?? '')
-              : user.name,
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: theme.textTheme.headlineSmall,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          user.email ?? user.phone ?? '',
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          textDirection: TextDirection.ltr,
-          style: theme.textTheme.bodyMedium,
-        ),
-      ],
+        boxShadow: AppSurface.hero(context, AppColors.greenDeep),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Container(
+                width: 68,
+                height: 68,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: ink,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: ink.withValues(alpha: 0.35),
+                    width: 4,
+                    strokeAlign: BorderSide.strokeAlignOutside,
+                  ),
+                ),
+                child: Text(
+                  initial,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: AppColors.greenDeep,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      user.name.trim().isEmpty
+                          ? (user.email ?? user.phone ?? '')
+                          : user.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: ink,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user.email ?? user.phone ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textDirection: TextDirection.ltr,
+                      style: theme.textTheme.bodyMedium
+                          ?.copyWith(color: ink.withValues(alpha: 0.9)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (rider != null) ...<Widget>[
+            const SizedBox(height: 18),
+            Row(
+              children: <Widget>[
+                stat(
+                  '${rider.completedDeliveries}',
+                  l10n.completedDeliveriesLabel,
+                ),
+                const SizedBox(width: 10),
+                stat(
+                  rider.rating ?? l10n.notRatedYet,
+                  l10n.ratingLabel,
+                  muted: rider.rating == null,
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_theme.dart';
 
 /// Dials a number.
@@ -110,6 +111,7 @@ class ContactActions extends StatelessWidget {
                   ? Icons.navigation_outlined
                   : Icons.directions_outlined,
               label: directionsLabel,
+              filled: true,
               onPressed: onNavigate ??
                   () => openDirections(
                         latitude: latitude,
@@ -128,24 +130,58 @@ class _Action extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.filled = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onPressed;
 
+  /// The way to go, in the brand green; a call stays outlined beside it.
+  final bool filled;
+
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 19),
-      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(50),
-        shape: RoundedRectangleBorder(
+    final ThemeData theme = Theme.of(context);
+    final ButtonStyle shape = ButtonStyle(
+      minimumSize: const WidgetStatePropertyAll<Size>(Size.fromHeight(54)),
+      textStyle: WidgetStatePropertyAll<TextStyle?>(
+        theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+      ),
+      shape: WidgetStatePropertyAll<OutlinedBorder>(
+        RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radius),
         ),
       ),
+    );
+    // Shrinks rather than cuts: "Call restaurant" in half a phone's width
+    // must still say who it calls.
+    final Widget text = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(label, maxLines: 1),
+    );
+
+    if (filled) {
+      return FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 22),
+        label: text,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.greenDeep,
+          foregroundColor: Colors.white,
+        ).merge(shape),
+      );
+    }
+    return OutlinedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 22),
+      label: text,
+      style: OutlinedButton.styleFrom(
+        side: BorderSide(
+          color: theme.colorScheme.primary.withValues(alpha: 0.6),
+          width: 1.5,
+        ),
+      ).merge(shape),
     );
   }
 }

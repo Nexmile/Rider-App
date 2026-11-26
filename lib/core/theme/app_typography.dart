@@ -15,6 +15,9 @@ import 'package:flutter/material.dart';
 class AppTypography {
   const AppTypography._();
 
+  /// Plus Jakarta Sans, bundled, the same face as the customer app.
+  static const String family = 'PlusJakartaSans';
+
   /// Applied to every style so leading is shared evenly around the glyph box.
   static const TextLeadingDistribution _even = TextLeadingDistribution.even;
 
@@ -37,6 +40,7 @@ class AppTypography {
       Color? color,
     }) {
       return TextStyle(
+        fontFamily: family,
         fontSize: size,
         fontWeight: weight,
         height: height,

@@ -38,6 +38,7 @@ import 'package:nexmile_rider/features/rider/data/rider_repository.dart';
 import 'package:nexmile_rider/features/rider/presentation/home/rider_home_screen.dart';
 import 'package:nexmile_rider/features/rider/presentation/onboarding/onboarding_screen.dart';
 import 'package:nexmile_rider/features/rider/presentation/orders/active_delivery_screen.dart';
+import 'package:nexmile_rider/features/rider/presentation/orders/order_details_screen.dart';
 import 'package:nexmile_rider/features/rider/presentation/orders/order_board_screen.dart';
 import 'package:nexmile_rider/features/rider/presentation/orders/widgets/order_card.dart';
 import 'package:nexmile_rider/features/rider/presentation/orders/widgets/pickup_code_sheet.dart';
@@ -781,6 +782,31 @@ const OrderDropoff _testDropoff = OrderDropoff(
 /// fixture — it is what `GET /rider/orders/available` actually returns, and a
 /// fixture that filled them in would hide a screen reading a field it cannot
 /// have yet.
+/// A finished order for the history tab.
+RiderOrder _pastOrder({
+  required String id,
+  required String shop,
+  required DateTime at,
+  OrderStatus status = OrderStatus.delivered,
+  double fee = 46,
+  double cash = 0,
+}) {
+  return RiderOrder(
+    id: id,
+    orderNumber: 'NX-$id',
+    status: status,
+    statusLabel: status.name,
+    pickup: OrderPickup(name: shop, address: '4 West Masi Street, Madurai'),
+    dropoff: _testDropoff,
+    orderValue: 420,
+    deliveryFee: fee,
+    collectCash: cash,
+    pickupCodeRequired: true,
+    deliveredAt: status == OrderStatus.delivered ? at : null,
+    placedAt: at,
+  );
+}
+
 RiderOrder _boardOrder({
   String id = '1001',
   String number = 'NX-1001',
@@ -986,6 +1012,24 @@ Future<void> _scrollToDelivery(WidgetTester tester, Finder finder) async {
   // Then all the way into view: at the bottom edge it sits under the
   // "Picked up" message bar.
   await tester.ensureVisible(finder.last);
+  await _pumpLive(tester);
+}
+
+/// The dot on the delivery tab while an order is in hand.
+Finder get _tabBadge => find.byKey(const ValueKey<String>('tab-badge'));
+
+/// Drags a slider on the delivery screen all the way across, as a rider
+/// would: a tap on it does nothing.
+Future<void> _swipe(WidgetTester tester, String key) async {
+  final Finder slider = find.byKey(ValueKey<String>(key));
+  await _scrollToDelivery(tester, slider);
+  await tester.drag(
+    find.descendant(
+      of: slider,
+      matching: find.byKey(const ValueKey<String>('swipe-thumb')),
+    ),
+    const Offset(1000, 0),
+  );
   await _pumpLive(tester);
 }
 
@@ -1700,6 +1744,27 @@ void main() {
       expect(_controller.isSignedIn, isTrue);
     });
 
+    testWidgets('help for a code that never came, with the spam tip for email',
+        (WidgetTester tester) async {
+      _useTallPhone(tester);
+      await reachOtp(tester, identifier: 'priya@example.com');
+      final Finder help = find.byKey(const ValueKey<String>('otp-help'));
+      await tester.ensureVisible(help);
+      await tester.pumpAndSettle();
+      expect(find.text("Didn't get the code?"), findsOneWidget);
+      expect(find.text('For email, look in your spam folder too.'),
+          findsOneWidget);
+
+      // A text message has no spam folder.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await reachOtp(tester);
+      await tester.ensureVisible(help);
+      await tester.pumpAndSettle();
+      expect(find.text("Didn't get the code?"), findsOneWidget);
+      expect(find.text('For email, look in your spam folder too.'),
+          findsNothing);
+    });
+
     testWidgets('a wrong code is rejected and the boxes are cleared',
         (WidgetTester tester) async {
       _useTallPhone(tester);
@@ -1917,9 +1982,18 @@ void main() {
         (WidgetTester tester) async {
       final FakeAuthRepository repo = await openProfile(tester);
 
-      // The rider profile carries three rows the customer one did not, so the
-      // button is below the fold on a test-sized viewport.
-      await tester.ensureVisible(find.text('Sign out'));
+      // At the foot of the page, under the grouped sections: far enough down
+      // that the list has not built it yet, so it is scrolled to.
+      await tester.scrollUntilVisible(
+        find.text('Sign out'),
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(ProfileScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Sign out'));
       await tester.pumpAndSettle();
@@ -1928,6 +2002,31 @@ void main() {
       expect(find.text('You have been signed out'), findsOneWidget);
       expect(repo.signOutCount, 1, reason: 'revoked server-side too');
       expect(_controller.isSignedIn, isFalse);
+    });
+
+    testWidgets('the header shows the work numbers, and payouts open from it',
+        (WidgetTester tester) async {
+      await openProfile(tester);
+      // Deliveries and rating from the rider record, in the header.
+      expect(find.text('12'), findsOneWidget);
+      expect(find.text('4.8'), findsOneWidget);
+      expect(find.text('Your details'), findsOneWidget);
+
+      final Finder payouts = find.text('Payouts');
+      await tester.scrollUntilVisible(
+        payouts,
+        200,
+        scrollable: find
+            .descendant(
+              of: find.byType(ProfileScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(payouts);
+      await tester.pumpAndSettle();
+      expect(find.byType(PayoutsScreen), findsOneWidget);
     });
 
     testWidgets('the language row opens the language screen',
@@ -2262,7 +2361,7 @@ void main() {
       // On the way to the restaurant the drop leg stays short.
       expect(find.text('Flat 3B, 2nd floor'), findsNothing);
 
-      await tester.tap(find.text('I have collected it'));
+      await _swipe(tester, 'pickup-swipe');
       await _pumpLive(tester);
       await tester.enterText(find.byType(TextField), '4321');
       await tester.tap(find.text('I have collected it').last);
@@ -2288,6 +2387,68 @@ void main() {
       expect(find.byType(InteractiveViewer), findsNothing);
     });
 
+    testWidgets('the delivery tab wears a dot while an order is in hand',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider();
+      await onBoard(tester, rider);
+      final Finder badge = _tabBadge;
+      expect(badge, findsNothing);
+
+      await tester.tap(find.text('Accept'));
+      await _pumpLive(tester);
+
+      expect(badge, findsOneWidget);
+      // Four steps, every one on screen, the first one live.
+      for (final String step in <String>[
+        'Reach restaurant',
+        'Pick up',
+        'Reach customer',
+        'Deliver',
+      ]) {
+        expect(
+          find.descendant(
+            of: find.byKey(const ValueKey<String>('journey-steps')),
+            matching: find.text(step),
+          ),
+          findsOneWidget,
+        );
+      }
+    });
+
+    testWidgets('a tap or a short drag does not collect the order',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider()..pickupCode = '4321';
+      await onBoard(tester, rider);
+      await tester.tap(find.text('Accept'));
+      await _pumpLive(tester);
+
+      final Finder slider = find.byKey(const ValueKey<String>('pickup-swipe'));
+      await _scrollToDelivery(tester, slider);
+      // A pocket tap.
+      await tester.tap(find.text('Swipe when collected'));
+      await _pumpLive(tester);
+      expect(find.byType(PickupCodeSheet), findsNothing);
+      // Half-hearted: the thumb springs back.
+      await tester.drag(
+        find.byKey(const ValueKey<String>('swipe-thumb')),
+        const Offset(80, 0),
+      );
+      await _pumpLive(tester);
+      expect(find.byType(PickupCodeSheet), findsNothing);
+
+      // All the way across opens the code sheet. Backing out of it puts the
+      // slider back, ready for another go.
+      await _swipe(tester, 'pickup-swipe');
+      expect(find.byType(PickupCodeSheet), findsOneWidget);
+      Navigator.of(tester.element(find.byType(PickupCodeSheet))).pop();
+      await _pumpLive(tester);
+      expect(find.byType(PickupCodeSheet), findsNothing);
+      expect(rider.assigned!.status, OrderStatus.assigned);
+
+      await _swipe(tester, 'pickup-swipe');
+      expect(find.byType(PickupCodeSheet), findsOneWidget);
+    });
+
     testWidgets('accepting brings the delivery tab forward',
         (WidgetTester tester) async {
       final FakeRiderRepository rider = workingRider();
@@ -2299,7 +2460,7 @@ void main() {
       expect(rider.assigned, isNotNull);
       expect(find.byType(ActiveDeliveryScreen), findsOneWidget);
       expect(find.text('Head to the restaurant'), findsWidgets);
-      expect(find.text('I have collected it'), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('pickup-swipe')), findsOneWidget);
     });
 
     OrderOffer liveOffer({String orderId = '1001'}) => OrderOffer.fromData(
@@ -2452,7 +2613,7 @@ void main() {
       expect(find.text('The kitchen knows you\'re here'), findsOneWidget);
       // Pressed once for this stop, so it goes; pickup is still there.
       expect(find.text("I've reached the restaurant"), findsNothing);
-      expect(find.text('I have collected it'), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('pickup-swipe')), findsOneWidget);
     });
 
     testWidgets('navigating stays inside the app',
@@ -2531,7 +2692,7 @@ void main() {
       await tester.tap(find.text('Accept'));
       await _pumpLive(tester);
 
-      await tester.tap(find.text('I have collected it'));
+      await _swipe(tester, 'pickup-swipe');
       await _pumpLive(tester);
 
       await tester.enterText(find.byType(TextField), '1111');
@@ -2557,7 +2718,7 @@ void main() {
       await tester.tap(find.text('Accept'));
       await _pumpLive(tester);
 
-      await tester.tap(find.text('I have collected it'));
+      await _swipe(tester, 'pickup-swipe');
       await _pumpLive(tester);
       await tester.enterText(find.byType(TextField), '4321');
       await tester.tap(find.text('I have collected it').last);
@@ -2578,6 +2739,8 @@ void main() {
       await tester.tap(find.text('Accept'));
       await _pumpLive(tester);
 
+      // At the foot of the screen, under the slider: secondary, but there.
+      await _scrollToDelivery(tester, find.text('Hand it back'));
       expect(find.text('Hand it back'), findsOneWidget);
     });
 
@@ -2596,7 +2759,7 @@ void main() {
       await _pumpLive(tester);
       expect(find.text('Collect ₹480 from the customer'), findsOneWidget);
 
-      await tester.tap(find.text('I have collected it'));
+      await _swipe(tester, 'pickup-swipe');
       await _pumpLive(tester);
       await tester.enterText(find.byType(TextField), '4321');
       await tester.tap(find.text('I have collected it').last);
@@ -2604,9 +2767,7 @@ void main() {
 
       // At the drop the door details sit above the button; scroll to it as a
       // rider would.
-      await _scrollToDelivery(tester, find.text('Delivered'));
-      await tester.tap(find.text('Delivered').last);
-      await _pumpLive(tester);
+      await _swipe(tester, 'deliver-swipe');
 
       // The dialog names the sum. "Did you collect it?" is far easier to wave
       // through than "did you collect ₹480?".
@@ -2633,17 +2794,14 @@ void main() {
 
       await tester.tap(find.text('Accept'));
       await _pumpLive(tester);
-      await tester.tap(find.text('I have collected it'));
+      await _swipe(tester, 'pickup-swipe');
       await _pumpLive(tester);
       await tester.enterText(find.byType(TextField), '4321');
       await tester.tap(find.text('I have collected it').last);
       await _pumpLive(tester);
 
-      await _scrollToDelivery(tester, find.text('Delivered'));
-      await tester.tap(find.text('Delivered').last);
-      await _pumpLive(tester);
-      await tester.tap(find.text('Delivered').last);
-      await _pumpLive(tester);
+      // Prepaid: the swipe is the confirmation, with no dialog after it.
+      await _swipe(tester, 'deliver-swipe');
 
       expect(rider.assigned, isNull);
       // The server owns the count. Adding one locally would drift from the
@@ -4087,6 +4245,98 @@ void main() {
   // The two things the backend asked for above all: nothing says the money was
   // sent unless the status is `paid`, and deductions are the server's words,
   // with no Deductions section at all when there are none.
+  group('delivery history', () {
+    Future<void> openHistory(WidgetTester tester) async {
+      final DateTime now = DateTime.now();
+      final DateTime today = DateTime(now.year, now.month, now.day, 12);
+      final FakeRiderRepository rider = _approvedRider();
+      rider._delivered.addAll(<RiderOrder>[
+        _pastOrder(id: '2001', shop: 'Amma Mess', at: today),
+        _pastOrder(
+          id: '2002',
+          shop: 'Saravana Bhavan',
+          at: today.subtract(const Duration(hours: 2)),
+          cash: 480,
+        ),
+        _pastOrder(
+          id: '2003',
+          shop: 'Murugan Idli',
+          at: today.subtract(const Duration(days: 1)),
+          fee: 38,
+        ),
+        _pastOrder(
+          id: '2004',
+          shop: 'Kumar Mess',
+          at: today.subtract(const Duration(days: 1, hours: 1)),
+          status: OrderStatus.cancelled,
+        ),
+      ]);
+      _useTallPhone(tester);
+      await _pumpApp(
+        tester,
+        seed: _languageChosen,
+        session: _testSession(),
+        riderRepository: rider,
+      );
+      await _settleSplashLive(tester);
+      await tester.tap(find.text('History'));
+      await _pumpLive(tester);
+    }
+
+    testWidgets('orders are grouped by day, with what each day earned',
+        (WidgetTester tester) async {
+      await openHistory(tester);
+
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Yesterday'), findsOneWidget);
+      // Two delivered today, at ₹46 each.
+      expect(find.text('2 deliveries · ₹92'), findsOneWidget);
+      // A cancelled order earned nothing, so yesterday counts one.
+      expect(find.text('1 delivery · ₹38'), findsOneWidget);
+
+      expect(find.text('+₹46'), findsNWidgets(2));
+      expect(find.text('+₹38'), findsOneWidget);
+      // The cash taken at the door, and the cancelled one marked as such.
+      expect(find.text('Cash ₹480'), findsOneWidget);
+      expect(find.text('Cancelled'), findsOneWidget);
+    });
+
+    testWidgets('a finished order offers no call and no directions',
+        (WidgetTester tester) async {
+      await openHistory(tester);
+      await tester.tap(find.byKey(const ValueKey<String>('history-2001')));
+      await _pumpLive(tester);
+      expect(find.byType(OrderDetailsScreen), findsOneWidget);
+      // The food is handed over: nobody left to ride to or ring.
+      expect(find.text('Call customer'), findsNothing);
+      expect(find.text('Call restaurant'), findsNothing);
+      expect(find.text('Navigate'), findsNothing);
+      // The record itself is all still there.
+      expect(find.text('Anand R'), findsOneWidget);
+    });
+
+    testWidgets('search narrows the list, and says when nothing matches',
+        (WidgetTester tester) async {
+      await openHistory(tester);
+      final Finder search = find.byKey(const ValueKey<String>('history-search'));
+
+      await tester.enterText(search, 'saravana');
+      await _pumpLive(tester);
+      expect(find.text('Saravana Bhavan'), findsOneWidget);
+      expect(find.text('Amma Mess'), findsNothing);
+      expect(find.text('Yesterday'), findsNothing);
+
+      await tester.enterText(search, 'NX-2003');
+      await _pumpLive(tester);
+      expect(find.text('Murugan Idli'), findsOneWidget);
+      expect(find.text('Saravana Bhavan'), findsNothing);
+
+      await tester.enterText(search, 'pizza');
+      await _pumpLive(tester);
+      expect(find.text('Nothing matches “pizza”.'), findsOneWidget);
+    });
+  });
+
   group('payouts', () {
     /// Signs in an approved rider and opens the first week's details.
     Future<void> openFirstWeek(
@@ -4098,6 +4348,93 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(PayoutDetailsScreen), findsOneWidget);
     }
+
+    testWidgets('the shift tab shows the latest week, and opens them all',
+        (WidgetTester tester) async {
+      _useTallPhone(tester);
+      await _pumpApp(
+        tester,
+        seed: _languageChosen,
+        session: _testSession(),
+        payoutRepository: FakePayoutRepository(),
+      );
+      await _settleSplash(tester);
+
+      final Finder amount = find.text('₹6626');
+      await tester.ensureVisible(amount);
+      await tester.pumpAndSettle();
+      expect(amount, findsOneWidget);
+      // Not yet sent, and the card says so.
+      expect(find.text('Pending'), findsOneWidget);
+
+      await tester.tap(amount);
+      await tester.pumpAndSettle();
+      expect(find.byType(PayoutsScreen), findsOneWidget);
+    });
+
+    testWidgets('the summary splits what has been paid from what has not',
+        (WidgetTester tester) async {
+      await openPayouts(
+        tester,
+        FakePayoutRepository(rows: <Map<String, dynamic>>[
+          _payoutRow(),
+          _payoutRow(<String, dynamic>{
+            'id': 2,
+            'period_start': '2026-08-31',
+            'period_end': '2026-09-06',
+            'net': 5000.00,
+            'status': 'paid',
+            'paid_at': '2026-09-08T10:00:00',
+          }),
+        ]),
+      );
+
+      final Finder summary =
+          find.byKey(const ValueKey<String>('payouts-summary'));
+      Finder inSummary(String text) =>
+          find.descendant(of: summary, matching: find.text(text));
+      // "Paid" counts only the week whose transfer went through.
+      expect(inSummary('Paid so far'), findsOneWidget);
+      expect(inSummary('₹5000'), findsOneWidget);
+      expect(inSummary('Not yet sent'), findsOneWidget);
+      // The latest week leads the card, and is the one not yet sent.
+      expect(inSummary('₹6626'), findsNWidgets(2));
+      expect(inSummary('Pending'), findsOneWidget);
+      // Both weeks end in September.
+      expect(find.text('September 2026'), findsOneWidget);
+    });
+
+    testWidgets('the tracker never runs ahead of the transfer',
+        (WidgetTester tester) async {
+      await openFirstWeek(tester, FakePayoutRepository());
+      final Finder steps = find.byKey(const ValueKey<String>('payout-steps'));
+      expect(find.descendant(of: steps, matching: find.text('In your bank')),
+          findsOneWidget);
+      // Pending: worked out, and nothing further ticked.
+      expect(
+        find.descendant(of: steps, matching: find.byIcon(Icons.check_rounded)),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a paid week ticks every step', (WidgetTester tester) async {
+      await openFirstWeek(
+        tester,
+        FakePayoutRepository(rows: <Map<String, dynamic>>[
+          _payoutRow(<String, dynamic>{
+            'status': 'paid',
+            'paid_at': '2026-09-15T10:00:00',
+          }),
+        ]),
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey<String>('payout-steps')),
+          matching: find.byIcon(Icons.check_rounded),
+        ),
+        findsNWidgets(3),
+      );
+    });
 
     test('decodes the row the backend documents', () {
       final Payout payout = Payout.fromJson(_payoutRowWithTds());

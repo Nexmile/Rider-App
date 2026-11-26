@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/motion/app_motion.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_surface.dart';
 import '../../../../core/widgets/brand_mark.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../../generated/l10n/app_localizations.dart';
@@ -23,12 +23,17 @@ class AuthScaffold extends StatelessWidget {
     required this.children,
     this.showBack = true,
     this.footer,
+    this.icon,
   });
 
   final String title;
   final String subtitle;
   final List<Widget> children;
   final bool showBack;
+
+  /// Drawn in a circle in the header, over the title: what the screen is
+  /// about (a text message, an email).
+  final IconData? icon;
 
   /// Pinned to the bottom of the content (not the viewport) — typically the
   /// "already have an account?" style link.
@@ -38,71 +43,137 @@ class AuthScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final MediaQueryData media = MediaQuery.of(context);
+    const Color ink = Colors.white;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: GestureDetector(
+    // The same shape as login: a green header, and the form on a sheet that
+    // rides up over its bottom edge.
+    final Widget header = Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(12, media.padding.top + 8, 24, 48),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: <Color>[Color(0xFF1F6E08), AppColors.greenDeep],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              if (showBack)
+                IconButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  icon: const Icon(Icons.arrow_back_rounded, color: ink),
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                )
+              else
+                const Padding(
+                  padding: EdgeInsetsDirectional.only(start: 12),
+                  child: BrandMark(size: 36, radius: 11),
+                ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  l10n.appName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textDirection: TextDirection.ltr,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: ink,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 12, top: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: entranceGroup(<Widget>[
+                if (icon != null)
+                  Container(
+                    width: 60,
+                    height: 60,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: ink.withValues(alpha: 0.16),
+                      border: Border.all(color: ink.withValues(alpha: 0.28)),
+                    ),
+                    child: Icon(icon, color: ink, size: 28),
+                  ),
+                Text(
+                  title,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    color: ink,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    subtitle,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: ink.withValues(alpha: 0.92),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Light status bar icons over the green header.
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        resizeToAvoidBottomInset: true,
+        body: GestureDetector(
           // Tapping the background dismisses the keyboard.
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.opaque,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+            padding: EdgeInsets.zero,
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  if (showBack) ...<Widget>[
-                    IconButton(
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      icon: const Icon(Icons.arrow_back_rounded),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 40,
-                        height: 40,
-                      ),
-                      tooltip:
-                          MaterialLocalizations.of(context).backButtonTooltip,
-                    ),
-                    const SizedBox(width: 8),
-                  ] else ...<Widget>[
-                    const BrandMark(size: 42, radius: 13),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: Text(
-                      l10n.appName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.ltr,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.2,
-                      ),
-                    ),
+              header,
+              Transform.translate(
+                offset: const Offset(0, -24),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(28)),
                   ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              ...entranceGroup(<Widget>[
-                const BrandRule(width: 52),
-                Padding(
-                  padding: const EdgeInsets.only(top: 16, bottom: 8),
-                  child: Text(
-                    title,
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      letterSpacing: -0.9,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      28,
+                      24,
+                      32 + media.padding.bottom,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        ...children,
+                        if (footer != null) ...<Widget>[
+                          const SizedBox(height: 24),
+                          footer!,
+                        ],
+                      ],
                     ),
                   ),
                 ),
-                Text(subtitle, style: theme.textTheme.bodyMedium),
-              ]),
-              const SizedBox(height: 28),
-              ...children,
-              if (footer != null) ...<Widget>[
-                const SizedBox(height: 24),
-                footer!,
-              ],
+              ),
             ],
           ),
         ),

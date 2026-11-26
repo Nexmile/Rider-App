@@ -110,6 +110,20 @@ class AppLocalizationsSat extends AppLocalizations {
   }
 
   @override
+  String get otpHelpTitle => 'Didn\'t get the code?';
+
+  @override
+  String get otpHelpCheck =>
+      'Check the number or email above. Tap back to change it.';
+
+  @override
+  String get otpHelpWait =>
+      'A code can take up to a minute to arrive. When the timer ends you can ask for a new one.';
+
+  @override
+  String get otpHelpSpam => 'For email, look in your spam folder too.';
+
+  @override
   String get verifyCode => 'ᱡᱟᱸᱪ ᱢᱮ';
 
   @override
@@ -161,6 +175,15 @@ class AppLocalizationsSat extends AppLocalizations {
 
   @override
   String get profileTitle => 'ᱯᱨᱚᱯᱷᱟᱭᱤᱞ';
+
+  @override
+  String get profileSectionDetails => 'Your details';
+
+  @override
+  String get profileSectionWork => 'Work';
+
+  @override
+  String get profileSectionApp => 'App settings';
 
   @override
   String get viewProfile => 'ᱯᱨᱚᱯᱷᱟᱭᱤᱞ ᱧᱮᱞ ᱢᱮ';
@@ -754,6 +777,27 @@ class AppLocalizationsSat extends AppLocalizations {
   String get confirmDeliveryButton => 'Delivered';
 
   @override
+  String get stepReachRestaurant => 'Reach restaurant';
+
+  @override
+  String get stepPickUp => 'Pick up';
+
+  @override
+  String get stepReachCustomer => 'Reach customer';
+
+  @override
+  String get stepDeliver => 'Deliver';
+
+  @override
+  String get swipePickUp => 'Swipe when collected';
+
+  @override
+  String get swipeDeliver => 'Swipe to deliver';
+
+  @override
+  String get cashToCollectLabel => 'Cash to collect';
+
+  @override
   String get confirmDeliveryTitle => 'Confirm delivery';
 
   @override
@@ -816,6 +860,39 @@ class AppLocalizationsSat extends AppLocalizations {
   @override
   String get historyEmptyBody =>
       'Orders you have completed will be listed here.';
+
+  @override
+  String get historySearchHint => 'Search order or restaurant';
+
+  @override
+  String get historyToday => 'Today';
+
+  @override
+  String get historyYesterday => 'Yesterday';
+
+  @override
+  String get historyEarlier => 'Earlier';
+
+  @override
+  String historyDaySummary(int count, String amount) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count deliveries',
+      one: '1 delivery',
+    );
+    return '$_temp0 · $amount';
+  }
+
+  @override
+  String historyNoMatch(String query) {
+    return 'Nothing matches “$query”.';
+  }
+
+  @override
+  String historyCashTaken(String amount) {
+    return 'Cash $amount';
+  }
 
   @override
   String get orderDelivered => 'Delivered';
@@ -933,6 +1010,24 @@ class AppLocalizationsSat extends AppLocalizations {
 
   @override
   String get payoutDeductions => 'Deductions';
+
+  @override
+  String get payoutsLatestWeek => 'Latest week';
+
+  @override
+  String get payoutsPaidSoFar => 'Paid so far';
+
+  @override
+  String get payoutsNotYetSent => 'Not yet sent';
+
+  @override
+  String get payoutStepWorkedOut => 'Worked out';
+
+  @override
+  String get payoutStepSending => 'Being sent';
+
+  @override
+  String get payoutStepInBank => 'In your bank';
 
   @override
   String get navToRestaurant => 'To the restaurant';

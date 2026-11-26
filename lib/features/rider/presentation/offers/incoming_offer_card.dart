@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/swipe_to_confirm.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/offer_models.dart';
 import '../../data/order_models.dart';
@@ -150,7 +151,18 @@ class _IncomingOfferCardState extends State<IncomingOfferCard> {
                 decoration: BoxDecoration(
                   color: _card,
                   borderRadius: BorderRadius.circular(22),
+                  // A green edge and glow: the one lit thing over the dimmed
+                  // app, the way an incoming call is.
+                  border: Border.all(
+                    color: const Color(0xFF3DBE3D).withValues(alpha: 0.55),
+                    width: 1.5,
+                  ),
                   boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: const Color(0xFF3DBE3D).withValues(alpha: 0.28),
+                      blurRadius: 34,
+                      spreadRadius: 2,
+                    ),
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 30,
@@ -195,7 +207,11 @@ class _IncomingOfferCardState extends State<IncomingOfferCard> {
                       title: l10n.offerPickupLine(offer.restaurant),
                       subtitle: fromYou == null ? null : l10n.offerFromYou(fromYou),
                     ),
-                    const SizedBox(height: 14),
+                    // The route between the two stops, dotted like a map's.
+                    const Padding(
+                      padding: EdgeInsetsDirectional.only(start: 8),
+                      child: _RouteDots(),
+                    ),
                     _Stop(
                       colour: const Color(0xFFF07A7A),
                       title: l10n.offerDropLine(offer.dropoffArea ?? '—'),
@@ -223,12 +239,13 @@ class _IncomingOfferCardState extends State<IncomingOfferCard> {
                           : Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: <Widget>[
-                                _SwipeToAccept(
+                                SwipeToConfirm(
+                                  key: const ValueKey<String>('offer-swipe'),
                                   label: controller.isAccepting
                                       ? l10n.offerAccepting
                                       : l10n.offerSwipeToAccept,
                                   busy: controller.isAccepting,
-                                  onAccepted: _accept,
+                                  onConfirmed: _accept,
                                 ),
                                 const SizedBox(height: 12),
                                 OutlinedButton(
@@ -267,7 +284,6 @@ class _IncomingOfferCardState extends State<IncomingOfferCard> {
 
 const Color _card = Color(0xFF1C1C1C);
 const Color _muted = Color(0xFFB5B5B0);
-const Color _accept = Color(0xFF0A8F0A);
 
 /// "New order", in a green-tinted pill.
 class _NewOrderPill extends StatelessWidget {
@@ -429,131 +445,29 @@ class _Stop extends StatelessWidget {
   }
 }
 
-/// A slider the rider drags all the way across. A tap in a pocket cannot
-/// accept a job; a deliberate swipe can. Screen readers get a plain button.
-class _SwipeToAccept extends StatefulWidget {
-  const _SwipeToAccept({
-    required this.label,
-    required this.busy,
-    required this.onAccepted,
-  });
-
-  final String label;
-  final bool busy;
-  final VoidCallback onAccepted;
-
-  @override
-  State<_SwipeToAccept> createState() => _SwipeToAcceptState();
-}
-
-class _SwipeToAcceptState extends State<_SwipeToAccept>
-    with SingleTickerProviderStateMixin {
-  static const double _height = 64;
-  static const double _thumb = 56;
-
-  double _drag = 0;
-  late final AnimationController _back = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 220),
-  )..addListener(() => setState(() => _drag = _from * (1 - _back.value)));
-  double _from = 0;
-
-  @override
-  void dispose() {
-    _back.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(_SwipeToAccept old) {
-    super.didUpdateWidget(old);
-    // An accept that came back without a win puts the thumb home again.
-    if (old.busy && !widget.busy && _drag > 0) {
-      _from = _drag;
-      _back.forward(from: 0);
-    }
-  }
+/// Three dots from the pickup marker down to the drop marker.
+class _RouteDots extends StatelessWidget {
+  const _RouteDots();
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints box) {
-        final double travel = box.maxWidth - _thumb - (_height - _thumb);
-        final double progress = travel <= 0 ? 0 : (_drag / travel).clamp(0, 1);
-
-        return Semantics(
-          button: true,
-          label: widget.label,
-          onTap: widget.busy ? null : widget.onAccepted,
-          excludeSemantics: true,
-          child: Container(
-            height: _height,
-            decoration: BoxDecoration(
-              color: Color.lerp(_accept, AppColors.green, progress),
-              borderRadius: BorderRadius.circular(14),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          for (int i = 0; i < 3; i++)
+            Container(
+              width: 3,
+              height: 3,
+              margin: const EdgeInsets.symmetric(vertical: 2),
+              decoration: const BoxDecoration(
+                color: _muted,
+                shape: BoxShape.circle,
+              ),
             ),
-            child: Stack(
-              alignment: Alignment.centerLeft,
-              children: <Widget>[
-                Center(
-                  child: Opacity(
-                    opacity: (1 - progress * 1.4).clamp(0, 1),
-                    child: Text(
-                      widget.label,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: (_height - _thumb) / 2 + _drag,
-                  child: GestureDetector(
-                    onHorizontalDragUpdate: widget.busy
-                        ? null
-                        : (DragUpdateDetails d) => setState(
-                              () => _drag = (_drag + d.delta.dx).clamp(0, travel),
-                            ),
-                    onHorizontalDragEnd: widget.busy
-                        ? null
-                        : (_) {
-                            if (_drag >= travel * 0.85) {
-                              setState(() => _drag = travel);
-                              widget.onAccepted();
-                            } else {
-                              _from = _drag;
-                              _back.forward(from: 0);
-                            }
-                          },
-                    child: Container(
-                      width: _thumb,
-                      height: _thumb,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: widget.busy
-                          ? const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.6,
-                                color: AppColors.greenDeep,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.arrow_forward_rounded,
-                              color: AppColors.greenDeep,
-                              size: 28,
-                            ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }

@@ -71,7 +71,7 @@ class OrderEmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.3,
+              letterSpacing: 0,
             ),
           ),
           if (body != null) ...<Widget>[

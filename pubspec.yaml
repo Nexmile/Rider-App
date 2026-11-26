@@ -82,6 +82,25 @@ flutter:
     - assets/icon/
     # The incoming-order ring, looped on the alarm stream while the app is open.
     - assets/sounds/
+    # The font's licence, shown on the open-source licences page.
+    - assets/fonts/plus_jakarta_sans/OFL.txt
+
+  # Plus Jakarta Sans (SIL Open Font License 1.1), the customer app's face too,
+  # bundled so it works offline and on the first frame. Latin only: Indic
+  # scripts fall back to the phone's own fonts, glyph by glyph.
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: assets/fonts/plus_jakarta_sans/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/plus_jakarta_sans/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/plus_jakarta_sans/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/plus_jakarta_sans/PlusJakartaSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/plus_jakarta_sans/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
 
 # ---------------------------------------------------------------------------
 # App launcher icons  ->  dart run flutter_launcher_icons
