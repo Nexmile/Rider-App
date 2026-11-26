@@ -125,6 +125,10 @@ class AppLocalizationsSat extends AppLocalizations {
   String get otpHelpSpam => 'ᱤᱢᱮᱞ ᱞᱟᱹᱜᱤᱫ, ᱟᱢᱟᱜ ᱥᱯᱮᱢ ᱯᱷᱚᱞᱰᱟᱨ ᱦᱚᱸ ᱧᱮᱞ ᱢᱮ᱾';
 
   @override
+  String get otpTrustLine =>
+      'Never share this code. Nexmile will never ask you for it.';
+
+  @override
   String get verifyCode => 'ᱡᱟᱸᱪ ᱢᱮ';
 
   @override
@@ -185,6 +189,22 @@ class AppLocalizationsSat extends AppLocalizations {
 
   @override
   String get profileSectionApp => 'ᱮᱯ ᱥᱮᱴᱤᱝᱥ';
+
+  @override
+  String profileRiderId(String id) {
+    return 'Rider ID $id';
+  }
+
+  @override
+  String profileMemberSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String get profileVerifiedPartner => 'Verified delivery partner';
+
+  @override
+  String get documentExpiredBadge => 'Expired';
 
   @override
   String get viewProfile => 'ᱯᱨᱚᱯᱷᱟᱭᱤᱞ ᱧᱮᱞ ᱢᱮ';

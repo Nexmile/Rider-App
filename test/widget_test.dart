@@ -9,7 +9,6 @@ import 'package:http/testing.dart';
 import 'package:nexmile_rider/app.dart';
 import 'package:nexmile_rider/core/constants/app_assets.dart';
 import 'package:nexmile_rider/core/localization/app_language.dart';
-import 'package:nexmile_rider/core/widgets/info_tile.dart';
 import 'package:nexmile_rider/core/network/api_client.dart';
 import 'package:nexmile_rider/core/network/api_exception.dart';
 import 'package:nexmile_rider/core/network/api_log.dart';
@@ -1645,7 +1644,10 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Enter a valid email address'), findsWidgets);
+      expect(
+        find.text('Enter a valid email address or 10-digit mobile number'),
+        findsWidgets,
+      );
       expect(repo.requestCount, 0);
       expect(find.byType(OtpVerificationScreen), findsNothing);
     });
@@ -1906,10 +1908,7 @@ void main() {
       // text match would pass for the wrong reason.
       expect(
         find.descendant(
-          of: find.ancestor(
-            of: find.text('Email'),
-            matching: find.byType(InfoTile),
-          ),
+          of: find.byKey(const ValueKey<String>('profile-email')),
           matching: find.text('Not added'),
         ),
         findsOneWidget,
@@ -2004,13 +2003,21 @@ void main() {
       expect(_controller.isSignedIn, isFalse);
     });
 
+    testWidgets('the header names the rider, their number and the badge',
+        (WidgetTester tester) async {
+      await openProfile(tester);
+      expect(find.textContaining('Rider ID'), findsOneWidget);
+      // Approved documents earn the badge under the name.
+      expect(find.text('Verified delivery partner'), findsOneWidget);
+    });
+
     testWidgets('the header shows the work numbers, and payouts open from it',
         (WidgetTester tester) async {
       await openProfile(tester);
       // Deliveries and rating from the rider record, in the header.
       expect(find.text('12'), findsOneWidget);
       expect(find.text('4.8'), findsOneWidget);
-      expect(find.text('Your details'), findsOneWidget);
+      expect(find.text('YOUR DETAILS'), findsOneWidget);
 
       final Finder payouts = find.text('Payouts');
       await tester.scrollUntilVisible(

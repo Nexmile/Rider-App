@@ -126,6 +126,10 @@ class AppLocalizationsTa extends AppLocalizations {
       'மின்னஞ்சல் என்றால், ஸ்பேம் ஃபோல்டரையும் பாருங்கள்.';
 
   @override
+  String get otpTrustLine =>
+      'Never share this code. Nexmile will never ask you for it.';
+
+  @override
   String get verifyCode => 'சரிபார்க்கவும்';
 
   @override
@@ -185,6 +189,22 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get profileSectionApp => 'ஆப் அமைப்புகள்';
+
+  @override
+  String profileRiderId(String id) {
+    return 'Rider ID $id';
+  }
+
+  @override
+  String profileMemberSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String get profileVerifiedPartner => 'Verified delivery partner';
+
+  @override
+  String get documentExpiredBadge => 'Expired';
 
   @override
   String get viewProfile => 'சுயவிவரத்தைப் பார்';

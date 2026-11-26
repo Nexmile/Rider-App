@@ -126,6 +126,10 @@ class AppLocalizationsSa extends AppLocalizations {
       'विद्युत्पत्रेण प्रेषितः चेत् स्पैम्-कोशम् अपि पश्यतु।';
 
   @override
+  String get otpTrustLine =>
+      'Never share this code. Nexmile will never ask you for it.';
+
+  @override
   String get verifyCode => 'सत्यापयतु';
 
   @override
@@ -185,6 +189,22 @@ class AppLocalizationsSa extends AppLocalizations {
 
   @override
   String get profileSectionApp => 'अनुप्रयोग-सेटिंग्स्';
+
+  @override
+  String profileRiderId(String id) {
+    return 'Rider ID $id';
+  }
+
+  @override
+  String profileMemberSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String get profileVerifiedPartner => 'Verified delivery partner';
+
+  @override
+  String get documentExpiredBadge => 'Expired';
 
   @override
   String get viewProfile => 'परिचयपत्रं पश्यतु';

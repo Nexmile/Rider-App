@@ -125,6 +125,10 @@ class AppLocalizationsNe extends AppLocalizations {
   String get otpHelpSpam => 'इमेलमा पठाइएको भए स्प्याम फोल्डर पनि हेर्नुहोस्।';
 
   @override
+  String get otpTrustLine =>
+      'Never share this code. Nexmile will never ask you for it.';
+
+  @override
   String get verifyCode => 'प्रमाणित गर्नुहोस्';
 
   @override
@@ -185,6 +189,22 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get profileSectionApp => 'एप सेटिङ';
+
+  @override
+  String profileRiderId(String id) {
+    return 'Rider ID $id';
+  }
+
+  @override
+  String profileMemberSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String get profileVerifiedPartner => 'Verified delivery partner';
+
+  @override
+  String get documentExpiredBadge => 'Expired';
 
   @override
   String get viewProfile => 'प्रोफाइल हेर्नुहोस्';

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/design/design.dart';
+
 import '../../../core/localization/app_language.dart';
 import '../../../core/localization/locale_controller.dart';
 import '../../../core/router/app_router.dart';
@@ -99,106 +101,129 @@ class _LoginScreenState extends State<LoginScreen> {
           // Tapping the background dismisses the keyboard.
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.opaque,
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              children: <Widget>[
-                LoginHero(
-                  height: heroHeight,
-                  tagline: l10n.tagline,
-                  topInset: media.padding.top,
-                  dishes: kRiderHeroDishes,
-                  badge: l10n.loginHeroBadge,
-                ),
-                // The form sheet rides up over the bottom of the picture.
-                Transform.translate(
-                  offset: const Offset(0, -24),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(28)),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        24,
-                        26,
-                        24,
-                        24 + media.padding.bottom,
+          child: Column(
+            children: <Widget>[
+              Expanded(
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    children: <Widget>[
+                      LoginHero(
+                        height: heroHeight,
+                        tagline: l10n.tagline,
+                        topInset: media.padding.top,
+                        dishes: kRiderHeroDishes,
+                        badge: l10n.loginHeroBadge,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: <Widget>[
-                          Text(
-                            l10n.loginHeadline,
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0,
-                              height: 1.2,
-                            ),
+                      // The form sheet rides up over the bottom of the picture.
+                      Transform.translate(
+                        offset: const Offset(0, -24),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface,
+                            borderRadius:
+                                const BorderRadius.vertical(top: Radius.circular(28)),
                           ),
-                          const SizedBox(height: 22),
-                          _LabelledRule(text: l10n.loginOrSignUp),
-                          const SizedBox(height: 18),
-                          Form(
-                            key: _formKey,
-                            child: AutofillGroup(
-                              child: AuthTextField(
-                                label: l10n.emailLabel,
-                                controller: _input,
-                                hint: l10n.loginEmailHint,
-                                prefixIcon: Icons.mail_outline_rounded,
-                                keyboardType: TextInputType.emailAddress,
-                                textInputAction: TextInputAction.done,
-                                autofillHints: const <String>[
-                                  AutofillHints.email,
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              24,
+                              26,
+                              24,
+                              24,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                Text(
+                                  l10n.loginHeadline,
+                                  textAlign: TextAlign.center,
+                                  style: theme.textTheme.headlineSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0,
+                                    height: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 22),
+                                _LabelledRule(text: l10n.loginOrSignUp),
+                                const SizedBox(height: 18),
+                                Form(
+                                  key: _formKey,
+                                  child: AutofillGroup(
+                                    child: AuthTextField(
+                                      label: l10n.emailOrPhoneLabel,
+                                      controller: _input,
+                                      hint: l10n.emailOrPhoneHint,
+                                      prefixIcon: Icons.person_outline_rounded,
+                                      keyboardType: TextInputType.emailAddress,
+                                      textInputAction: TextInputAction.done,
+                                      autofillHints: const <String>[
+                                        AutofillHints.email,
+                                      ],
+                                      enabled: !isBusy,
+                                      validator: (String? value) =>
+                                          LoginIdentifier.tryParse(value) == null
+                                              ? l10n.invalidEmailOrPhone
+                                              : null,
+                                      onSubmitted: (_) => isBusy ? null : _submit(),
+                                      onChanged: (_) {
+                                        if (_failure != null) {
+                                          setState(() => _failure = null);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                if (_failure != null) ...<Widget>[
+                                  const SizedBox(height: 14),
+                                  AuthErrorBanner(message: _failure!.message(l10n)),
                                 ],
-                                enabled: !isBusy,
-                                validator: (String? value) =>
-                                    LoginIdentifier.tryParse(value) == null
-                                        ? l10n.invalidEmail
-                                        : null,
-                                onSubmitted: (_) => isBusy ? null : _submit(),
-                                onChanged: (_) {
-                                  if (_failure != null) {
-                                    setState(() => _failure = null);
-                                  }
-                                },
-                              ),
+                                const SizedBox(height: 8),
+                                _LanguageRow(
+                                  language: language,
+                                  action: l10n.changeLanguage,
+                                  onTap: isBusy ? null : _changeLanguage,
+                                ),
+                                const SizedBox(height: 20),
+                                // The OTP flow is shared byte-for-byte with the
+                                // customer app; only `intended_role` differs. Saying
+                                // which app this is stops a customer creating a
+                                // rider account by downloading the wrong one.
+                                _LegalNote(text: l10n.loginRiderNote),
+                                const SizedBox(height: 8),
+                                _LegalNote(text: l10n.agreeToTermsOnContinue),
+                              ],
                             ),
                           ),
-                          if (_failure != null) ...<Widget>[
-                            const SizedBox(height: 14),
-                            AuthErrorBanner(message: _failure!.message(l10n)),
-                          ],
-                          const SizedBox(height: 8),
-                          _LanguageRow(
-                            language: language,
-                            action: l10n.changeLanguage,
-                            onTap: isBusy ? null : _changeLanguage,
-                          ),
-                          const SizedBox(height: 14),
-                          AuthSubmitButton(
-                            label: l10n.continueLabel,
-                            isBusy: isBusy,
-                            onPressed: _submit,
-                          ),
-                          const SizedBox(height: 20),
-                          // The OTP flow is shared byte-for-byte with the
-                          // customer app; only `intended_role` differs. Saying
-                          // which app this is stops a customer creating a
-                          // rider account by downloading the wrong one.
-                          _LegalNote(text: l10n.loginRiderNote),
-                          const SizedBox(height: 8),
-                          _LegalNote(text: l10n.agreeToTermsOnContinue),
-                        ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              // Pinned under the scroll, so the action is always in reach and
+              // rides up with the keyboard.
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  border: Border(
+                    top: BorderSide(color: context.nx.hairline),
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    12,
+                    24,
+                    12 + media.viewPadding.bottom,
+                  ),
+                  child: AuthSubmitButton(
+                    label: l10n.continueLabel,
+                    isBusy: isBusy,
+                    onPressed: _submit,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

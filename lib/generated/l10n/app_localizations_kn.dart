@@ -126,6 +126,10 @@ class AppLocalizationsKn extends AppLocalizations {
       'ಇಮೇಲ್ ಆಗಿದ್ದರೆ, ನಿಮ್ಮ ಸ್ಪ್ಯಾಮ್ ಫೋಲ್ಡರ್‌ನಲ್ಲೂ ನೋಡಿ.';
 
   @override
+  String get otpTrustLine =>
+      'Never share this code. Nexmile will never ask you for it.';
+
+  @override
   String get verifyCode => 'ಪರಿಶೀಲಿಸಿ';
 
   @override
@@ -185,6 +189,22 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get profileSectionApp => 'ಆ್ಯಪ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು';
+
+  @override
+  String profileRiderId(String id) {
+    return 'Rider ID $id';
+  }
+
+  @override
+  String profileMemberSince(String date) {
+    return 'Member since $date';
+  }
+
+  @override
+  String get profileVerifiedPartner => 'Verified delivery partner';
+
+  @override
+  String get documentExpiredBadge => 'Expired';
 
   @override
   String get viewProfile => 'ಪ್ರೊಫೈಲ್ ನೋಡಿ';

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/design/design.dart';
 import '../../../core/router/app_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../generated/l10n/app_localizations.dart';
@@ -34,6 +35,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   Timer? _ticker;
   int _secondsLeft = 0;
+
+  /// The length of the current wait, for the ring that runs down with it.
+  int _cooldownTotal = 1;
   AuthFailure? _failure;
   bool _incomplete = false;
 
@@ -54,7 +58,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   void _startCooldown(int seconds) {
     _ticker?.cancel();
-    setState(() => _secondsLeft = seconds);
+    setState(() {
+      _secondsLeft = seconds;
+      _cooldownTotal = seconds < 1 ? 1 : seconds;
+    });
     if (seconds <= 0) return;
     _ticker = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       if (!mounted) {
@@ -185,10 +192,35 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 )
               : Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Text(
-                    l10n.resendCodeIn(_secondsLeft),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      // Runs down with the wait, so "when can I ask again?"
+                      // is answered at a glance.
+                      SizedBox.square(
+                        dimension: 18,
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween<double>(
+                            end: _secondsLeft / _cooldownTotal,
+                          ),
+                          duration: const Duration(milliseconds: 900),
+                          builder: (BuildContext context, double v, _) =>
+                              CircularProgressIndicator(
+                            value: v,
+                            strokeWidth: 2.4,
+                            backgroundColor: context.nx.hairline,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: NxSpace.xs),
+                      Flexible(
+                        child: Text(
+                          l10n.resendCodeIn(_secondsLeft),
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
         ),
@@ -201,6 +233,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ],
         const SizedBox(height: 20),
         _HelpCard(byEmail: byEmail),
+        const SizedBox(height: NxSpace.md),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Icon(Icons.lock_outline_rounded, size: 15, color: context.nx.inkMuted),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                l10n.otpTrustLine,
+                textAlign: TextAlign.center,
+                style: NxType.caption.copyWith(color: context.nx.inkMuted),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }

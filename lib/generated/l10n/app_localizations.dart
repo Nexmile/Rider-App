@@ -344,6 +344,12 @@ abstract class AppLocalizations {
   /// **'For email, look in your spam folder too.'**
   String get otpHelpSpam;
 
+  /// Small line at the foot of the code screen, under the help card.
+  ///
+  /// In en, this message translates to:
+  /// **'Never share this code. Nexmile will never ask you for it.'**
+  String get otpTrustLine;
+
   /// Primary button on the code verification screen.
   ///
   /// In en, this message translates to:
@@ -451,6 +457,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'App settings'**
   String get profileSectionApp;
+
+  /// Under the rider's name on the profile: their rider number.
+  ///
+  /// In en, this message translates to:
+  /// **'Rider ID {id}'**
+  String profileRiderId(String id);
+
+  /// Under the rider's name on the profile: when they joined, as a month and year.
+  ///
+  /// In en, this message translates to:
+  /// **'Member since {date}'**
+  String profileMemberSince(String date);
+
+  /// Green badge under the rider's name once their documents are approved.
+  ///
+  /// In en, this message translates to:
+  /// **'Verified delivery partner'**
+  String get profileVerifiedPartner;
+
+  /// Red badge beside a licence or insurance date that has passed. One short word.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get documentExpiredBadge;
 
   /// Dashboard action that opens the profile screen.
   ///

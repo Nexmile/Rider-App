@@ -42,8 +42,9 @@ class GradientButton extends StatelessWidget {
           boxShadow: enabled
               ? <BoxShadow>[
                   BoxShadow(
-                    color: AppColors.greenDeep.withValues(alpha: 0.28),
-                    blurRadius: 18,
+                    color: AppColors.greenDeep.withValues(alpha: 0.22),
+                    blurRadius: 16,
+                    spreadRadius: -6,
                     offset: const Offset(0, 8),
                   ),
                 ]

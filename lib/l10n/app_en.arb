@@ -157,6 +157,8 @@
   "@otpHelpWait": { "description": "Help card tip about waiting for the code and the resend timer." },
   "otpHelpSpam": "For email, look in your spam folder too.",
   "@otpHelpSpam": { "description": "Help card tip, shown only when the code was sent by email." },
+  "otpTrustLine": "Never share this code. Nexmile will never ask you for it.",
+  "@otpTrustLine": { "description": "Small line at the foot of the code screen, under the help card." },
 
   "verifyCode": "Verify",
   "@verifyCode": {
@@ -241,6 +243,20 @@
   "@profileSectionWork": { "description": "Heading over verification, vehicle and payouts on the profile page." },
   "profileSectionApp": "App settings",
   "@profileSectionApp": { "description": "Heading over the app language row on the profile page." },
+  "profileRiderId": "Rider ID {id}",
+  "@profileRiderId": {
+    "description": "Under the rider's name on the profile: their rider number.",
+    "placeholders": { "id": { "type": "String", "example": "42" } }
+  },
+  "profileMemberSince": "Member since {date}",
+  "@profileMemberSince": {
+    "description": "Under the rider's name on the profile: when they joined, as a month and year.",
+    "placeholders": { "date": { "type": "String", "example": "March 2026" } }
+  },
+  "profileVerifiedPartner": "Verified delivery partner",
+  "@profileVerifiedPartner": { "description": "Green badge under the rider's name once their documents are approved." },
+  "documentExpiredBadge": "Expired",
+  "@documentExpiredBadge": { "description": "Red badge beside a licence or insurance date that has passed. One short word." },
 
   "viewProfile": "View profile",
   "@viewProfile": {
