@@ -1854,7 +1854,7 @@ void main() {
         session: _testSession(),
       );
       await _settleSplash(tester);
-      await tester.tap(find.byIcon(Icons.person_outline_rounded).first);
+      await tester.tap(find.byKey(const ValueKey<String>('open-profile')).first);
       await tester.pumpAndSettle();
       return repo;
     }
@@ -1969,7 +1969,7 @@ void main() {
         session: _testSession(),
       );
       await _settleSplash(tester);
-      await tester.tap(find.byIcon(Icons.person_outline_rounded).first);
+      await tester.tap(find.byKey(const ValueKey<String>('open-profile')).first);
       await tester.pumpAndSettle();
 
       // The fake throws directly rather than going through ApiClient, so the
@@ -2502,10 +2502,15 @@ void main() {
       // From a position up to 25 seconds old, so never shown as exact.
       expect(find.text('About 240 m from you'), findsOneWidget);
       expect(find.text('Drop: Anna Nagar'), findsOneWidget);
-      expect(
-        find.text('Estimated earnings · 3 items · Collect ₹430 cash'),
-        findsOneWidget,
-      );
+      // Each fact in its own chip; cash, the one the rider is liable for,
+      // among them.
+      Finder onCard(String text) => find.descendant(
+            of: find.byType(IncomingOfferCard),
+            matching: find.text(text),
+          );
+      expect(onCard('Estimated earnings'), findsOneWidget);
+      expect(onCard('3 items'), findsOneWidget);
+      expect(onCard('Collect ₹430 cash'), findsOneWidget);
       // No customer address until the order is won.
       expect(find.text('12 Anna Nagar, Madurai'), findsNothing);
 
@@ -2725,6 +2730,17 @@ void main() {
       await _pumpLive(tester);
 
       expect(rider.assigned!.status, OrderStatus.pickedUp);
+      // Back up to the tracker at the top, past the stops and the slider.
+      await tester.drag(
+        find
+            .descendant(
+              of: find.byType(ActiveDeliveryScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+        const Offset(0, 3000),
+      );
+      await _pumpLive(tester);
       expect(find.text('Deliver to the customer'), findsWidgets);
       // Once the food is in the bag it has to be delivered — the API refuses a
       // release, so the button is gone rather than offered and then rejected.
@@ -4360,7 +4376,7 @@ void main() {
       );
       await _settleSplash(tester);
 
-      final Finder amount = find.text('₹6626');
+      final Finder amount = find.text('₹6,626');
       await tester.ensureVisible(amount);
       await tester.pumpAndSettle();
       expect(amount, findsOneWidget);

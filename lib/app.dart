@@ -11,7 +11,7 @@ import 'core/push/push_destination.dart';
 import 'core/push/push_service.dart';
 import 'core/router/app_router.dart';
 import 'core/services/preferences_service.dart';
-import 'core/theme/app_theme.dart';
+import 'core/design/app_theme.dart';
 import 'core/theme/app_typography.dart';
 import 'core/widgets/exit_dialog.dart';
 import 'features/auth/state/auth_controller.dart';
@@ -276,8 +276,8 @@ class _NexmileRiderAppState extends State<NexmileRiderApp>
             title: 'Nexmile Rider',
             debugShowCheckedModeBanner: false,
 
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
+            theme: NxTheme.light,
+            darkTheme: NxTheme.dark,
             themeMode: ThemeMode.system,
 
             locale: controller.locale,

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../motion/app_motion.dart';
+import '../design/app_shadows.dart';
 import 'app_colors.dart';
+import '../design/app_tokens.dart';
 
 /// Depth, for a palette that has to work on both grounds.
 ///
@@ -24,117 +26,51 @@ class AppSurface {
   static const double radiusLarge = 28;
 
   /// Resting elevation for a card in a list.
-  static List<BoxShadow> card(BuildContext context) {
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
-    if (dark) {
-      // On a near-black ground a shadow is nearly invisible, so dark mode gets
-      // its separation from the surface colour and a hairline instead. What is
-      // left here is only enough to stop a card sitting flush.
-      return const <BoxShadow>[
-        BoxShadow(
-          color: Color(0x66000000),
-          blurRadius: 18,
-          offset: Offset(0, 6),
-        ),
-      ];
-    }
-    return <BoxShadow>[
-      BoxShadow(
-        color: AppColors.greenDeep.withValues(alpha: 0.055),
-        blurRadius: 20,
-        offset: const Offset(0, 8),
-      ),
-      BoxShadow(
-        color: AppColors.inkStrong.withValues(alpha: 0.035),
-        blurRadius: 3,
-        offset: const Offset(0, 1),
-      ),
-    ];
-  }
+  // Everything below now reads the design system's tokens, so screens not
+  // yet moved onto the Nx components already get its white cards and soft
+  // shadows instead of tinted panels on a ledge.
 
-  /// The one card on a screen that matters most — the duty card, the order in
-  /// hand. Lifted further and tinted with the accent it carries.
-  static List<BoxShadow> hero(BuildContext context, Color accent) {
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
-    return <BoxShadow>[
-      BoxShadow(
-        color: accent.withValues(alpha: dark ? 0.20 : 0.16),
-        blurRadius: 30,
-        offset: const Offset(0, 12),
-      ),
-      if (!dark)
-        BoxShadow(
-          color: AppColors.inkStrong.withValues(alpha: 0.04),
-          blurRadius: 4,
-          offset: const Offset(0, 2),
-        ),
-    ];
-  }
+  static List<BoxShadow> card(BuildContext context) => context.nx.cardShadow;
 
-  /// Border colour for a card that is not carrying an accent.
-  ///
-  /// Nearly invisible in light — the shadow is doing the separating — and
-  /// doing most of the work in dark, where a shadow cannot.
-  static Color line(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return theme.brightness == Brightness.dark
-        ? theme.colorScheme.outline
-        : theme.colorScheme.outline.withValues(alpha: 0.55);
-  }
+  /// A glow in [accent] on the day palette; nothing at night.
+  static List<BoxShadow> hero(BuildContext context, Color accent) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? NxShadows.none
+          : NxShadows.glow(accent);
 
-  /// A very soft wash of [accent] over the card surface.
-  ///
-  /// Used where a card should read as *live* rather than merely present: the
-  /// duty card while online, the cash banner on a delivery. Kept under 8% so
-  /// text contrast is unaffected in either theme.
+  static Color line(BuildContext context) => context.nx.hairline;
+
+  /// Kept for older call sites: a plain card colour, no tint.
   static Gradient wash(BuildContext context, Color accent) {
-    final bool dark = Theme.of(context).brightness == Brightness.dark;
-    final Color surface = Theme.of(context).colorScheme.surfaceContainerLow;
-    return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: <Color>[
-        Color.alphaBlend(accent.withValues(alpha: dark ? 0.14 : 0.09), surface),
-        Color.alphaBlend(accent.withValues(alpha: dark ? 0.04 : 0.02), surface),
-      ],
-    );
+    final Color surface = context.nx.surface;
+    return LinearGradient(colors: <Color>[surface, surface]);
   }
 
-  /// The standard card decoration: surface, radius, hairline, soft lift.
+  /// A white card. An [accent] is an outline in that colour, not a tinted
+  /// panel: colour is kept for meaning.
   static BoxDecoration decoration(
     BuildContext context, {
     Color? accent,
     double? radius,
     bool elevated = true,
   }) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
     final BorderRadius shape =
         BorderRadius.circular(radius ?? AppSurface.radius);
-
     return BoxDecoration(
-      color: accent == null ? theme.colorScheme.surfaceContainerLow : null,
-      gradient: accent == null ? null : wash(context, accent),
+      color: t.surface,
       borderRadius: shape,
-      border: Border.all(
-        color: accent == null
-            ? line(context)
-            : accent.withValues(alpha: 0.42),
-        width: accent == null ? 1 : 1.4,
-      ),
-      boxShadow: !elevated
-          ? null
-          : accent == null
-              ? card(context)
-              : hero(context, accent),
+      border: accent != null
+          ? Border.all(color: accent.withValues(alpha: 0.75), width: 1.6)
+          : dark
+              ? Border.all(color: t.border, width: 1.5)
+              : null,
+      boxShadow: elevated ? t.cardShadow : null,
     );
   }
 }
 
-/// A card with the app's standard depth, radius and optional accent wash.
-///
-/// Exists so the treatment lives in one place: every screen that needs "a
-/// surface holding some content" gets the same corner, the same lift and the
-/// same hairline, and changing that is one edit rather than fifteen.
 class SurfaceCard extends StatelessWidget {
   const SurfaceCard({
     super.key,

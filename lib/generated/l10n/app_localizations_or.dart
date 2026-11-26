@@ -519,6 +519,27 @@ class AppLocalizationsOr extends AppLocalizations {
   String get riderHomeTitle => 'ଡେଲିଭରି ପାଇଁ ପ୍ରସ୍ତୁତ';
 
   @override
+  String get shiftTodayEarnings => 'Today\'s earnings';
+
+  @override
+  String get shiftOrdersToday => 'Orders today';
+
+  @override
+  String get shiftCashCollected => 'Cash collected';
+
+  @override
+  String get shiftDetails => 'Details';
+
+  @override
+  String get dutyPillOn => 'ON';
+
+  @override
+  String get dutyPillOff => 'OFF';
+
+  @override
+  String get dutyPillBreak => 'BREAK';
+
+  @override
   String get riderHomeSubtitle =>
       'ଅନଲାଇନ ହୁଅନ୍ତୁ, ଆମେ ଆପଣଙ୍କୁ ନିକଟର ଡେଲିଭରି ପଠାଇବୁ।';
 

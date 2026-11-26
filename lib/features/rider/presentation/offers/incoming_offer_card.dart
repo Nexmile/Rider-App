@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/swipe_to_confirm.dart';
+import '../../../../core/design/design.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/offer_models.dart';
 import '../../data/order_models.dart';
@@ -39,7 +39,7 @@ class OfferOverlay extends StatelessWidget {
               opacity: a,
               child: SlideTransition(
                 position: Tween<Offset>(
-                  begin: const Offset(0, 0.08),
+                  begin: const Offset(0, 0.25),
                   end: Offset.zero,
                 ).animate(a),
                 child: child,
@@ -82,6 +82,13 @@ class _IncomingOfferCardState extends State<IncomingOfferCard> {
   static Duration _atLeastOneSecond(Duration d) =>
       d.inMilliseconds < 1000 ? const Duration(seconds: 1) : d;
 
+  @override
+  void initState() {
+    super.initState();
+    // On top of the ringer's own pattern: one firm knock the moment it lands.
+    HapticFeedback.heavyImpact();
+  }
+
   Future<void> _accept() async {
     final OfferController offers = context.read<OfferController>();
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
@@ -117,162 +124,201 @@ class _IncomingOfferCardState extends State<IncomingOfferCard> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final OfferController controller = context.watch<OfferController>();
     final OrderOffer offer = widget.offer;
     final Duration left = offer.remaining();
     final double fraction =
         (left.inMilliseconds / _window.inMilliseconds).clamp(0.0, 1.0);
+    final MediaQueryData media = MediaQuery.of(context);
+    final Color ink = t.onNight;
+    final Color soft = ink.withValues(alpha: 0.7);
 
     final String? fromYou = formatDistance(l10n, offer.pickupDistanceMetres);
     final String? trip = formatDistance(l10n, offer.deliveryDistanceMetres);
-    final String summary = <String>[
-      l10n.offerEstimatedEarnings,
-      if (offer.itemCount != null) l10n.offerItems('${offer.itemCount}'),
-      // Cash is the one figure the rider is personally liable for, so it is
-      // on the card even though it makes the line longer.
-      if (offer.collectCash > 0)
-        l10n.offerCollectCash(formatAmount(l10n, offer.collectCash)),
-    ].join(' · ');
 
-    // A compact card over the dimmed app, the way ride apps put up an
-    // incoming request: the app is still there behind it, the decision is
+    // A dark sheet rising over the dimmed app, the way an incoming call
+    // takes the screen: the app is still there behind it, the decision is
     // all that is lit.
     return Material(
-      color: Colors.black.withValues(alpha: 0.72),
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
-                decoration: BoxDecoration(
-                  color: _card,
-                  borderRadius: BorderRadius.circular(22),
-                  // A green edge and glow: the one lit thing over the dimmed
-                  // app, the way an incoming call is.
-                  border: Border.all(
-                    color: const Color(0xFF3DBE3D).withValues(alpha: 0.55),
-                    width: 1.5,
-                  ),
-                  boxShadow: <BoxShadow>[
-                    BoxShadow(
-                      color: const Color(0xFF3DBE3D).withValues(alpha: 0.28),
-                      blurRadius: 34,
-                      spreadRadius: 2,
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 30,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
+      color: Colors.black.withValues(alpha: 0.55),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 560,
+            maxHeight: media.size.height - media.padding.top - NxSpace.xl,
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: t.nightDeep,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(32)),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  blurRadius: 50,
+                  offset: const Offset(0, -20),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Row(
+              ],
+            ),
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                NxSpace.lg,
+                NxSpace.sm,
+                NxSpace.lg,
+                NxSpace.xl + media.padding.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: ink.withValues(alpha: 0.22),
+                        borderRadius: NxRadius.pillAll,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: NxSpace.lg),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            _NewOrderPill(label: l10n.offerTitle),
+                            const SizedBox(height: NxSpace.xs),
+                            Text(
+                              l10n.offerEstimatedEarnings,
+                              style: NxType.bodySmall.copyWith(
+                                color: soft,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _Countdown(
+                        fraction: fraction,
+                        seconds: (left.inMilliseconds / 1000).ceil(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: NxSpace.xxs),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: NxMoneyText(
+                      offer.earnings,
+                      colour: ink,
+                      style: NxType.display.copyWith(fontSize: 58),
+                    ),
+                  ),
+                  const SizedBox(height: NxSpace.md),
+                  Wrap(
+                    spacing: NxSpace.xs,
+                    runSpacing: NxSpace.xs,
+                    children: <Widget>[
+                      if (offer.itemCount != null)
+                        _Chip(text: l10n.offerItems('${offer.itemCount}')),
+                      if (trip != null) _Chip(text: l10n.offerTrip(trip)),
+                      // Cash is the one figure the rider is personally
+                      // liable for, so it is the one chip in colour.
+                      if (offer.collectCash > 0)
+                        _Chip(
+                          text: l10n.offerCollectCash(
+                            formatAmount(l10n, offer.collectCash),
+                          ),
+                          fill: t.action,
+                          ink: t.onAction,
+                        ),
+                      if (offer.estimatedPrepMinutes != null &&
+                          offer.estimatedPrepMinutes! > 0)
+                        _Chip(
+                          text: l10n.offerFoodReadyIn(
+                            '${offer.estimatedPrepMinutes}',
+                          ),
+                          fill: t.lime.withValues(alpha: 0.14),
+                          ink: t.lime,
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: NxSpace.lg),
+                  Container(
+                    padding: const EdgeInsets.all(NxSpace.md),
+                    decoration: BoxDecoration(
+                      color: ink.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
                       children: <Widget>[
-                        _NewOrderPill(label: l10n.offerTitle),
-                        const Spacer(),
-                        _Countdown(
-                          fraction: fraction,
-                          seconds: (left.inMilliseconds / 1000).ceil(),
+                        _Stop(
+                          marker: _Marker.pickup,
+                          title: l10n.offerPickupLine(offer.restaurant),
+                          subtitle:
+                              fromYou == null ? null : l10n.offerFromYou(fromYou),
+                          connector: true,
+                        ),
+                        _Stop(
+                          marker: _Marker.drop,
+                          title: l10n.offerDropLine(offer.dropoffArea ?? '—'),
+                          subtitle: trip == null ? null : l10n.offerTrip(trip),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 18),
-                    Text(
-                      formatAmount(l10n, offer.earnings),
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      summary,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: _muted,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Divider(height: 1, color: Color(0xFF3A3A3A)),
-                    const SizedBox(height: 18),
-                    _Stop(
-                      colour: const Color(0xFF6AA6F8),
-                      title: l10n.offerPickupLine(offer.restaurant),
-                      subtitle: fromYou == null ? null : l10n.offerFromYou(fromYou),
-                    ),
-                    // The route between the two stops, dotted like a map's.
-                    const Padding(
-                      padding: EdgeInsetsDirectional.only(start: 8),
-                      child: _RouteDots(),
-                    ),
-                    _Stop(
-                      colour: const Color(0xFFF07A7A),
-                      title: l10n.offerDropLine(offer.dropoffArea ?? '—'),
-                      subtitle: trip == null ? null : l10n.offerTrip(trip),
-                    ),
-                    if (offer.estimatedPrepMinutes != null &&
-                        offer.estimatedPrepMinutes! > 0) ...<Widget>[
-                      const SizedBox(height: 14),
-                      Text(
-                        l10n.offerFoodReadyIn('${offer.estimatedPrepMinutes}'),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: _muted,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 22),
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 200),
-                      child: _choosingReason
-                          ? _RejectReasons(
-                              onChosen: _reject,
-                              onBack: () =>
-                                  setState(() => _choosingReason = false),
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                SwipeToConfirm(
-                                  key: const ValueKey<String>('offer-swipe'),
-                                  label: controller.isAccepting
-                                      ? l10n.offerAccepting
-                                      : l10n.offerSwipeToAccept,
-                                  busy: controller.isAccepting,
-                                  onConfirmed: _accept,
-                                ),
-                                const SizedBox(height: 12),
-                                OutlinedButton(
-                                  onPressed: controller.isAccepting
-                                      ? null
-                                      : () => setState(
-                                            () => _choosingReason = true,
-                                          ),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    side: const BorderSide(
-                                      color: Color(0xFF4A4A4A),
-                                      width: 1.4,
-                                    ),
-                                    minimumSize: const Size.fromHeight(56),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    textStyle: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: NxSpace.lg),
+                  AnimatedSize(
+                    duration: AppMotion.quick,
+                    child: _choosingReason
+                        ? _RejectReasons(
+                            onChosen: _reject,
+                            onBack: () =>
+                                setState(() => _choosingReason = false),
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: <Widget>[
+                              NxSwipeButton(
+                                key: const ValueKey<String>('offer-swipe'),
+                                label: controller.isAccepting
+                                    ? l10n.offerAccepting
+                                    : l10n.offerSwipeToAccept,
+                                busy: controller.isAccepting,
+                                onConfirmed: _accept,
+                              ),
+                              const SizedBox(height: NxSpace.sm),
+                              OutlinedButton(
+                                onPressed: controller.isAccepting
+                                    ? null
+                                    : () => setState(
+                                          () => _choosingReason = true,
+                                        ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: ink.withValues(alpha: 0.85),
+                                  side: BorderSide(
+                                    color: ink.withValues(alpha: 0.16),
+                                    width: 1.5,
                                   ),
-                                  child: Text(l10n.offerReject),
+                                  minimumSize: const Size.fromHeight(52),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  textStyle: NxType.button.copyWith(
+                                    fontSize: 15,
+                                  ),
                                 ),
-                              ],
-                            ),
-                    ),
-                  ],
-                ),
+                                child: Text(l10n.offerReject),
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -282,10 +328,7 @@ class _IncomingOfferCardState extends State<IncomingOfferCard> {
   }
 }
 
-const Color _card = Color(0xFF1C1C1C);
-const Color _muted = Color(0xFFB5B5B0);
-
-/// "New order", in a green-tinted pill.
+/// "New order", lime on a lime-tinted pill.
 class _NewOrderPill extends StatelessWidget {
   const _NewOrderPill({required this.label});
 
@@ -293,27 +336,33 @@ class _NewOrderPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF143D14),
-        borderRadius: BorderRadius.circular(10),
+        color: t.lime.withValues(alpha: 0.12),
+        borderRadius: NxRadius.pillAll,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const Icon(
-            Icons.delivery_dining_rounded,
-            size: 18,
-            color: Color(0xFF3DBE3D),
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: t.lime, shape: BoxShape.circle),
           ),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: const Color(0xFF3DBE3D),
-                  fontWeight: FontWeight.w700,
-                ),
+          Flexible(
+            child: Text(
+              label.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: NxType.caption.copyWith(
+                color: t.lime,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.7,
+              ),
+            ),
           ),
         ],
       ),
@@ -321,7 +370,35 @@ class _NewOrderPill extends StatelessWidget {
   }
 }
 
-/// The small ring that runs out: green while there is time, amber, then red.
+/// A fact about the job, in a dark chip; cash gets the orange one.
+class _Chip extends StatelessWidget {
+  const _Chip({required this.text, this.fill, this.ink});
+
+  final String text;
+  final Color? fill;
+  final Color? ink;
+
+  @override
+  Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: fill ?? t.onNight.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        text,
+        style: NxType.bodySmall.copyWith(
+          color: ink ?? t.onNight,
+          fontWeight: fill == null ? FontWeight.w700 : FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+/// The ring that runs out: lime while there is time, orange, then red.
 class _Countdown extends StatelessWidget {
   const _Countdown({required this.fraction, required this.seconds});
 
@@ -330,26 +407,29 @@ class _Countdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
     final Color colour = fraction > 0.5
-        ? const Color(0xFF3DBE3D)
+        ? t.lime
         : fraction > 0.2
-            ? AppColors.orangeLight
-            : const Color(0xFFE5484D);
+            ? t.action
+            : NxColors.red500;
 
     return SizedBox.square(
-      dimension: 56,
+      dimension: 64,
       child: CustomPaint(
-        painter: _RingPainter(fraction: fraction, colour: colour),
+        painter: _RingPainter(
+          fraction: fraction,
+          colour: colour,
+          track: t.onNight.withValues(alpha: 0.12),
+        ),
         child: Center(
           child: Text(
             '$seconds',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontFeatures: const <FontFeature>[
-                    FontFeature.tabularFigures(),
-                  ],
-                ),
+            style: NxType.title.copyWith(
+              color: t.onNight,
+              fontWeight: FontWeight.w800,
+              fontFeatures: NxType.tabular,
+            ),
           ),
         ),
       ),
@@ -358,22 +438,27 @@ class _Countdown extends StatelessWidget {
 }
 
 class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.fraction, required this.colour});
+  const _RingPainter({
+    required this.fraction,
+    required this.colour,
+    required this.track,
+  });
 
   final double fraction;
   final Color colour;
+  final Color track;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const double stroke = 4;
-    final Rect rect = (Offset.zero & size).deflate(stroke / 2);
+    const double stroke = 5;
+    final Rect rect = (Offset.zero & size).deflate(stroke / 2 + 1);
     canvas.drawArc(
       rect,
       0,
       math.pi * 2,
       false,
       Paint()
-        ..color = colour.withValues(alpha: 0.22)
+        ..color = track
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke,
     );
@@ -395,81 +480,119 @@ class _RingPainter extends CustomPainter {
       old.fraction != fraction || old.colour != colour;
 }
 
-/// One end of the trip: a coloured marker, the place, how far.
-class _Stop extends StatelessWidget {
-  const _Stop({required this.colour, required this.title, this.subtitle});
+enum _Marker { pickup, drop }
 
-  final Color colour;
+/// One end of the trip: its marker, the place, how far. The pickup's marker
+/// carries a dotted line down to the drop.
+class _Stop extends StatelessWidget {
+  const _Stop({
+    required this.marker,
+    required this.title,
+    this.subtitle,
+    this.connector = false,
+  });
+
+  final _Marker marker;
   final String title;
   final String? subtitle;
+  final bool connector;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          width: 18,
-          height: 18,
-          margin: const EdgeInsets.only(top: 3),
-          decoration: BoxDecoration(
-            border: Border.all(color: colour, width: 2.2),
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (subtitle != null)
-                Text(
-                  subtitle!,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: _muted),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Three dots from the pickup marker down to the drop marker.
-class _RouteDots extends StatelessWidget {
-  const _RouteDots();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final NxTokens t = context.nx;
+    final Color ink = t.onNight;
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          for (int i = 0; i < 3; i++)
-            Container(
-              width: 3,
-              height: 3,
-              margin: const EdgeInsets.symmetric(vertical: 2),
-              decoration: const BoxDecoration(
-                color: _muted,
-                shape: BoxShape.circle,
+          SizedBox(
+            width: 16,
+            child: Column(
+              children: <Widget>[
+                const SizedBox(height: 4),
+                if (marker == _Marker.pickup)
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: t.lime, width: 3),
+                    ),
+                  )
+                else
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: t.action,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                if (connector)
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: CustomPaint(
+                        painter: _DashPainter(ink.withValues(alpha: 0.35)),
+                        child: const SizedBox(width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: connector ? NxSpace.md : 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: NxType.titleSmall.copyWith(
+                      color: ink,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 17,
+                    ),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle!,
+                      style: NxType.bodySmall.copyWith(
+                        color: ink.withValues(alpha: 0.65),
+                      ),
+                    ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );
   }
+}
+
+class _DashPainter extends CustomPainter {
+  const _DashPainter(this.colour);
+
+  final Color colour;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint p = Paint()
+      ..color = colour
+      ..strokeWidth = 2;
+    final double x = size.width / 2;
+    for (double y = 0; y < size.height; y += 8) {
+      canvas.drawLine(Offset(x, y), Offset(x, (y + 4).clamp(0, size.height)), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashPainter old) => old.colour != colour;
 }
 
 /// The decline reasons, in the card where the slider was.

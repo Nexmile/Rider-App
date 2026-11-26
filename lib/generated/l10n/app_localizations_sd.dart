@@ -520,6 +520,27 @@ class AppLocalizationsSd extends AppLocalizations {
   String get riderHomeTitle => 'ڊليوري لاءِ تيار';
 
   @override
+  String get shiftTodayEarnings => 'Today\'s earnings';
+
+  @override
+  String get shiftOrdersToday => 'Orders today';
+
+  @override
+  String get shiftCashCollected => 'Cash collected';
+
+  @override
+  String get shiftDetails => 'Details';
+
+  @override
+  String get dutyPillOn => 'ON';
+
+  @override
+  String get dutyPillOff => 'OFF';
+
+  @override
+  String get dutyPillBreak => 'BREAK';
+
+  @override
   String get riderHomeSubtitle =>
       'آن لائن ٿيو ۽ اسان توهان کي ويجهيون ڊليوريون موڪلينداسين.';
 

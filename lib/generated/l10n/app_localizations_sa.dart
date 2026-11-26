@@ -521,6 +521,27 @@ class AppLocalizationsSa extends AppLocalizations {
   String get riderHomeTitle => 'प्रस्थानाय सज्जः';
 
   @override
+  String get shiftTodayEarnings => 'Today\'s earnings';
+
+  @override
+  String get shiftOrdersToday => 'Orders today';
+
+  @override
+  String get shiftCashCollected => 'Cash collected';
+
+  @override
+  String get shiftDetails => 'Details';
+
+  @override
+  String get dutyPillOn => 'ON';
+
+  @override
+  String get dutyPillOff => 'OFF';
+
+  @override
+  String get dutyPillBreak => 'BREAK';
+
+  @override
   String get riderHomeSubtitle =>
       'ऑनलाइन् भवतु, वयं समीपस्थानि प्रापणानि भवते प्रेषयिष्यामः।';
 

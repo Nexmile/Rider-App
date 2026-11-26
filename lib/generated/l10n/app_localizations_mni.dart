@@ -518,6 +518,27 @@ class AppLocalizationsMni extends AppLocalizations {
   String get riderHomeTitle => 'চৎনবা শেম ওইরে';
 
   @override
+  String get shiftTodayEarnings => 'Today\'s earnings';
+
+  @override
+  String get shiftOrdersToday => 'Orders today';
+
+  @override
+  String get shiftCashCollected => 'Cash collected';
+
+  @override
+  String get shiftDetails => 'Details';
+
+  @override
+  String get dutyPillOn => 'ON';
+
+  @override
+  String get dutyPillOff => 'OFF';
+
+  @override
+  String get dutyPillBreak => 'BREAK';
+
+  @override
   String get riderHomeSubtitle =>
       'অনলাইন ওইবিয়ু, ঐখোয়না নহাক্কী নকপা ডেলিভরিশিং থারগনি।';
 

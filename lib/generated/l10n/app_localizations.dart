@@ -1064,6 +1064,48 @@ abstract class AppLocalizations {
   /// **'Ready to ride'**
   String get riderHomeTitle;
 
+  /// Label at the top of the green card on the Shift tab, over what the rider has earned since midnight. Shown in capitals in Latin script.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s earnings'**
+  String get shiftTodayEarnings;
+
+  /// Under the number of orders delivered today, in a small tile on the earnings card.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders today'**
+  String get shiftOrdersToday;
+
+  /// Under the cash taken from customers today, in a small tile on the earnings card.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash collected'**
+  String get shiftCashCollected;
+
+  /// Small link on the earnings card that opens today's deliveries.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get shiftDetails;
+
+  /// Very short word on the duty switch at the top of the Shift tab while the rider is online. One short word.
+  ///
+  /// In en, this message translates to:
+  /// **'ON'**
+  String get dutyPillOn;
+
+  /// Very short word on the duty switch while the rider is offline. One short word.
+  ///
+  /// In en, this message translates to:
+  /// **'OFF'**
+  String get dutyPillOff;
+
+  /// Very short word on the duty switch while the rider is on a break. One short word.
+  ///
+  /// In en, this message translates to:
+  /// **'BREAK'**
+  String get dutyPillBreak;
+
   /// Supporting copy on the rider home screen.
   ///
   /// In en, this message translates to:

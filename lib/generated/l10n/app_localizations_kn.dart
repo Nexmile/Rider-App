@@ -519,6 +519,27 @@ class AppLocalizationsKn extends AppLocalizations {
   String get riderHomeTitle => 'ಡೆಲಿವರಿಗೆ ಸಿದ್ಧ';
 
   @override
+  String get shiftTodayEarnings => 'Today\'s earnings';
+
+  @override
+  String get shiftOrdersToday => 'Orders today';
+
+  @override
+  String get shiftCashCollected => 'Cash collected';
+
+  @override
+  String get shiftDetails => 'Details';
+
+  @override
+  String get dutyPillOn => 'ON';
+
+  @override
+  String get dutyPillOff => 'OFF';
+
+  @override
+  String get dutyPillBreak => 'BREAK';
+
+  @override
   String get riderHomeSubtitle =>
       'ಆನ್‌ಲೈನ್ ಆಗಿ, ನಾವು ನಿಮಗೆ ಹತ್ತಿರದ ಡೆಲಿವರಿಗಳನ್ನು ಕಳುಹಿಸುತ್ತೇವೆ.';
 

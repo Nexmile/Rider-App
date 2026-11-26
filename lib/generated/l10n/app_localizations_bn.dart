@@ -517,6 +517,27 @@ class AppLocalizationsBn extends AppLocalizations {
   String get riderHomeTitle => 'কাজের জন্য তৈরি';
 
   @override
+  String get shiftTodayEarnings => 'Today\'s earnings';
+
+  @override
+  String get shiftOrdersToday => 'Orders today';
+
+  @override
+  String get shiftCashCollected => 'Cash collected';
+
+  @override
+  String get shiftDetails => 'Details';
+
+  @override
+  String get dutyPillOn => 'ON';
+
+  @override
+  String get dutyPillOff => 'OFF';
+
+  @override
+  String get dutyPillBreak => 'BREAK';
+
+  @override
   String get riderHomeSubtitle =>
       'অনলাইন হন, আমরা আপনাকে কাছাকাছি ডেলিভারি পাঠাব।';
 

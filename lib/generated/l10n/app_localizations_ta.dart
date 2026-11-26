@@ -522,6 +522,27 @@ class AppLocalizationsTa extends AppLocalizations {
   String get riderHomeTitle => 'பயணத்திற்குத் தயார்';
 
   @override
+  String get shiftTodayEarnings => 'Today\'s earnings';
+
+  @override
+  String get shiftOrdersToday => 'Orders today';
+
+  @override
+  String get shiftCashCollected => 'Cash collected';
+
+  @override
+  String get shiftDetails => 'Details';
+
+  @override
+  String get dutyPillOn => 'ON';
+
+  @override
+  String get dutyPillOff => 'OFF';
+
+  @override
+  String get dutyPillBreak => 'BREAK';
+
+  @override
   String get riderHomeSubtitle =>
       'ஆன்லைனுக்கு வாருங்கள், அருகிலுள்ள டெலிவரிகளை உங்களுக்கு அனுப்புவோம்.';
 
