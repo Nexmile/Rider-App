@@ -1634,6 +1634,30 @@ abstract class AppLocalizations {
   /// **'Delivered. Thanks, you are back online.'**
   String get deliveryConfirmed;
 
+  /// Title of the moment after the rider swipes to deliver and the server confirms it.
+  ///
+  /// In en, this message translates to:
+  /// **'Order delivered'**
+  String get deliverySuccessTitle;
+
+  /// Small line over the large amount the rider earned for the delivery just closed.
+  ///
+  /// In en, this message translates to:
+  /// **'You earned'**
+  String get deliverySuccessYouEarned;
+
+  /// Dimmed row under the restaurant card on the delivery screen: the stop after this one.
+  ///
+  /// In en, this message translates to:
+  /// **'Then deliver to {name}'**
+  String nextStopDeliverTo(String name);
+
+  /// Dimmed row under the customer card once the food is collected: the stop already done.
+  ///
+  /// In en, this message translates to:
+  /// **'Picked up from {name}'**
+  String pickedUpFrom(String name);
+
   /// Button that returns an order to the board.
   ///
   /// In en, this message translates to:

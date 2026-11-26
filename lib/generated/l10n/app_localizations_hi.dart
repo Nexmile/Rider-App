@@ -831,6 +831,22 @@ class AppLocalizationsHi extends AppLocalizations {
   String get deliveryConfirmed => 'पहुँचा दिया. धन्यवाद, आप फिर से ऑनलाइन हैं.';
 
   @override
+  String get deliverySuccessTitle => 'Order delivered';
+
+  @override
+  String get deliverySuccessYouEarned => 'You earned';
+
+  @override
+  String nextStopDeliverTo(String name) {
+    return 'Then deliver to $name';
+  }
+
+  @override
+  String pickedUpFrom(String name) {
+    return 'Picked up from $name';
+  }
+
+  @override
   String get releaseOrderButton => 'वापस कर दें';
 
   @override

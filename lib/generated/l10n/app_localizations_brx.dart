@@ -834,6 +834,22 @@ class AppLocalizationsBrx extends AppLocalizations {
       'डेलिभार जाबाय। साबायखर, नोंथाङ फिन अनलाइन दङ।';
 
   @override
+  String get deliverySuccessTitle => 'Order delivered';
+
+  @override
+  String get deliverySuccessYouEarned => 'You earned';
+
+  @override
+  String nextStopDeliverTo(String name) {
+    return 'Then deliver to $name';
+  }
+
+  @override
+  String pickedUpFrom(String name) {
+    return 'Picked up from $name';
+  }
+
+  @override
   String get releaseOrderButton => 'फिनहो';
 
   @override

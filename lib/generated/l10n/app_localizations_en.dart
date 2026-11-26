@@ -833,6 +833,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deliveryConfirmed => 'Delivered. Thanks, you are back online.';
 
   @override
+  String get deliverySuccessTitle => 'Order delivered';
+
+  @override
+  String get deliverySuccessYouEarned => 'You earned';
+
+  @override
+  String nextStopDeliverTo(String name) {
+    return 'Then deliver to $name';
+  }
+
+  @override
+  String pickedUpFrom(String name) {
+    return 'Picked up from $name';
+  }
+
+  @override
   String get releaseOrderButton => 'Hand it back';
 
   @override

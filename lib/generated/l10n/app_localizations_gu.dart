@@ -831,6 +831,22 @@ class AppLocalizationsGu extends AppLocalizations {
   String get deliveryConfirmed => 'ડિલિવર થઈ ગયો. આભાર, તમે ફરી ઓનલાઇન છો.';
 
   @override
+  String get deliverySuccessTitle => 'Order delivered';
+
+  @override
+  String get deliverySuccessYouEarned => 'You earned';
+
+  @override
+  String nextStopDeliverTo(String name) {
+    return 'Then deliver to $name';
+  }
+
+  @override
+  String pickedUpFrom(String name) {
+    return 'Picked up from $name';
+  }
+
+  @override
   String get releaseOrderButton => 'ઓર્ડર પાછો આપો';
 
   @override

@@ -1,43 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:provider/provider.dart';
 
-import '../../../../core/motion/app_motion.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_surface.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/info_tile.dart';
-import '../../../../core/widgets/step_tracker.dart';
-import '../../../../core/widgets/swipe_to_confirm.dart';
+import '../../../../core/design/design.dart';
 import '../../../../generated/l10n/app_localizations.dart';
+import '../../data/navigation_models.dart';
 import '../../data/order_models.dart';
 import '../../data/rider_failure.dart';
 import '../../state/order_controller.dart';
 import '../../state/rider_controller.dart';
-import 'order_formatting.dart';
+import '../navigation/map_styles.dart';
 import '../navigation/navigation_screen.dart';
-import '../../data/navigation_models.dart';
+import '../widgets/dropoff_details.dart';
+import 'order_formatting.dart';
 import 'widgets/contact_actions.dart';
 import 'widgets/order_empty_state.dart';
 import 'widgets/pickup_code_sheet.dart';
 import 'widgets/release_order_sheet.dart';
-import '../widgets/dropoff_details.dart';
 
-/// The order in hand, and the one thing to do about it next.
+/// The order in hand, map first: where the stops are, then the one thing to
+/// do about it next.
 ///
-/// Structured around a single primary button that changes meaning with the
-/// order's status — collect, then deliver — rather than a screen of options.
-/// A rider reads this at a counter or on a doorstep, usually one-handed, and
-/// the question is always "what now?", never "which of these?".
+/// A map across the top, and over it a sheet that reads top to bottom as the
+/// job does: which step, what cash to take, the stop the rider is riding to,
+/// the stop after it, and the slider that moves the order on. A rider reads
+/// this at a counter or on a doorstep, one-handed, and the question is always
+/// "what now?", never "which of these?".
 ///
-/// The status comes from the server on every action, never guessed locally: an
-/// order this app thinks is picked up but the API does not would leave the
-/// rider pressing Delivered on something that will 422.
+/// The status comes from the server on every action, never guessed locally:
+/// an order this app thinks is picked up but the API does not would leave the
+/// rider swiping Deliver on something that will 422.
 class ActiveDeliveryScreen extends StatelessWidget {
   const ActiveDeliveryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final OrderController orders = context.watch<OrderController>();
     final RiderOrder? order = orders.active;
@@ -46,12 +44,17 @@ class ActiveDeliveryScreen extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: () => orders.loadActive(),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 40, 20, 32),
+          padding: const EdgeInsets.fromLTRB(
+            NxSpace.lg,
+            NxSpace.xxl,
+            NxSpace.lg,
+            NxSpace.xxl,
+          ),
           physics: const AlwaysScrollableScrollPhysics(),
           children: <Widget>[
             if (orders.isLoadingActive)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
+                padding: EdgeInsets.symmetric(vertical: NxSpace.xxxl),
                 child: Center(child: CircularProgressIndicator()),
               )
             else
@@ -65,127 +68,79 @@ class ActiveDeliveryScreen extends StatelessWidget {
       );
     }
 
-    final bool collected = order.status.isCollected;
+    final NxTokens t = context.nx;
+    final double mapHeight =
+        (MediaQuery.sizeOf(context).height * 0.36).clamp(240.0, 340.0) +
+            MediaQuery.paddingOf(context).top;
+    const double overlap = 28;
 
-    return RefreshIndicator(
-      onRefresh: () => orders.loadActive(silent: true),
-      child: ListView(
-        // Room at the end, so the main button can always be scrolled clear of
-        // a message bar such as "Picked up. Deliver to the customer."
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
-        physics: const AlwaysScrollableScrollPhysics(),
+    final Widget sheet = Container(
+      decoration: BoxDecoration(
+        color: t.ground,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 18,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      // Room at the end, so the slider can always be scrolled clear of a
+      // message bar such as "Picked up. Deliver to the customer."
+      padding: const EdgeInsets.fromLTRB(
+        NxSpace.screen,
+        NxSpace.sm,
+        NxSpace.screen,
+        120,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  l10n.orderNumberLabel(order.orderNumber),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.headlineSmall,
-                ),
+          Center(
+            child: Container(
+              width: 44,
+              height: 5,
+              decoration: BoxDecoration(
+                color: t.border,
+                borderRadius: NxRadius.pillAll,
               ),
-              const SizedBox(width: 8),
-              StatusChip(
-                label: order.statusText(l10n),
-                tone: order.statusTone,
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 12),
-          // Where the rider is in the journey, and what is next. The whole
-          // screen is "what now?", so answering it above the fold — before the
-          // cash, the addresses or the ticket — is the point.
+          const SizedBox(height: NxSpace.sm),
           _JourneyCard(order: order),
-          const SizedBox(height: 14),
-
-          // Cash first, above the addresses. It is the one number on this
-          // screen the rider is personally liable for, and burying it under a
-          // list of items is how a prepaid order gets charged twice.
-          _CashBanner(order: order),
-          const SizedBox(height: 16),
-
-          _Leg(
-            icon: Icons.storefront_outlined,
-            label: l10n.pickupLabel,
-            name: order.pickup.name,
-            address: order.pickup.address,
-            distance: formatDistance(l10n, order.pickup.distanceMetres),
-            // Once the food is collected the restaurant is behind the rider —
-            // showing it as the live leg would point them the wrong way.
-            dimmed: collected,
-            actions: ContactActions(
-              callLabel: l10n.callRestaurant,
-              directionsLabel: l10n.navStart,
-              onNavigate: NavigationScreen.canNavigate(order, NavTarget.pickup)
-                  ? () => NavigationScreen.open(context, order, NavTarget.pickup)
-                  : null,
-              phone: order.pickup.phone,
-              latitude: order.pickup.latitude,
-              longitude: order.pickup.longitude,
-              address: order.pickup.address,
-            ),
-          ),
-
-          if (order.dropoff != null) ...<Widget>[
-            const SizedBox(height: 14),
-            _Leg(
-              icon: Icons.location_on_outlined,
-              label: l10n.dropoffLabel,
-              name: order.dropoff!.contactName,
-              address: order.dropoff!.address,
-              distance: formatDistance(l10n, order.deliveryDistanceMetres),
-              dimmed: !collected,
-              // The door matters at the drop. Before the food is collected
-              // the rider is heading to the restaurant, and this leg stays
-              // short.
-              details: !collected || DropoffDetails.isEmpty(order.dropoff!)
-                  ? null
-                  : DropoffDetails(dropoff: order.dropoff!),
-              actions: ContactActions(
-                callLabel: l10n.callCustomer,
-                directionsLabel: l10n.navStart,
-                onNavigate: NavigationScreen.canNavigate(order, NavTarget.dropoff)
-                    ? () =>
-                        NavigationScreen.open(context, order, NavTarget.dropoff)
-                    : null,
-                phone: order.dropoff!.contactPhone,
-                latitude: order.dropoff!.latitude,
-                longitude: order.dropoff!.longitude,
-                address: order.dropoff!.address,
-              ),
-            ),
-          ],
-
+          const SizedBox(height: NxSpace.sm),
+          // Cash before the stops. It is the one number on this screen the
+          // rider is personally liable for, and burying it under a list is
+          // how a prepaid order gets charged twice.
+          _CashStrip(order: order),
+          const SizedBox(height: NxSpace.sm),
+          _CurrentStop(order: order),
+          const SizedBox(height: NxSpace.sm),
+          _OtherStop(order: order),
           if (order.customerNote != null) ...<Widget>[
-            const SizedBox(height: 14),
+            const SizedBox(height: NxSpace.sm),
             _Note(note: order.customerNote!),
           ],
-
           if (order.items.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 22),
+            const SizedBox(height: NxSpace.lg),
             Text(
               l10n.orderItemsLabel,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: NxType.titleSmall.copyWith(color: t.ink),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: NxSpace.xs),
             OrderItemList(items: order.items),
           ],
-
-          const SizedBox(height: 24),
+          const SizedBox(height: NxSpace.lg),
           _ReachedAction(order: order),
           _PrimaryAction(order: order),
-
           if (order.canRelease) ...<Widget>[
-            const SizedBox(height: 12),
+            const SizedBox(height: NxSpace.sm),
             TextButton(
-              onPressed: orders.isActing
-                  ? null
-                  : () => _release(context, order.id),
+              onPressed:
+                  orders.isActing ? null : () => _release(context, order.id),
               style: TextButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
+                foregroundColor: t.danger,
                 minimumSize: const Size.fromHeight(48),
               ),
               child: Text(
@@ -195,6 +150,32 @@ class ActiveDeliveryScreen extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+
+    return RefreshIndicator(
+      onRefresh: () => orders.loadActive(silent: true),
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: <Widget>[
+          SliverToBoxAdapter(
+            child: Stack(
+              children: <Widget>[
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: mapHeight,
+                  child: _MapHeader(order: order),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(top: mapHeight - overlap),
+                  child: sheet,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -210,6 +191,744 @@ class ActiveDeliveryScreen extends StatelessWidget {
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(l10n.orderReleased)));
+  }
+}
+
+/// The two stops on a map, with the order number floating over it. A
+/// preview, not a navigator: it does not pan or zoom, and a tap opens the
+/// turn-by-turn screen for the stop the rider is riding to.
+class _MapHeader extends StatelessWidget {
+  const _MapHeader({required this.order});
+
+  final RiderOrder order;
+
+  NavTarget get _target =>
+      order.status.isCollected ? NavTarget.dropoff : NavTarget.pickup;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    final bool dark = Theme.of(context).brightness == Brightness.dark;
+    final bool collected = order.status.isCollected;
+
+    final gm.LatLng? shop =
+        order.pickup.latitude != null && order.pickup.longitude != null
+            ? gm.LatLng(order.pickup.latitude!, order.pickup.longitude!)
+            : null;
+    final OrderDropoff? drop = order.dropoff;
+    final gm.LatLng? home = drop?.latitude != null && drop?.longitude != null
+        ? gm.LatLng(drop!.latitude!, drop.longitude!)
+        : null;
+    final List<gm.LatLng> points = <gm.LatLng>[
+      if (shop != null) shop,
+      if (home != null) home,
+    ];
+    final bool canNavigate = NavigationScreen.canNavigate(order, _target);
+    void navigate() => NavigationScreen.open(context, order, _target);
+
+    final String? distance = formatDistance(
+      l10n,
+      collected ? order.deliveryDistanceMetres : order.pickup.distanceMetres,
+    );
+
+    return Stack(
+      fit: StackFit.expand,
+      children: <Widget>[
+        if (points.isEmpty)
+          CustomPaint(painter: _StreetsPainter(t))
+        else
+          gm.GoogleMap(
+            initialCameraPosition: gm.CameraPosition(
+              target: _centre(points),
+              zoom: 13.5,
+            ),
+            liteModeEnabled: true,
+            zoomControlsEnabled: false,
+            myLocationButtonEnabled: false,
+            mapToolbarEnabled: false,
+            compassEnabled: false,
+            scrollGesturesEnabled: false,
+            zoomGesturesEnabled: false,
+            rotateGesturesEnabled: false,
+            tiltGesturesEnabled: false,
+            style: dark ? kNavMapStyleDark : kNavMapStyleLight,
+            padding: EdgeInsets.only(
+              top: MediaQuery.paddingOf(context).top + 64,
+              bottom: 44,
+              left: 32,
+              right: 32,
+            ),
+            markers: <gm.Marker>{
+              if (shop != null)
+                gm.Marker(
+                  markerId: const gm.MarkerId('pickup'),
+                  position: shop,
+                  icon: gm.BitmapDescriptor.defaultMarkerWithHue(
+                    gm.BitmapDescriptor.hueOrange,
+                  ),
+                ),
+              if (home != null)
+                gm.Marker(
+                  markerId: const gm.MarkerId('dropoff'),
+                  position: home,
+                  icon: gm.BitmapDescriptor.defaultMarkerWithHue(
+                    gm.BitmapDescriptor.hueGreen,
+                  ),
+                ),
+            },
+            onMapCreated: (gm.GoogleMapController map) {
+              if (points.length < 2) return;
+              map.moveCamera(
+                gm.CameraUpdate.newLatLngBounds(_bounds(points), 40),
+              );
+            },
+          ),
+        // The whole map is one button: to turn-by-turn for this stop.
+        if (canNavigate)
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(onTap: navigate),
+            ),
+          ),
+        Positioned(
+          top: MediaQuery.paddingOf(context).top + NxSpace.sm,
+          left: NxSpace.screen,
+          right: NxSpace.screen,
+          child: Row(
+            children: <Widget>[
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: t.surface,
+                    borderRadius: NxRadius.pillAll,
+                    boxShadow: NxShadows.floating,
+                  ),
+                  child: Text(
+                    <String>[
+                      l10n.orderNumberLabel(order.orderNumber),
+                      if (distance != null) distance,
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: NxType.caption.copyWith(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: t.ink,
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (canNavigate)
+                Material(
+                  color: t.surface,
+                  shape: const CircleBorder(),
+                  child: IconButton(
+                    tooltip: l10n.navStart,
+                    onPressed: navigate,
+                    icon: Icon(Icons.navigation_rounded, color: t.primary),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  static gm.LatLng _centre(List<gm.LatLng> points) {
+    double lat = 0;
+    double lng = 0;
+    for (final gm.LatLng p in points) {
+      lat += p.latitude;
+      lng += p.longitude;
+    }
+    return gm.LatLng(lat / points.length, lng / points.length);
+  }
+
+  static gm.LatLngBounds _bounds(List<gm.LatLng> points) {
+    double south = points.first.latitude;
+    double north = south;
+    double west = points.first.longitude;
+    double east = west;
+    for (final gm.LatLng p in points) {
+      if (p.latitude < south) south = p.latitude;
+      if (p.latitude > north) north = p.latitude;
+      if (p.longitude < west) west = p.longitude;
+      if (p.longitude > east) east = p.longitude;
+    }
+    return gm.LatLngBounds(
+      southwest: gm.LatLng(south, west),
+      northeast: gm.LatLng(north, east),
+    );
+  }
+}
+
+/// A few pale streets, standing in for the map when the order carries no
+/// coordinates.
+class _StreetsPainter extends CustomPainter {
+  _StreetsPainter(this.t);
+
+  final NxTokens t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(Offset.zero & size, Paint()..color = t.surfaceMuted);
+    final Paint road = Paint()
+      ..color = t.surface
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(-20, size.height * 0.35),
+      Offset(size.width + 20, size.height * 0.2),
+      road..strokeWidth = 14,
+    );
+    canvas.drawLine(
+      Offset(-20, size.height * 0.7),
+      Offset(size.width + 20, size.height * 0.78),
+      road..strokeWidth = 10,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.4, -20),
+      Offset(size.width * 0.5, size.height + 20),
+      road..strokeWidth = 12,
+    );
+    canvas.drawLine(
+      Offset(size.width * 0.78, -20),
+      Offset(size.width * 0.74, size.height + 20),
+      road..strokeWidth = 9,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_StreetsPainter old) => old.t != t;
+}
+
+/// Where the rider is in the job: what to do now, which step of four, and
+/// a bar per step. A step that moves on knocks once.
+class _JourneyCard extends StatefulWidget {
+  const _JourneyCard({required this.order});
+
+  final RiderOrder order;
+
+  /// The step the rider is on, 0 to 3; 4 once delivered.
+  static int currentStep(RiderOrder order) => switch (order.status) {
+        OrderStatus.assigned => 0,
+        OrderStatus.reachedRestaurant => 1,
+        OrderStatus.pickedUp || OrderStatus.outForDelivery => 2,
+        OrderStatus.reachedCustomer => 3,
+        OrderStatus.delivered => 4,
+        _ => order.status.isCollected ? 2 : 0,
+      };
+
+  @override
+  State<_JourneyCard> createState() => _JourneyCardState();
+}
+
+class _JourneyCardState extends State<_JourneyCard> {
+  @override
+  void didUpdateWidget(_JourneyCard old) {
+    super.didUpdateWidget(old);
+    if (_JourneyCard.currentStep(old.order) !=
+        _JourneyCard.currentStep(widget.order)) {
+      HapticFeedback.lightImpact();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    final RiderOrder order = widget.order;
+    final int current = _JourneyCard.currentStep(order);
+    final List<String> steps = <String>[
+      l10n.stepReachRestaurant,
+      l10n.stepPickUp,
+      l10n.stepReachCustomer,
+      l10n.stepDeliver,
+    ];
+
+    Color bar(int i) => i < current
+        ? t.primaryBright
+        : i == current
+            ? t.action
+            : t.border;
+    Color ink(int i) => i < current
+        ? t.primary
+        : i == current
+            ? t.actionText
+            : t.inkMuted;
+
+    return NxCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  order.status.isCollected
+                      ? l10n.deliverToCustomer
+                      : l10n.headToRestaurant,
+                  style: NxType.titleSmall.copyWith(
+                    color: t.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: NxSpace.xs),
+              Text(
+                l10n.permStepCount(
+                  (current + 1).clamp(1, steps.length),
+                  steps.length,
+                ),
+                style: NxType.caption.copyWith(color: t.inkMuted),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: <Widget>[
+              for (int i = 0; i < steps.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: AnimatedContainer(
+                    duration: AppMotion.medium,
+                    curve: AppMotion.change,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: bar(i),
+                      borderRadius: NxRadius.pillAll,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            key: const ValueKey<String>('journey-steps'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              for (int i = 0; i < steps.length; i++) ...<Widget>[
+                if (i > 0) const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    steps[i],
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: NxType.caption.copyWith(
+                      fontSize: 11,
+                      color: ink(i),
+                      fontWeight:
+                          i == current ? FontWeight.w800 : FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// What to take at the door, as a bold orange strip; or, plainly, that
+/// there is nothing to take. Both cases get a strip: a prepaid order with no
+/// strip leaves the rider to infer it, and inferring wrong means asking a
+/// customer for money they have already paid.
+class _CashStrip extends StatelessWidget {
+  const _CashStrip({required this.order});
+
+  final RiderOrder order;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+
+    if (!order.isCashOnDelivery) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        decoration: BoxDecoration(
+          color: t.primarySoft,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: <Widget>[
+            Icon(Icons.verified_rounded, color: t.primary),
+            const SizedBox(width: NxSpace.sm),
+            Expanded(
+              child: Text(
+                l10n.nothingToCollect,
+                style: NxType.titleSmall.copyWith(
+                  fontSize: 15,
+                  color: t.primary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final String amount = formatAmount(l10n, order.collectCash);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: t.action,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text(
+                  l10n.cashToCollectLabel.toUpperCase(),
+                  style: NxType.caption.copyWith(
+                    color: t.onAction,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  l10n.collectAtDoor(amount),
+                  style: NxType.bodySmall.copyWith(
+                    color: t.onAction,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: NxSpace.sm),
+          NxMoneyText(
+            order.collectCash,
+            split: false,
+            colour: t.onAction,
+            style: NxType.display.copyWith(fontSize: 30),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The stop the rider is riding to, in a card with a green edge: what and
+/// where, the door if it is the drop, and a call and the way there.
+class _CurrentStop extends StatelessWidget {
+  const _CurrentStop({required this.order});
+
+  final RiderOrder order;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    final OrderDropoff? drop = order.dropoff;
+    final bool atDrop = order.status.isCollected && drop != null;
+    final NavTarget target = atDrop ? NavTarget.dropoff : NavTarget.pickup;
+
+    final String label = atDrop ? l10n.dropoffLabel : l10n.pickupLabel;
+    final String? distance = formatDistance(
+      l10n,
+      atDrop ? order.deliveryDistanceMetres : order.pickup.distanceMetres,
+    );
+    final String? name = atDrop ? drop.contactName : order.pickup.name;
+    final String address = atDrop ? drop.address : order.pickup.address;
+    final String? phone = atDrop ? drop.contactPhone : order.pickup.phone;
+    final double? lat = atDrop ? drop.latitude : order.pickup.latitude;
+    final double? lng = atDrop ? drop.longitude : order.pickup.longitude;
+
+    // In-app turn-by-turn where the server can route it; the phone's own
+    // maps app otherwise.
+    final VoidCallback? navigate = NavigationScreen.canNavigate(order, target)
+        ? () => NavigationScreen.open(context, order, target)
+        : (lat != null && lng != null) || address.isNotEmpty
+            ? () => openDirections(
+                  latitude: lat,
+                  longitude: lng,
+                  address: address,
+                )
+            : null;
+
+    return NxCard(
+      borderColor: t.primaryBright,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: t.primarySoft,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  atDrop ? Icons.home_rounded : Icons.storefront_rounded,
+                  color: t.primary,
+                ),
+              ),
+              const SizedBox(width: NxSpace.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      <String>[
+                        label.toUpperCase(),
+                        if (distance != null) distance,
+                      ].join(' · '),
+                      style: NxType.caption.copyWith(
+                        color: t.inkMuted,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    if (name != null && name.isNotEmpty)
+                      Text(
+                        name,
+                        style: NxType.title.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: t.ink,
+                        ),
+                      ),
+                    Text(
+                      address,
+                      style: NxType.bodySmall.copyWith(color: t.inkMuted),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // The door matters at the drop: flat, street, landmark, photo.
+          if (atDrop && !DropoffDetails.isEmpty(drop)) ...<Widget>[
+            const SizedBox(height: NxSpace.sm),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 56),
+              child: DropoffDetails(dropoff: drop),
+            ),
+          ],
+          const SizedBox(height: NxSpace.md),
+          Row(
+            children: <Widget>[
+              if (phone != null && phone.isNotEmpty) ...<Widget>[
+                Tooltip(
+                  message: atDrop ? l10n.callCustomer : l10n.callRestaurant,
+                  child: OutlinedButton(
+                    onPressed: () => dial(phone),
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      minimumSize: const Size(56, 52),
+                      foregroundColor: t.primary,
+                    ),
+                    child: Semantics(
+                      label: atDrop ? l10n.callCustomer : l10n.callRestaurant,
+                      child: const Icon(Icons.call_rounded),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: NxSpace.sm),
+              ],
+              Expanded(
+                child: FilledButton(
+                  onPressed: navigate,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: t.night,
+                    foregroundColor: t.onNight,
+                    minimumSize: const Size.fromHeight(52),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(Icons.navigation_rounded, size: 18, color: t.lime),
+                      const SizedBox(width: NxSpace.xs),
+                      Flexible(
+                        child: Text(
+                          l10n.navStart,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The other stop, dimmed: the customer while riding to the restaurant, or
+/// the restaurant once the food is in the bag. Kept on screen rather than
+/// removed: a rider who has to go back for a forgotten item still needs the
+/// restaurant's number.
+class _OtherStop extends StatelessWidget {
+  const _OtherStop({required this.order});
+
+  final RiderOrder order;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    final bool collected = order.status.isCollected;
+    final OrderDropoff? drop = order.dropoff;
+
+    final String title;
+    final String subtitle;
+    String? distance;
+    final Widget trailing;
+    if (!collected) {
+      if (drop == null) return const SizedBox.shrink();
+      final String who = drop.contactName;
+      title = l10n.nextStopDeliverTo(who.isEmpty ? drop.address : who);
+      distance = formatDistance(l10n, order.deliveryDistanceMetres);
+      subtitle = drop.address;
+      trailing = NavigationScreen.canNavigate(order, NavTarget.dropoff)
+          ? IconButton(
+              key: const ValueKey<String>('nav-next'),
+              tooltip: l10n.navStart,
+              onPressed: () =>
+                  NavigationScreen.open(context, order, NavTarget.dropoff),
+              icon: Icon(Icons.navigation_outlined, color: t.inkMuted),
+            )
+          : const SizedBox.shrink();
+    } else {
+      final String shop = order.pickup.name ?? '';
+      title = l10n.pickedUpFrom(shop.isEmpty ? order.pickup.address : shop);
+      subtitle = order.pickup.address;
+      final String? phone = order.pickup.phone;
+      trailing = phone == null || phone.isEmpty
+          ? const SizedBox.shrink()
+          : IconButton(
+              key: const ValueKey<String>('call-previous'),
+              tooltip: l10n.callRestaurant,
+              onPressed: () => dial(phone),
+              icon: Icon(Icons.call_outlined, color: t.inkMuted),
+            );
+    }
+
+    return Opacity(
+      opacity: 0.8,
+      child: NxCard(
+        padding: const EdgeInsetsDirectional.fromSTEB(16, 10, 8, 10),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                color: collected ? t.primaryBright : t.action,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: collected
+                  ? const Icon(
+                      Icons.check_rounded,
+                      size: 11,
+                      color: Colors.white,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: NxSpace.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: NxType.titleSmall.copyWith(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: t.ink,
+                    ),
+                  ),
+                  Row(
+                    children: <Widget>[
+                      Flexible(
+                        child: Text(
+                          subtitle,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: NxType.caption.copyWith(
+                            color: t.inkMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      if (distance != null)
+                        Text(
+                          ' · $distance',
+                          textDirection: TextDirection.ltr,
+                          style: NxType.caption.copyWith(color: t.inkMuted),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            trailing,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Note extends StatelessWidget {
+  const _Note({required this.note});
+
+  final String note;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    return NxCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(Icons.sticky_note_2_outlined, size: 20, color: t.info),
+          const SizedBox(width: NxSpace.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  l10n.customerNoteLabel,
+                  style: NxType.caption.copyWith(color: t.inkMuted),
+                ),
+                const SizedBox(height: 2),
+                Text(note, style: NxType.body.copyWith(color: t.ink)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -235,8 +954,15 @@ class _ReachedAction extends StatelessWidget {
     if (!atRestaurantStep && !atCustomerStep) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: OutlinedButton.icon(
+      padding: const EdgeInsets.only(bottom: NxSpace.sm),
+      child: NxSecondaryButton(
+        icon: atRestaurantStep
+            ? Icons.storefront_outlined
+            : Icons.door_front_door_outlined,
+        label: atRestaurantStep
+            ? l10n.reachedRestaurantButton
+            : l10n.reachedCustomerButton,
+        tone: NxTone.success,
         onPressed: orders.isActing
             ? null
             : () async {
@@ -258,24 +984,6 @@ class _ReachedAction extends StatelessWidget {
                     ),
                   );
               },
-        icon: Icon(
-          atRestaurantStep
-              ? Icons.storefront_outlined
-              : Icons.door_front_door_outlined,
-        ),
-        label: Text(
-          atRestaurantStep
-              ? l10n.reachedRestaurantButton
-              : l10n.reachedCustomerButton,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radius),
-          ),
-        ),
       ),
     );
   }
@@ -283,10 +991,9 @@ class _ReachedAction extends StatelessWidget {
 
 /// The slider that moves the order along.
 ///
-/// Two states only, because there are only ever two things left to do: collect
-/// it, or hand it over. A swipe rather than a tap, so neither happens from a
-/// pocket or a bumpy road. Anything else — a release, a call — is secondary
-/// and sits below or beside the address it belongs to.
+/// Two states only, because there are only ever two things left to do:
+/// collect it, or hand it over. A swipe rather than a tap, so neither happens
+/// from a pocket or a bumpy road.
 class _PrimaryAction extends StatelessWidget {
   const _PrimaryAction({required this.order});
 
@@ -298,7 +1005,7 @@ class _PrimaryAction extends StatelessWidget {
     final OrderController orders = context.watch<OrderController>();
 
     if (order.status.isCollected) {
-      return SwipeToConfirm(
+      return NxSwipeButton(
         key: const ValueKey<String>('deliver-swipe'),
         label: l10n.swipeDeliver,
         icon: Icons.done_all_rounded,
@@ -307,7 +1014,7 @@ class _PrimaryAction extends StatelessWidget {
       );
     }
 
-    return SwipeToConfirm(
+    return NxSwipeButton(
       key: const ValueKey<String>('pickup-swipe'),
       label: l10n.swipePickUp,
       icon: Icons.shopping_bag_rounded,
@@ -327,12 +1034,13 @@ class _PrimaryAction extends StatelessWidget {
   }
 
   /// Confirming a delivery is irreversible. On a prepaid order the swipe is
-  /// the confirmation. On a cash order it is also the moment the rider becomes
-  /// liable for the money, so it asks once more — and the question names the
-  /// amount, because "did you collect it?" is easier to wave through than "did
-  /// you collect ₹480?".
+  /// the confirmation. On a cash order it is also the moment the rider
+  /// becomes liable for the money, so it asks once more — and the question
+  /// names the amount, because "did you collect it?" is easier to wave
+  /// through than "did you collect ₹480?".
   Future<void> _deliver(BuildContext context) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
+    final NavigatorState navigator = Navigator.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final OrderController orders = context.read<OrderController>();
     final RiderController rider = context.read<RiderController>();
@@ -362,285 +1070,97 @@ class _PrimaryAction extends StatelessWidget {
 
     final RiderFailure? failure = await orders.deliver(order.id);
 
-    if (failure == null) {
-      // The server increments `completed_deliveries` and puts the rider back
-      // on `available`. Refetching is how the home screen learns both — adding
-      // one locally would drift from the figure the rider is paid against.
-      await rider.refresh();
+    if (failure != null) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(failure.message(l10n)),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      return;
     }
 
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            failure == null ? l10n.deliveryConfirmed : failure.message(l10n),
-          ),
-          duration: const Duration(seconds: 5),
-        ),
-      );
+    // The server increments `completed_deliveries` and puts the rider back
+    // on `available`. Refetching is how the home screen learns both — adding
+    // one locally would drift from the figure the rider is paid against.
+    await rider.refresh();
+    // This screen has already swapped to its empty state, so the moment is
+    // shown from the navigator, not from here.
+    if (!navigator.mounted) return;
+    await _Delivered.show(navigator.context, earned: order.earnings);
   }
 }
 
-/// What to collect at the door, or plainly that there is nothing to collect.
-///
-/// Both cases get a banner. A prepaid order with no banner at all leaves the
-/// rider to infer it, and the failure mode of inferring wrong is asking a
-/// customer for money they have already paid.
-class _CashBanner extends StatelessWidget {
-  const _CashBanner({required this.order});
+/// The moment a delivery closes: a tick drawn in, what it paid, and that the
+/// rider is back on the board.
+class _Delivered extends StatelessWidget {
+  const _Delivered({required this.earned});
 
-  final RiderOrder order;
+  final double earned;
+
+  static Future<void> show(BuildContext context, {required double earned}) {
+    HapticFeedback.heavyImpact();
+    return showDialog<void>(
+      context: context,
+      builder: (_) => _Delivered(earned: earned),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-    final bool cash = order.isCashOnDelivery;
-
-    final Color base = cash
-        ? AppColors.orangeDeep
-        : (isDark ? AppColors.greenLight : AppColors.greenDeep);
-
-    final Widget badge = Container(
-      width: 42,
-      height: 42,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: base.withValues(alpha: isDark ? 0.24 : 0.16),
-      ),
-      child: Icon(
-        cash ? Icons.payments_rounded : Icons.verified_rounded,
-        color: base,
-        size: 22,
-      ),
-    );
-
-    if (!cash) {
-      return SurfaceCard(
-        accent: base,
-        padding: const EdgeInsets.all(17),
-        child: Row(
-          children: <Widget>[
-            badge,
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                l10n.nothingToCollect,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: base,
-                  height: 1.35,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // The amount as large as anything on the screen: it is read at a door,
-    // with the customer's hand already out.
-    final String amount = formatAmount(l10n, order.collectCash);
-    return SurfaceCard(
-      accent: base,
-      padding: const EdgeInsets.fromLTRB(17, 16, 17, 17),
-      child: Row(
-        children: <Widget>[
-          badge,
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  l10n.cashToCollectLabel,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: base,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text(
-                    amount,
-                    maxLines: 1,
-                    textDirection: TextDirection.ltr,
-                    style: theme.textTheme.displaySmall?.copyWith(
-                      color: base,
-                      fontWeight: FontWeight.w800,
-                      height: 1.15,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  l10n.collectAtDoor(amount),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One half of the journey — the restaurant, or the customer.
-class _Leg extends StatelessWidget {
-  const _Leg({
-    required this.icon,
-    required this.label,
-    required this.address,
-    required this.actions,
-    this.name,
-    this.distance,
-    this.dimmed = false,
-    this.details,
-  });
-
-  final IconData icon;
-  final String label;
-  final String? name;
-  final String address;
-  final String? distance;
-  final Widget actions;
-
-  /// More about the place, under the address: for the drop, the door.
-  final Widget? details;
-
-  /// True for the leg that is behind the rider. Kept on screen rather than
-  /// removed — a rider who has to go back for a forgotten item still needs the
-  /// restaurant's number.
-  final bool dimmed;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-    final Color accent = isDark ? AppColors.greenLight : AppColors.greenDeep;
-
-    return Opacity(
-      opacity: dimmed ? 0.55 : 1,
-      child: AnimatedContainer(
-        duration: AppMotion.medium,
-        curve: AppMotion.change,
-        padding: const EdgeInsets.all(18),
-        decoration: AppSurface.decoration(
-          context,
-          accent: dimmed ? null : accent,
-          radius: AppSurface.radiusLarge,
+    final NxTokens t = context.nx;
+    return Dialog(
+      key: const ValueKey<String>('delivered'),
+      insetPadding: const EdgeInsets.all(NxSpace.xl),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          NxSpace.xl,
+          NxSpace.md,
+          NxSpace.xl,
+          NxSpace.xl,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Icon(icon, size: 22, color: accent),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      Text(
-                        label,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      if (name != null && name!.isNotEmpty)
-                        Text(
-                          name!,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      const SizedBox(height: 2),
-                      Text(address, style: theme.textTheme.bodyMedium),
-                    ],
-                  ),
-                ),
-                if (distance != null) ...<Widget>[
-                  const SizedBox(width: 10),
-                  Text(
-                    distance!,
-                    textDirection: TextDirection.ltr,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            if (details != null) ...<Widget>[
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsetsDirectional.only(start: 34),
-                child: details!,
+            const NxSuccessCheck(size: 88),
+            Text(
+              l10n.deliverySuccessTitle,
+              textAlign: TextAlign.center,
+              style: NxType.title.copyWith(
+                color: t.ink,
+                fontWeight: FontWeight.w800,
               ),
-            ],
-            const SizedBox(height: 14),
-            actions,
+            ),
+            const SizedBox(height: NxSpace.md),
+            Text(
+              l10n.deliverySuccessYouEarned,
+              style: NxType.caption.copyWith(color: t.inkMuted),
+            ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: NxMoneyText(
+                earned,
+                sign: '+',
+                colour: t.primary,
+                style: NxType.display.copyWith(fontSize: 40),
+              ),
+            ),
+            const SizedBox(height: NxSpace.xs),
+            Text(
+              l10n.deliveryConfirmed,
+              textAlign: TextAlign.center,
+              style: NxType.bodySmall.copyWith(color: t.inkMuted),
+            ),
+            const SizedBox(height: NxSpace.lg),
+            NxPrimaryButton(
+              label: l10n.continueLabel,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Note extends StatelessWidget {
-  const _Note({required this.note});
-
-  final String note;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final AppLocalizations l10n = AppLocalizations.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.radius),
-        border: Border.all(color: theme.colorScheme.outline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(
-                Icons.sticky_note_2_outlined,
-                size: 18,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.customerNoteLabel,
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(note, style: theme.textTheme.bodyMedium),
-        ],
       ),
     );
   }
@@ -648,9 +1168,9 @@ class _Note extends StatelessWidget {
 
 /// The ticket, as a checklist for the counter.
 ///
-/// Quantity leads, then the dish, then its options — that is the order the bag
-/// is checked in. The line total is present but quiet: the rider is confirming
-/// contents, not settling a bill.
+/// Quantity leads, then the dish, then its options — that is the order the
+/// bag is checked in. The line total is present but quiet: the rider is
+/// confirming contents, not settling a bill.
 class OrderItemList extends StatelessWidget {
   const OrderItemList({super.key, required this.items});
 
@@ -658,19 +1178,15 @@ class OrderItemList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: theme.colorScheme.outline),
-      ),
+    return NxCard(
+      padding: EdgeInsets.zero,
       child: Column(
         children: <Widget>[
           for (int i = 0; i < items.length; i++) ...<Widget>[
-            if (i > 0) Divider(height: 1, color: theme.colorScheme.outline),
+            if (i > 0) Divider(height: 1, color: t.hairline),
             Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
@@ -681,18 +1197,20 @@ class OrderItemList extends StatelessWidget {
                     height: 30,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
+                      color: t.surfaceMuted,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${items[i].quantity}',
                       textDirection: TextDirection.ltr,
-                      style: theme.textTheme.labelLarge?.copyWith(
+                      style: NxType.titleSmall.copyWith(
+                        fontSize: 14,
+                        color: t.ink,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: NxSpace.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -701,11 +1219,12 @@ class OrderItemList extends StatelessWidget {
                         Row(
                           children: <Widget>[
                             _VegMark(isVeg: items[i].isVeg),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: NxSpace.xs),
                             Expanded(
                               child: Text(
                                 items[i].name,
-                                style: theme.textTheme.bodyLarge?.copyWith(
+                                style: NxType.body.copyWith(
+                                  color: t.ink,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -719,14 +1238,16 @@ class OrderItemList extends StatelessWidget {
                                 .options
                                 .map((OrderItemOption o) => o.name)
                                 .join(', '),
-                            style: theme.textTheme.bodySmall,
+                            style:
+                                NxType.bodySmall.copyWith(color: t.inkMuted),
                           ),
                         ],
                         if (items[i].notes != null) ...<Widget>[
                           const SizedBox(height: 4),
                           Text(
                             items[i].notes!,
-                            style: theme.textTheme.bodySmall?.copyWith(
+                            style: NxType.bodySmall.copyWith(
+                              color: t.inkMuted,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -738,9 +1259,7 @@ class OrderItemList extends StatelessWidget {
                   Text(
                     formatAmount(l10n, items[i].lineTotal),
                     textDirection: TextDirection.ltr,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: NxType.bodySmall.copyWith(color: t.inkMuted),
                   ),
                 ],
               ),
@@ -778,82 +1297,6 @@ class _VegMark extends StatelessWidget {
           height: 6,
           decoration: BoxDecoration(color: colour, shape: BoxShape.circle),
         ),
-      ),
-    );
-  }
-}
-
-/// What to do now, over the four steps of the journey.
-///
-/// Every step stays on screen, the finished ones ticked rather than hidden: a
-/// rider glancing down mid-ride wants to confirm what they have done as much
-/// as what is next. The "reached" steps are optional — pickup and delivery
-/// never wait on them — so a skipped one is ticked once a later step is done.
-class _JourneyCard extends StatelessWidget {
-  const _JourneyCard({required this.order});
-
-  final RiderOrder order;
-
-  /// The step the rider is on, 0 to 3; 4 once delivered.
-  static int currentStep(RiderOrder order) => switch (order.status) {
-        OrderStatus.assigned => 0,
-        OrderStatus.reachedRestaurant => 1,
-        OrderStatus.pickedUp || OrderStatus.outForDelivery => 2,
-        OrderStatus.reachedCustomer => 3,
-        OrderStatus.delivered => 4,
-        _ => order.status.isCollected ? 2 : 0,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final AppLocalizations l10n = AppLocalizations.of(context);
-    final bool collected = order.status.isCollected;
-    final int current = currentStep(order);
-
-    final List<TrackerStep> steps = <TrackerStep>[
-      TrackerStep(l10n.stepReachRestaurant, Icons.storefront_rounded),
-      TrackerStep(l10n.stepPickUp, Icons.shopping_bag_rounded),
-      TrackerStep(l10n.stepReachCustomer, Icons.location_on_rounded),
-      TrackerStep(l10n.stepDeliver, Icons.home_rounded),
-    ];
-
-    return SurfaceCard(
-      radius: AppSurface.radiusLarge,
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  collected
-                      ? Icons.location_on_rounded
-                      : Icons.storefront_rounded,
-                  size: 22,
-                  color: AppColors.orangeDeep,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    collected ? l10n.deliverToCustomer : l10n.headToRestaurant,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          StepTracker(
-            key: const ValueKey<String>('journey-steps'),
-            steps: steps,
-            done: current,
-          ),
-        ],
       ),
     );
   }

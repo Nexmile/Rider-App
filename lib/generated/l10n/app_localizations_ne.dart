@@ -834,6 +834,22 @@ class AppLocalizationsNe extends AppLocalizations {
       'डेलिभर भयो। धन्यवाद, तपाईं फेरि अनलाइन हुनुहुन्छ।';
 
   @override
+  String get deliverySuccessTitle => 'Order delivered';
+
+  @override
+  String get deliverySuccessYouEarned => 'You earned';
+
+  @override
+  String nextStopDeliverTo(String name) {
+    return 'Then deliver to $name';
+  }
+
+  @override
+  String pickedUpFrom(String name) {
+    return 'Picked up from $name';
+  }
+
+  @override
   String get releaseOrderButton => 'फिर्ता गर्नुहोस्';
 
   @override

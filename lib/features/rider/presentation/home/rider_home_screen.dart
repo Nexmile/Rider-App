@@ -128,9 +128,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     // The Shift tab draws its own header (greeting, avatar, duty switch);
     // the others share a slim bar with the brand and the way to the profile.
     final bool onShift = _tab == 0;
+    // Delivery with an order in hand is map first, edge to edge.
+    final bool fullBleed =
+        onShift || (_tab == _deliveryTab && orders.hasActiveOrder);
 
     return Scaffold(
-      appBar: onShift
+      appBar: fullBleed
           ? null
           : AppBar(
               titleSpacing: NxSpace.screen,

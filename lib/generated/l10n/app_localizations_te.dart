@@ -836,6 +836,22 @@ class AppLocalizationsTe extends AppLocalizations {
       'డెలివరీ అయ్యింది. ధన్యవాదాలు, మీరు మళ్ళీ ఆన్‌లైన్‌లో ఉన్నారు.';
 
   @override
+  String get deliverySuccessTitle => 'Order delivered';
+
+  @override
+  String get deliverySuccessYouEarned => 'You earned';
+
+  @override
+  String nextStopDeliverTo(String name) {
+    return 'Then deliver to $name';
+  }
+
+  @override
+  String pickedUpFrom(String name) {
+    return 'Picked up from $name';
+  }
+
+  @override
   String get releaseOrderButton => 'తిరిగి ఇవ్వండి';
 
   @override

@@ -843,6 +843,22 @@ class AppLocalizationsTa extends AppLocalizations {
       'சேர்த்துவிட்டீர்கள். நன்றி, நீங்கள் மீண்டும் ஆன்லைனில் இருக்கிறீர்கள்.';
 
   @override
+  String get deliverySuccessTitle => 'Order delivered';
+
+  @override
+  String get deliverySuccessYouEarned => 'You earned';
+
+  @override
+  String nextStopDeliverTo(String name) {
+    return 'Then deliver to $name';
+  }
+
+  @override
+  String pickedUpFrom(String name) {
+    return 'Picked up from $name';
+  }
+
+  @override
   String get releaseOrderButton => 'திருப்பிக் கொடுங்கள்';
 
   @override

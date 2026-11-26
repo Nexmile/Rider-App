@@ -2415,6 +2415,35 @@ void main() {
       }
     });
 
+    testWidgets('the step bar says which of the four steps the rider is on',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider()..pickupCode = '4321';
+      await onBoard(tester, rider);
+      await tester.tap(find.text('Accept'));
+      await _pumpLive(tester);
+      expect(find.text('1 of 4'), findsOneWidget);
+
+      await _swipe(tester, 'pickup-swipe');
+      await tester.enterText(find.byType(TextField), '4321');
+      await tester.tap(find.text('I have collected it').last);
+      await _pumpLive(tester);
+      await tester.drag(
+        find
+            .descendant(
+              of: find.byType(ActiveDeliveryScreen),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+        const Offset(0, 3000),
+      );
+      await _pumpLive(tester);
+      // Collected: reaching the customer is next, and the restaurant is
+      // behind, ticked off with its number still to hand.
+      expect(find.text('3 of 4'), findsOneWidget);
+      expect(find.text('Picked up from Amma Mess'), findsOneWidget);
+      expect(find.byKey(const ValueKey<String>('call-previous')), findsOneWidget);
+    });
+
     testWidgets('a tap or a short drag does not collect the order',
         (WidgetTester tester) async {
       final FakeRiderRepository rider = workingRider()..pickupCode = '4321';
@@ -2630,7 +2659,9 @@ void main() {
 
       // The customer is about 2.3 km from the test position, and this server
       // has no route yet, so it falls back to a direction and a distance.
-      final Finder toCustomer = find.text('Navigate').last;
+      // The customer is the next stop: its row carries the way there.
+      final Finder toCustomer =
+          find.byKey(const ValueKey<String>('nav-next'));
       await tester.ensureVisible(toCustomer);
       await _pumpLive(tester);
       await tester.tap(toCustomer);
@@ -2818,6 +2849,11 @@ void main() {
 
       // Prepaid: the swipe is the confirmation, with no dialog after it.
       await _swipe(tester, 'deliver-swipe');
+
+      // The moment it closes: what it paid, and the way back to work.
+      expect(find.byKey(const ValueKey<String>('delivered')), findsOneWidget);
+      expect(find.text('Order delivered'), findsOneWidget);
+      expect(find.text('+₹46'), findsOneWidget);
 
       expect(rider.assigned, isNull);
       // The server owns the count. Adding one locally would drift from the

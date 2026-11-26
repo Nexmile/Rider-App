@@ -895,6 +895,20 @@
 
   "deliveryConfirmed": "Delivered. Thanks, you are back online.",
   "@deliveryConfirmed": { "description": "Confirmation after closing an order out." },
+  "deliverySuccessTitle": "Order delivered",
+  "@deliverySuccessTitle": { "description": "Title of the moment after the rider swipes to deliver and the server confirms it." },
+  "deliverySuccessYouEarned": "You earned",
+  "@deliverySuccessYouEarned": { "description": "Small line over the large amount the rider earned for the delivery just closed." },
+  "nextStopDeliverTo": "Then deliver to {name}",
+  "@nextStopDeliverTo": {
+    "description": "Dimmed row under the restaurant card on the delivery screen: the stop after this one.",
+    "placeholders": { "name": { "type": "String", "example": "Anand R" } }
+  },
+  "pickedUpFrom": "Picked up from {name}",
+  "@pickedUpFrom": {
+    "description": "Dimmed row under the customer card once the food is collected: the stop already done.",
+    "placeholders": { "name": { "type": "String", "example": "Amma Mess" } }
+  },
 
   "releaseOrderButton": "Hand it back",
   "@releaseOrderButton": { "description": "Button that returns an order to the board." },
