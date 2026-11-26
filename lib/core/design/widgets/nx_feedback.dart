@@ -66,8 +66,9 @@ class NxEmptyState extends StatelessWidget {
   }
 }
 
-/// Three soft rings around an icon, the outer one breathing. Stands in for
-/// an illustration until real artwork exists.
+/// Two soft rings around an icon, growing in once when the state appears.
+/// Stands in for an illustration until real artwork exists. Plays once, not
+/// in a loop: an idle screen should be calm, not busy.
 class _Badge extends StatefulWidget {
   const _Badge({required this.icon, required this.tint});
 
@@ -81,16 +82,16 @@ class _Badge extends StatefulWidget {
 class _BadgeState extends State<_Badge> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 2400),
+    duration: const Duration(milliseconds: 700),
   );
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (AppMotion.reduced(context)) {
-      _c.stop();
-    } else if (!_c.isAnimating) {
-      _c.repeat(reverse: true);
+      _c.value = 1;
+    } else if (_c.value == 0 && !_c.isAnimating) {
+      _c.forward();
     }
   }
 
@@ -106,7 +107,7 @@ class _BadgeState extends State<_Badge> with SingleTickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _c,
       builder: (BuildContext context, Widget? child) {
-        final double grow = 1 + 0.06 * Curves.easeInOut.transform(_c.value);
+        final double grow = 0.85 + 0.15 * Curves.easeOutBack.transform(_c.value);
         return SizedBox(
           width: 132,
           height: 132,

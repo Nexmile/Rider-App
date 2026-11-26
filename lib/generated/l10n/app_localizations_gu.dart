@@ -898,6 +898,18 @@ class AppLocalizationsGu extends AppLocalizations {
   String get historySearchHint => 'ઓર્ડર કે રેસ્ટોરાં શોધો';
 
   @override
+  String get historyFilterAll => 'All';
+
+  @override
+  String get historyFilterWeek => 'This week';
+
+  @override
+  String get historyFilterMonth => 'This month';
+
+  @override
+  String get historyEarned => 'Earned';
+
+  @override
   String get historyToday => 'આજે';
 
   @override
@@ -1051,6 +1063,16 @@ class AppLocalizationsGu extends AppLocalizations {
 
   @override
   String get payoutsNotYetSent => 'હજી મોકલાયા નથી';
+
+  @override
+  String get payoutsRecentWeeks => 'Recent weeks';
+
+  @override
+  String get payoutsHowTitle => 'How payouts work';
+
+  @override
+  String get payoutsHowBody =>
+      'Each week\'s earnings are worked out after the week ends, then sent to your bank. Deductions such as TDS are listed in each week\'s breakdown.';
 
   @override
   String get payoutStepWorkedOut => 'ગણતરી થઈ';

@@ -901,6 +901,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historySearchHint => 'Search order or restaurant';
 
   @override
+  String get historyFilterAll => 'All';
+
+  @override
+  String get historyFilterWeek => 'This week';
+
+  @override
+  String get historyFilterMonth => 'This month';
+
+  @override
+  String get historyEarned => 'Earned';
+
+  @override
   String get historyToday => 'Today';
 
   @override
@@ -1055,6 +1067,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get payoutsNotYetSent => 'Not yet sent';
+
+  @override
+  String get payoutsRecentWeeks => 'Recent weeks';
+
+  @override
+  String get payoutsHowTitle => 'How payouts work';
+
+  @override
+  String get payoutsHowBody =>
+      'Each week\'s earnings are worked out after the week ends, then sent to your bank. Deductions such as TDS are listed in each week\'s breakdown.';
 
   @override
   String get payoutStepWorkedOut => 'Worked out';

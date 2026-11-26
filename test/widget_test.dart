@@ -4339,7 +4339,8 @@ void main() {
         (WidgetTester tester) async {
       await openHistory(tester);
 
-      expect(find.text('Today'), findsOneWidget);
+      // Once in the range control, once as the day's heading.
+      expect(find.text('Today'), findsNWidgets(2));
       expect(find.text('Yesterday'), findsOneWidget);
       // Two delivered today, at ₹46 each.
       expect(find.text('2 deliveries · ₹92'), findsOneWidget);
@@ -4365,6 +4366,22 @@ void main() {
       expect(find.text('Navigate'), findsNothing);
       // The record itself is all still there.
       expect(find.text('Anand R'), findsOneWidget);
+    });
+
+    testWidgets('the range narrows the list, and the summary follows it',
+        (WidgetTester tester) async {
+      await openHistory(tester);
+      final Finder summary =
+          find.byKey(const ValueKey<String>('history-summary'));
+      // Everything the list holds: ₹46 + ₹46 + ₹38, the cancelled one aside.
+      expect(find.descendant(of: summary, matching: find.text('₹130')),
+          findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey<String>('history-range-today')));
+      await _pumpLive(tester);
+      expect(find.text('Yesterday'), findsNothing);
+      expect(find.descendant(of: summary, matching: find.text('₹92')),
+          findsOneWidget);
     });
 
     testWidgets('search narrows the list, and says when nothing matches',
@@ -4396,7 +4413,7 @@ void main() {
       FakePayoutRepository payouts,
     ) async {
       await openPayouts(tester, payouts);
-      await tester.tap(find.byIcon(Icons.chevron_right_rounded).first);
+      await tester.tap(find.byKey(const ValueKey<String>('payout-week-0')));
       await tester.pumpAndSettle();
       expect(find.byType(PayoutDetailsScreen), findsOneWidget);
     }
@@ -4447,13 +4464,16 @@ void main() {
           find.descendant(of: summary, matching: find.text(text));
       // "Paid" counts only the week whose transfer went through.
       expect(inSummary('Paid so far'), findsOneWidget);
-      expect(inSummary('₹5000'), findsOneWidget);
+      expect(inSummary('₹5,000'), findsOneWidget);
       expect(inSummary('Not yet sent'), findsOneWidget);
       // The latest week leads the card, and is the one not yet sent.
-      expect(inSummary('₹6626'), findsNWidgets(2));
+      expect(inSummary('₹6,626'), findsNWidgets(2));
       expect(inSummary('Pending'), findsOneWidget);
       // Both weeks end in September.
-      expect(find.text('September 2026'), findsOneWidget);
+      expect(find.text('SEPTEMBER 2026'), findsOneWidget);
+      // Two weeks are enough for a chart, and the note on how it works.
+      expect(find.byKey(const ValueKey<String>('payouts-chart')), findsOneWidget);
+      expect(find.text('How payouts work'), findsOneWidget);
     });
 
     testWidgets('the tracker never runs ahead of the transfer',

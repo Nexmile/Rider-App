@@ -1754,6 +1754,30 @@ abstract class AppLocalizations {
   /// **'Search order or restaurant'**
   String get historySearchHint;
 
+  /// Segment on the past deliveries tab: every order the list holds. One short word.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get historyFilterAll;
+
+  /// Segment on the past deliveries tab: orders since Monday, the same week payouts are worked out over. Short.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get historyFilterWeek;
+
+  /// Segment on the past deliveries tab: orders since the 1st of this month. Short.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get historyFilterMonth;
+
+  /// Label over the total the rider earned from delivered orders in the chosen range.
+  ///
+  /// In en, this message translates to:
+  /// **'Earned'**
+  String get historyEarned;
+
   /// Day heading over today's deliveries in the history list.
   ///
   /// In en, this message translates to:
@@ -2017,6 +2041,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not yet sent'**
   String get payoutsNotYetSent;
+
+  /// Heading over a small bar chart of the amount payable for each of the last few weeks.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent weeks'**
+  String get payoutsRecentWeeks;
+
+  /// Heading of the explanation card at the foot of the payouts screen.
+  ///
+  /// In en, this message translates to:
+  /// **'How payouts work'**
+  String get payoutsHowTitle;
+
+  /// Body of the explanation card at the foot of the payouts screen. Must not promise a date the money arrives.
+  ///
+  /// In en, this message translates to:
+  /// **'Each week\'s earnings are worked out after the week ends, then sent to your bank. Deductions such as TDS are listed in each week\'s breakdown.'**
+  String get payoutsHowBody;
 
   /// Payout tracker step 1: the week's earnings have been calculated.
   ///

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_surface.dart';
-import '../../../../core/widgets/info_tile.dart';
+import '../../../../core/design/design.dart';
+import '../../../../core/widgets/info_tile.dart' show StatusTone;
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/order_models.dart';
 import '../../data/rider_failure.dart';
@@ -12,11 +11,15 @@ import 'order_details_screen.dart';
 import 'order_formatting.dart';
 import 'widgets/order_empty_state.dart';
 
+/// Which slice of the history is on screen.
+enum _Range { all, today, week, month }
+
 /// What the rider has already done, a day at a time.
 ///
 /// Fetched once when the tab is opened rather than polled: a finished delivery
 /// does not change, and the only new row is one this app itself just created.
-/// Searching filters what is already on the phone; it never asks the server.
+/// The range and the search filter what is already on the phone; neither
+/// asks the server.
 class DeliveryHistoryScreen extends StatefulWidget {
   const DeliveryHistoryScreen({super.key});
 
@@ -27,6 +30,7 @@ class DeliveryHistoryScreen extends StatefulWidget {
 class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
   final TextEditingController _search = TextEditingController();
   String _query = '';
+  _Range _range = _Range.all;
 
   @override
   void initState() {
@@ -55,119 +59,320 @@ class _DeliveryHistoryScreenState extends State<DeliveryHistoryScreen> {
     return false;
   }
 
+  /// The first moment of the range. "This week" starts on Monday, the same
+  /// week payouts are worked out over.
+  static DateTime? _since(_Range range, DateTime now) {
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    return switch (range) {
+      _Range.all => null,
+      _Range.today => today,
+      _Range.week => today.subtract(Duration(days: today.weekday - 1)),
+      _Range.month => DateTime(now.year, now.month),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
     final OrderController orders = context.watch<OrderController>();
     final List<RiderOrder> history = orders.history;
 
     final String query = _query.trim().toLowerCase();
-    final List<RiderOrder> shown = query.isEmpty
-        ? history
-        : <RiderOrder>[
-            for (final RiderOrder order in history)
-              if (_matches(order, query)) order,
-          ];
+    final DateTime? since = _since(_range, DateTime.now());
+    final List<RiderOrder> shown = <RiderOrder>[
+      for (final RiderOrder order in history)
+        if ((query.isEmpty || _matches(order, query)) &&
+            (since == null ||
+                ((_Day.when(order)?.isBefore(since)) == false)))
+          order,
+    ];
     final List<_Day> days = _Day.group(shown);
+    final List<RiderOrder> delivered = <RiderOrder>[
+      for (final RiderOrder order in shown)
+        if (order.status == OrderStatus.delivered) order,
+    ];
+    final double earned = delivered.fold<double>(
+      0,
+      (double sum, RiderOrder order) => sum + order.earnings,
+    );
+
+    final List<Widget> top = <Widget>[
+      Text(
+        l10n.historyTitle,
+        style: NxType.headline.copyWith(color: t.ink),
+      ),
+      const SizedBox(height: NxSpace.md),
+      if (history.isNotEmpty) ...<Widget>[
+        _RangeTabs(
+          value: _range,
+          onChanged: (_Range r) => setState(() => _range = r),
+        ),
+        const SizedBox(height: NxSpace.sm),
+        _Summary(earned: earned, deliveries: delivered.length),
+        const SizedBox(height: NxSpace.sm),
+        TextField(
+          key: const ValueKey<String>('history-search'),
+          controller: _search,
+          onChanged: (String value) => setState(() => _query = value),
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: l10n.historySearchHint,
+            prefixIcon: const Icon(Icons.search_rounded),
+            suffixIcon: _query.isEmpty
+                ? null
+                : IconButton(
+                    tooltip:
+                        MaterialLocalizations.of(context).clearButtonTooltip,
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () {
+                      _search.clear();
+                      setState(() => _query = '');
+                    },
+                  ),
+          ),
+        ),
+        const SizedBox(height: NxSpace.md),
+      ],
+      if (orders.historyFailure != null) ...<Widget>[
+        OrderBanner(message: orders.historyFailure!.message(l10n)),
+        const SizedBox(height: NxSpace.md),
+      ],
+    ];
+
+    final Widget? placeholder = orders.isLoadingHistory && history.isEmpty
+        ? const NxSkeletonList(count: 3, height: 96)
+        : history.isEmpty
+            ? OrderEmptyState(
+                icon: Icons.history_rounded,
+                title: l10n.historyEmptyTitle,
+                body: l10n.historyEmptyBody,
+              )
+            : shown.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    child: Text(
+                      query.isEmpty
+                          ? l10n.historyEmptyTitle
+                          : l10n.historyNoMatch(_query.trim()),
+                      textAlign: TextAlign.center,
+                      style: NxType.body.copyWith(color: t.inkMuted),
+                    ),
+                  )
+                : null;
+
+    const EdgeInsets side = EdgeInsets.symmetric(horizontal: NxSpace.screen);
 
     return RefreshIndicator(
       onRefresh: () => orders.loadHistory(),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: <Widget>[
-          Text(
-            l10n.historyTitle,
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 14),
-
-          if (history.isNotEmpty) ...<Widget>[
-            TextField(
-              key: const ValueKey<String>('history-search'),
-              controller: _search,
-              onChanged: (String value) => setState(() => _query = value),
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: l10n.historySearchHint,
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: _query.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip:
-                            MaterialLocalizations.of(context).clearButtonTooltip,
-                        icon: const Icon(Icons.close_rounded),
-                        onPressed: () {
-                          _search.clear();
-                          setState(() => _query = '');
-                        },
-                      ),
-              ),
+        slivers: <Widget>[
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(
+              NxSpace.screen,
+              NxSpace.sm,
+              NxSpace.screen,
+              0,
             ),
-            const SizedBox(height: 18),
-          ],
-
-          if (orders.historyFailure != null) ...<Widget>[
-            OrderBanner(message: orders.historyFailure!.message(l10n)),
-            const SizedBox(height: 16),
-          ],
-
-          if (orders.isLoadingHistory && history.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 48),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (history.isEmpty)
-            OrderEmptyState(
-              icon: Icons.history_rounded,
-              title: l10n.historyEmptyTitle,
-              body: l10n.historyEmptyBody,
-            )
-          else if (shown.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Text(
-                l10n.historyNoMatch(_query.trim()),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+            sliver: SliverList(delegate: SliverChildListDelegate(top)),
+          ),
+          if (placeholder != null)
+            SliverPadding(
+              padding: side,
+              sliver: SliverToBoxAdapter(child: placeholder),
             )
           else
-            for (final _Day day in days) ...<Widget>[
-              _DayHeader(day: day),
-              const SizedBox(height: 8),
-              SurfaceCard(
-                padding: EdgeInsets.zero,
-                radius: AppSurface.radiusLarge,
-                child: Column(
-                  children: <Widget>[
-                    for (int i = 0; i < day.orders.length; i++) ...<Widget>[
-                      if (i > 0)
-                        Divider(
-                          height: 1,
-                          indent: 72,
-                          color: AppSurface.line(context),
+            for (final _Day day in days)
+              SliverMainAxisGroup(
+                slivers: <Widget>[
+                  // The day stays pinned while its orders scroll under it.
+                  PinnedHeaderSliver(
+                    child: ColoredBox(
+                      color: t.ground,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          NxSpace.screen + 4,
+                          NxSpace.sm,
+                          NxSpace.screen + 4,
+                          NxSpace.sm,
                         ),
-                      _HistoryRow(
-                        order: day.orders[i],
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) =>
-                                OrderDetailsScreen(order: day.orders[i]),
-                          ),
+                        child: _DayHeader(day: day),
+                      ),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      NxSpace.screen,
+                      0,
+                      NxSpace.screen,
+                      NxSpace.lg,
+                    ),
+                    sliver: SliverToBoxAdapter(
+                      child: NxCard(
+                        padding: EdgeInsets.zero,
+                        child: Column(
+                          children: <Widget>[
+                            for (int i = 0; i < day.orders.length; i++) ...<
+                                Widget>[
+                              if (i > 0)
+                                Divider(
+                                  height: 1,
+                                  indent: 72,
+                                  color: t.hairline,
+                                ),
+                              _HistoryRow(
+                                order: day.orders[i],
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => OrderDetailsScreen(
+                                      order: day.orders[i],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                    ],
-                  ],
+                    ),
+                  ),
+                ],
+              ),
+          const SliverToBoxAdapter(child: SizedBox(height: NxSpace.xl)),
+        ],
+      ),
+    );
+  }
+}
+
+/// All / Today / This week / This month, as one segmented control.
+class _RangeTabs extends StatelessWidget {
+  const _RangeTabs({required this.value, required this.onChanged});
+
+  final _Range value;
+  final ValueChanged<_Range> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    final Map<_Range, String> labels = <_Range, String>{
+      _Range.all: l10n.historyFilterAll,
+      _Range.today: l10n.historyToday,
+      _Range.week: l10n.historyFilterWeek,
+      _Range.month: l10n.historyFilterMonth,
+    };
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: t.surfaceMuted,
+        borderRadius: NxRadius.controlAll,
+      ),
+      child: Row(
+        children: <Widget>[
+          for (final MapEntry<_Range, String> entry in labels.entries)
+            Expanded(
+              child: Semantics(
+                button: true,
+                selected: entry.key == value,
+                child: GestureDetector(
+                  key: ValueKey<String>('history-range-${entry.key.name}'),
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => onChanged(entry.key),
+                  child: AnimatedContainer(
+                    duration: AppMotion.quick,
+                    curve: AppMotion.change,
+                    constraints: const BoxConstraints(minHeight: 40),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: entry.key == value ? t.surface : null,
+                      borderRadius: BorderRadius.circular(NxRadius.control - 4),
+                      boxShadow: entry.key == value ? t.cardShadow : null,
+                    ),
+                    child: Text(
+                      entry.value,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                      style: NxType.caption.copyWith(
+                        fontSize: 13,
+                        color: entry.key == value ? t.ink : t.inkMuted,
+                        fontWeight: entry.key == value
+                            ? FontWeight.w800
+                            : FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
+            ),
         ],
+      ),
+    );
+  }
+}
+
+/// What the chosen range came to: earned, and how many deliveries.
+class _Summary extends StatelessWidget {
+  const _Summary({required this.earned, required this.deliveries});
+
+  final double earned;
+  final int deliveries;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    return NxCard(
+      key: const ValueKey<String>('history-summary'),
+      child: IntrinsicHeight(
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    l10n.historyEarned,
+                    style: NxType.caption.copyWith(color: t.inkMuted),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: NxMoneyText(
+                      earned,
+                      colour: t.primary,
+                      style: NxType.display.copyWith(fontSize: 28),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            VerticalDivider(width: NxSpace.xl, color: t.hairline),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    l10n.completedDeliveriesLabel,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: NxType.caption.copyWith(color: t.inkMuted),
+                  ),
+                  Text(
+                    '$deliveries',
+                    style: NxType.display.copyWith(
+                      fontSize: 28,
+                      color: t.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -227,8 +432,8 @@ class _DayHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
     final DateTime? date = day.date;
 
     final String label;
@@ -256,43 +461,38 @@ class _DayHeader extends StatelessWidget {
       (double sum, RiderOrder order) => sum + order.earnings,
     );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      // Both sides loose, pushed apart: the day on the left, its total at
-      // the right edge, and either one shrinking if a language runs long.
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w800),
+    // Both sides loose, pushed apart: the day on the left, its total at the
+    // right edge, and either one shrinking if a language runs long.
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: NxType.titleSmall.copyWith(
+              color: t.ink,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          if (delivered.isNotEmpty) ...<Widget>[
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                l10n.historyDaySummary(
-                  delivered.length,
-                  formatAmount(l10n, earned),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.end,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                ),
+        ),
+        if (delivered.isNotEmpty) ...<Widget>[
+          const SizedBox(width: NxSpace.sm),
+          Flexible(
+            child: Text(
+              l10n.historyDaySummary(
+                delivered.length,
+                formatAmount(l10n, earned),
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: NxType.caption.copyWith(color: t.inkMuted),
             ),
-          ],
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -306,10 +506,8 @@ class _HistoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-    final Color green = isDark ? AppColors.greenLight : AppColors.greenDeep;
+    final NxTokens t = context.nx;
     final bool delivered = order.status == OrderStatus.delivered;
     final DateTime? when = _Day.when(order);
 
@@ -335,17 +533,16 @@ class _HistoryRow extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (delivered ? green : theme.colorScheme.onSurfaceVariant)
-                    .withValues(alpha: isDark ? 0.18 : 0.10),
+                borderRadius: NxRadius.smallAll,
+                color: delivered ? t.primarySoft : t.surfaceMuted,
               ),
               child: Icon(
                 delivered ? Icons.check_rounded : Icons.close_rounded,
                 size: 22,
-                color: delivered ? green : theme.colorScheme.onSurfaceVariant,
+                color: delivered ? t.primary : t.inkMuted,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: NxSpace.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,23 +552,25 @@ class _HistoryRow extends StatelessWidget {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                    style: NxType.titleSmall.copyWith(
+                      color: t.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subline,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: NxType.bodySmall.copyWith(color: t.inkMuted),
                   ),
                   const SizedBox(height: 6),
                   if (!delivered)
-                    StatusChip(
+                    NxStatusChip(
                       label: order.statusText(l10n),
-                      tone: order.statusTone,
+                      tone: order.statusTone == StatusTone.negative
+                          ? NxTone.danger
+                          : NxTone.neutral,
                     )
                   else
                     Text(
@@ -382,10 +581,10 @@ class _HistoryRow extends StatelessWidget {
                           : l10n.prepaidLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall?.copyWith(
+                      style: NxType.caption.copyWith(
                         color: order.isCashOnDelivery
-                            ? AppColors.orangeDeep
-                            : theme.colorScheme.onSurfaceVariant,
+                            ? t.actionText
+                            : t.inkMuted,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -393,12 +592,14 @@ class _HistoryRow extends StatelessWidget {
               ),
             ),
             if (delivered) ...<Widget>[
-              const SizedBox(width: 12),
-              Text(
-                '+${formatAmount(l10n, order.earnings)}',
-                textDirection: TextDirection.ltr,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: green,
+              const SizedBox(width: NxSpace.sm),
+              NxMoneyText(
+                order.earnings,
+                sign: '+',
+                split: false,
+                colour: t.primary,
+                style: NxType.titleSmall.copyWith(
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
                 ),
               ),

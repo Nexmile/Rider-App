@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/design/widgets/nx_data.dart' show formatRupees;
 import '../../../../core/widgets/info_tile.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/order_models.dart';
@@ -67,10 +68,10 @@ extension OrderPresentation on RiderOrder {
 /// "₹40.00" invites a second look at a counter, and the whole point of this
 /// number is that it can be read at a glance.
 String formatAmount(AppLocalizations l10n, double amount) {
-  final bool whole = amount == amount.roundToDouble();
-  return l10n.amountRupees(
-    whole ? amount.round().toString() : amount.toStringAsFixed(2),
-  );
+  // Indian grouping ("6,559.74", "1,00,000"), paise only when there are
+  // some. The rupee sign comes from the translation, which places it.
+  final String grouped = formatRupees(amount.abs()).replaceFirst('₹', '');
+  return '${amount < 0 ? '−' : ''}${l10n.amountRupees(grouped)}';
 }
 
 /// Distance, in the unit that suits it.

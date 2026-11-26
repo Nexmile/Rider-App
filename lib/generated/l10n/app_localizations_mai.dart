@@ -894,6 +894,18 @@ class AppLocalizationsMai extends AppLocalizations {
   String get historySearchHint => 'ऑर्डर वा रेस्टोरेंट ताकू';
 
   @override
+  String get historyFilterAll => 'All';
+
+  @override
+  String get historyFilterWeek => 'This week';
+
+  @override
+  String get historyFilterMonth => 'This month';
+
+  @override
+  String get historyEarned => 'Earned';
+
+  @override
   String get historyToday => 'आइ';
 
   @override
@@ -1047,6 +1059,16 @@ class AppLocalizationsMai extends AppLocalizations {
 
   @override
   String get payoutsNotYetSent => 'अखन धरि नहि पठाओल गेल';
+
+  @override
+  String get payoutsRecentWeeks => 'Recent weeks';
+
+  @override
+  String get payoutsHowTitle => 'How payouts work';
+
+  @override
+  String get payoutsHowBody =>
+      'Each week\'s earnings are worked out after the week ends, then sent to your bank. Deductions such as TDS are listed in each week\'s breakdown.';
 
   @override
   String get payoutStepWorkedOut => 'हिसाब भेल';

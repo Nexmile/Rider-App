@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_surface.dart';
-import '../../../../../core/widgets/info_tile.dart';
+import '../../../../../core/design/design.dart';
+import '../../../../../core/widgets/info_tile.dart' show StatusTone;
 import '../../../../../generated/l10n/app_localizations.dart';
 import '../../../data/order_models.dart';
 import '../order_formatting.dart';
 
-/// One order, as it appears on the board and in the history list.
+/// One order, as it appears on the board.
 ///
-/// Laid out as a decision, in the order the decision is made: which shop and
-/// how far, then what it pays and whether there is cash to handle, then the
-/// button. That is about a second's reading with a helmet still on.
+/// Laid out as a decision, in the order the decision is made: what it pays
+/// (the biggest thing on the card), how far and whether there is cash to
+/// handle, the route, then the button. About a second's reading with a
+/// helmet still on.
 class OrderCard extends StatelessWidget {
   const OrderCard({
     super.key,
@@ -23,7 +23,7 @@ class OrderCard extends StatelessWidget {
 
   final RiderOrder order;
 
-  /// Null in the history list, where there is nothing left to accept.
+  /// Null where there is nothing left to accept.
   final VoidCallback? onAccept;
 
   final VoidCallback? onTap;
@@ -35,12 +35,11 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
+    final NxTokens t = context.nx;
+    final String? toShop = formatDistance(l10n, order.pickup.distanceMetres);
 
-    return SurfaceCard(
-      radius: AppSurface.radiusLarge,
+    return NxCard(
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,114 +51,100 @@ class OrderCard extends StatelessWidget {
                   l10n.orderNumberLabel(order.orderNumber),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0,
-                  ),
+                  style: NxType.caption.copyWith(color: t.inkMuted),
                 ),
               ),
-              const SizedBox(width: 8),
-              StatusChip(
+              const SizedBox(width: NxSpace.xs),
+              NxStatusChip(
                 label: order.statusText(l10n),
-                tone: order.statusTone,
+                tone: switch (order.statusTone) {
+                  StatusTone.positive => NxTone.success,
+                  StatusTone.warning => NxTone.action,
+                  StatusTone.negative => NxTone.danger,
+                  StatusTone.neutral => NxTone.neutral,
+                },
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
+          const SizedBox(height: NxSpace.sm),
+          // What it pays, as large as anything on the board.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      l10n.earningsLabel,
+                      style: NxType.caption.copyWith(color: t.inkMuted),
+                    ),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: NxMoneyText(
+                        order.earnings,
+                        colour: t.primary,
+                        style: NxType.display.copyWith(fontSize: 34),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (toShop != null) _Chip(icon: Icons.near_me_rounded, text: toShop),
+            ],
+          ),
+          const SizedBox(height: NxSpace.sm),
+          Wrap(
+            spacing: NxSpace.xs,
+            runSpacing: NxSpace.xs,
+            children: <Widget>[
+              // Cash is the one figure here that can cost the rider their own
+              // money, so it is the one chip in colour.
+              if (order.isCashOnDelivery)
+                _Chip(
+                  icon: Icons.payments_rounded,
+                  text: l10n.offerCollectCash(
+                    formatAmount(l10n, order.collectCash),
+                  ),
+                  fill: t.actionSoft,
+                  ink: t.actionText,
+                )
+              else
+                _Chip(
+                  icon: Icons.verified_rounded,
+                  text: l10n.prepaidLabel,
+                  fill: t.primarySoft,
+                  ink: t.primary,
+                ),
+              if (order.itemCount != null)
+                _Chip(
+                  icon: Icons.shopping_bag_outlined,
+                  text: l10n.itemCount(order.itemCount!),
+                ),
+            ],
+          ),
+          const SizedBox(height: NxSpace.md),
           // Drawn as one journey joined by a rail rather than two unrelated
-          // rows. A rider reads a delivery as a route, and on the board the
-          // second stop is deliberately missing — which the rail then shows as
-          // an open end instead of hiding.
+          // rows. On the board the second stop is deliberately missing,
+          // which the rail shows as an open end instead of hiding.
           _Route(
             pickupLabel: l10n.pickupLabel,
             pickupName: order.pickup.name,
             pickupAddress: order.pickup.address,
-            pickupTrailing: formatDistance(l10n, order.pickup.distanceMetres),
-            dropoffLabel: order.dropoff == null ? null : l10n.dropoffLabel,
+            dropoffLabel: l10n.dropoffLabel,
             dropoffName: order.dropoff?.contactName,
             dropoffAddress: order.dropoff?.address,
             dropoffTrailing: order.dropoff == null
                 ? null
                 : formatDistance(l10n, order.deliveryDistanceMetres),
           ),
-
-          const SizedBox(height: 16),
-
-          // The money, on its own tinted strip: what the job pays, and what
-          // has to be collected for it.
-          Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-            decoration: BoxDecoration(
-              color: (isDark ? AppColors.greenLight : AppColors.greenDeep)
-                  .withValues(alpha: isDark ? 0.10 : 0.07),
-              borderRadius: BorderRadius.circular(AppSurface.radiusSmall),
-            ),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  flex: 5,
-                  child: _Figure(
-                    label: l10n.earningsLabel,
-                    value: formatAmount(l10n, order.earnings),
-                    emphasis: true,
-                    large: true,
-                  ),
-                ),
-                Expanded(
-                  flex: 4,
-                  child: _Figure(
-                    label: order.isCashOnDelivery
-                        ? l10n.collectCashLabel
-                        : l10n.prepaidLabel,
-                    value: order.isCashOnDelivery
-                        ? formatAmount(l10n, order.collectCash)
-                        : null,
-                    // Cash is the one figure here that can cost the rider
-                    // their own money, so it is the one that gets a colour
-                    // rather than blending into the row.
-                    colour:
-                        order.isCashOnDelivery ? AppColors.orangeDeep : null,
-                  ),
-                ),
-                if (order.itemCount != null)
-                  Expanded(
-                    flex: 3,
-                    child: _Figure(
-                      label: '',
-                      value: l10n.itemCount(order.itemCount!),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
           if (onAccept != null) ...<Widget>[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: isBusy ? null : onAccept,
-                style: FilledButton.styleFrom(
-                  backgroundColor:
-                      isDark ? AppColors.greenLight : AppColors.greenDeep,
-                  foregroundColor:
-                      isDark ? const Color(0xFF10250A) : AppColors.white,
-                  minimumSize: const Size.fromHeight(54),
-                  textStyle: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSurface.radiusSmall),
-                  ),
-                ),
-                icon: const Icon(Icons.bolt_rounded, size: 22),
-                label: Text(
-                  l10n.acceptOrder,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
+            const SizedBox(height: NxSpace.md),
+            NxPrimaryButton(
+              label: l10n.acceptOrder,
+              icon: Icons.bolt_rounded,
+              onPressed: isBusy ? null : onAccept,
             ),
           ],
         ],
@@ -168,111 +153,40 @@ class OrderCard extends StatelessWidget {
   }
 }
 
-/// Pickup and drop-off, joined by a vertical rail.
-///
-/// The rail is the point: it turns two addresses into a journey with a
-/// direction. On the board the drop-off is withheld by the API, so the rail
-/// ends in a hollow marker — the shape says "there is a second stop, you will
-/// see it when it is yours" rather than leaving a gap.
-class _Route extends StatelessWidget {
-  const _Route({
-    required this.pickupLabel,
-    required this.pickupAddress,
-    this.pickupName,
-    this.pickupTrailing,
-    this.dropoffLabel,
-    this.dropoffName,
-    this.dropoffAddress,
-    this.dropoffTrailing,
-  });
+/// A fact about the order in a small rounded chip.
+class _Chip extends StatelessWidget {
+  const _Chip({required this.icon, required this.text, this.fill, this.ink});
 
-  final String pickupLabel;
-  final String? pickupName;
-  final String pickupAddress;
-  final String? pickupTrailing;
-
-  final String? dropoffLabel;
-  final String? dropoffName;
-  final String? dropoffAddress;
-  final String? dropoffTrailing;
+  final IconData icon;
+  final String text;
+  final Color? fill;
+  final Color? ink;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-    final Color start = isDark ? AppColors.greenLight : AppColors.greenDeep;
-    final Color end = AppColors.orangeDeep;
-    final bool hasDropoff = dropoffAddress != null;
-
-    // IntrinsicHeight is what lets the rail stretch to exactly the height of
-    // the two stops beside it. Inside a scroll view the row's cross axis is
-    // unbounded, so the rail's `Expanded` has nothing to expand into and the
-    // layout throws. Measuring the text column first is the cost of drawing a
-    // line whose length is decided by content it does not own.
-    return IntrinsicHeight(
+    final NxTokens t = context.nx;
+    final Color colour = ink ?? t.ink;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: fill ?? t.surfaceMuted,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          // The rail sits in its own column so both stops share one continuous
-          // line rather than each drawing half of it.
-          SizedBox(
-            width: 18,
-            child: Column(
-              children: <Widget>[
-                const SizedBox(height: 3),
-                _Marker(colour: start, filled: true),
-                Expanded(
-                  child: Container(
-                    width: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 3),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(2),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: <Color>[
-                          start.withValues(alpha: 0.55),
-                          (hasDropoff ? end : start).withValues(alpha: 0.22),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                _Marker(colour: hasDropoff ? end : start, filled: hasDropoff),
-                const SizedBox(height: 3),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                _Stop(
-                  label: pickupLabel,
-                  name: pickupName,
-                  address: pickupAddress,
-                  trailing: pickupTrailing,
-                ),
-                const SizedBox(height: 14),
-                if (hasDropoff)
-                  _Stop(
-                    label: dropoffLabel!,
-                    name: dropoffName,
-                    address: dropoffAddress!,
-                    trailing: dropoffTrailing,
-                  )
-                else
-                  // Not an error state and not a placeholder to be filled in
-                  // later — the address genuinely does not exist for this
-                  // rider yet, and saying so is more use than a blank.
-                  Text(
-                    AppLocalizations.of(context).dropoffLabel,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-              ],
+          Icon(icon, size: 15, color: colour),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: NxType.caption.copyWith(
+                fontSize: 13,
+                color: colour,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -281,27 +195,136 @@ class _Route extends StatelessWidget {
   }
 }
 
-class _Marker extends StatelessWidget {
-  const _Marker({required this.colour, required this.filled});
+/// Pickup and drop-off, joined by a dotted rail.
+///
+/// On the board the drop-off is withheld by the API, so the rail ends in a
+/// hollow marker — the shape says "there is a second stop, you will see it
+/// when it is yours" rather than leaving a gap.
+class _Route extends StatelessWidget {
+  const _Route({
+    required this.pickupLabel,
+    required this.pickupAddress,
+    required this.dropoffLabel,
+    this.pickupName,
+    this.dropoffName,
+    this.dropoffAddress,
+    this.dropoffTrailing,
+  });
 
-  final Color colour;
-  final bool filled;
+  final String pickupLabel;
+  final String? pickupName;
+  final String pickupAddress;
+
+  final String dropoffLabel;
+  final String? dropoffName;
+  final String? dropoffAddress;
+  final String? dropoffTrailing;
 
   @override
   Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
+    final bool hasDropoff = dropoffAddress != null;
+
+    // IntrinsicHeight lets the rail stretch to exactly the height of the two
+    // stops beside it; inside a scroll view the row's cross axis is
+    // unbounded, so an `Expanded` rail would have nothing to expand into.
     return Container(
-      width: 11,
-      height: 11,
+      padding: const EdgeInsets.all(NxSpace.sm),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: filled ? colour : Colors.transparent,
-        border: Border.all(
-          color: colour.withValues(alpha: filled ? 1 : 0.5),
-          width: 2,
+        color: t.ground,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              width: 14,
+              child: Column(
+                children: <Widget>[
+                  const SizedBox(height: 3),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: t.primaryBright, width: 3),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3),
+                      child: CustomPaint(
+                        painter: _Dashes(t.inkFaint),
+                        child: const SizedBox(width: 2),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: hasDropoff ? t.action : null,
+                      border: hasDropoff
+                          ? null
+                          : Border.all(color: t.inkFaint, width: 2),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                ],
+              ),
+            ),
+            const SizedBox(width: NxSpace.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _Stop(label: pickupLabel, name: pickupName, address: pickupAddress),
+                  const SizedBox(height: NxSpace.sm),
+                  if (hasDropoff)
+                    _Stop(
+                      label: dropoffLabel,
+                      name: dropoffName,
+                      address: dropoffAddress!,
+                      trailing: dropoffTrailing,
+                    )
+                  else
+                    // Not an error and not a placeholder: the address does
+                    // not exist for this rider yet, and saying so is more
+                    // use than a blank.
+                    Text(
+                      dropoffLabel,
+                      style: NxType.caption.copyWith(color: t.inkMuted),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _Dashes extends CustomPainter {
+  const _Dashes(this.colour);
+
+  final Color colour;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint p = Paint()
+      ..color = colour
+      ..strokeWidth = 2;
+    final double x = size.width / 2;
+    for (double y = 0; y < size.height; y += 7) {
+      canvas.drawLine(Offset(x, y), Offset(x, (y + 3).clamp(0, size.height)), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_Dashes old) => old.colour != colour;
 }
 
 class _Stop extends StatelessWidget {
@@ -321,8 +344,7 @@ class _Stop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
+    final NxTokens t = context.nx;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -332,122 +354,43 @@ class _Stop extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                label.toUpperCase(),
+                style: NxType.caption.copyWith(
+                  fontSize: 11,
+                  color: t.inkMuted,
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 2),
               if (name != null && name!.isNotEmpty)
                 Text(
                   name!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  style: NxType.titleSmall.copyWith(
+                    color: t.ink,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               Text(
                 address,
-                // Two lines, then ellipsis. A full address runs three or four
-                // lines in most Indian cities and would push the fee and the
-                // accept button off a small screen — the details screen is
-                // where the whole thing belongs.
+                // Two lines, then ellipsis. A full Indian address runs three
+                // or four lines and would push the button off a small screen;
+                // the details screen is where the whole thing belongs.
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall,
+                style: NxType.bodySmall.copyWith(color: t.inkMuted),
               ),
             ],
           ),
         ),
         if (trailing != null) ...<Widget>[
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              trailing!,
-              textDirection: TextDirection.ltr,
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+          const SizedBox(width: NxSpace.xs),
+          Text(
+            trailing!,
+            textDirection: TextDirection.ltr,
+            style: NxType.caption.copyWith(color: t.inkMuted),
           ),
         ],
-      ],
-    );
-  }
-}
-
-/// A caption over a number, shrinking rather than wrapping.
-class _Figure extends StatelessWidget {
-  const _Figure({
-    required this.label,
-    required this.value,
-    this.colour,
-    this.emphasis = false,
-    this.large = false,
-  });
-
-  final String label;
-
-  /// The headline figure on the card: what the job pays.
-  final bool large;
-
-  /// Null renders the label alone, which is how "Paid online" reads — there is
-  /// no amount to show, and a zero would be read as an amount.
-  final String? value;
-
-  final Color? colour;
-  final bool emphasis;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-
-    final Color resolved = colour ??
-        (emphasis
-            ? (isDark ? AppColors.greenLight : AppColors.greenDeep)
-            : theme.colorScheme.onSurface);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        if (label.isNotEmpty)
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-        const SizedBox(height: 2),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: AlignmentDirectional.centerStart,
-          child: Text(
-            value ?? '—',
-            maxLines: 1,
-            textDirection: value == null ? null : TextDirection.ltr,
-            style: (large
-                    ? theme.textTheme.headlineSmall
-                    : theme.textTheme.titleMedium)
-                ?.copyWith(
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0,
-              color:
-                  value == null ? theme.colorScheme.onSurfaceVariant : resolved,
-            ),
-          ),
-        ),
       ],
     );
   }

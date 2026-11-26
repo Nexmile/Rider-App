@@ -904,6 +904,18 @@ class AppLocalizationsMl extends AppLocalizations {
   String get historySearchHint => 'ഓർഡറോ റെസ്റ്റോറന്റോ തിരയുക';
 
   @override
+  String get historyFilterAll => 'All';
+
+  @override
+  String get historyFilterWeek => 'This week';
+
+  @override
+  String get historyFilterMonth => 'This month';
+
+  @override
+  String get historyEarned => 'Earned';
+
+  @override
   String get historyToday => 'ഇന്ന്';
 
   @override
@@ -1057,6 +1069,16 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get payoutsNotYetSent => 'ഇതുവരെ അയച്ചിട്ടില്ല';
+
+  @override
+  String get payoutsRecentWeeks => 'Recent weeks';
+
+  @override
+  String get payoutsHowTitle => 'How payouts work';
+
+  @override
+  String get payoutsHowBody =>
+      'Each week\'s earnings are worked out after the week ends, then sent to your bank. Deductions such as TDS are listed in each week\'s breakdown.';
 
   @override
   String get payoutStepWorkedOut => 'കണക്കാക്കി';

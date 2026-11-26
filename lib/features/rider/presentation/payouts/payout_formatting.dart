@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/design/design.dart';
 import '../../../../core/widgets/info_tile.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/payout_models.dart';
@@ -37,32 +37,29 @@ extension PayoutPresentation on Payout {
   }
 }
 
-/// A status on a green card, where the usual chip colours would vanish into
-/// the background. Solid white once the money has moved.
-class WhitePill extends StatelessWidget {
-  const WhitePill({super.key, required this.label, required this.solid});
+/// A payout's status on a dark card: lime once the money has moved, orange
+/// while it has not.
+class PayoutStatusPill extends StatelessWidget {
+  const PayoutStatusPill({super.key, required this.payout});
 
-  final String label;
-  final bool solid;
+  final Payout payout;
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final NxTokens t = context.nx;
+    final Color fill = payout.isPaid ? t.lime : t.action;
+    final Color ink = payout.isPaid ? t.onLime : t.onAction;
     return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 140),
+      constraints: const BoxConstraints(maxWidth: 160),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: solid ? Colors.white : Colors.white.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(99),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(color: fill, borderRadius: NxRadius.pillAll),
         child: Text(
-          label,
+          payout.statusText(l10n),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: solid ? AppColors.greenDeep : Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
+          style: NxType.caption.copyWith(color: ink, fontWeight: FontWeight.w800),
         ),
       ),
     );

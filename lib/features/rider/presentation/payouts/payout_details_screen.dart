@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_surface.dart';
-import '../../../../core/widgets/step_tracker.dart';
+import '../../../../core/design/design.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/payout_models.dart';
 import '../../state/payout_controller.dart';
@@ -99,21 +97,13 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
-    const Color ink = Colors.white;
+    final NxTokens t = context.nx;
+    final Color ink = t.onNight;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppSurface.radiusLarge),
-        gradient: const LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-          colors: <Color>[Color(0xFF1F6E08), AppColors.greenDeep],
-        ),
-        boxShadow: AppSurface.hero(context, AppColors.greenDeep),
-      ),
+    return NxHeroCard(
+      gradient: t.darkHeroGradient,
+      glow: t.nightDeep,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -124,34 +114,28 @@ class _Hero extends StatelessWidget {
                   payout.periodText(context, l10n),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: NxType.titleSmall.copyWith(
                     color: ink,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              WhitePill(label: payout.statusText(l10n), solid: payout.isPaid),
+              const SizedBox(width: NxSpace.xs),
+              PayoutStatusPill(payout: payout),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: NxSpace.md),
           Text(
             l10n.payoutNetLabel,
-            style: theme.textTheme.labelMedium
-                ?.copyWith(color: ink.withValues(alpha: 0.85)),
+            style: NxType.caption.copyWith(color: ink.withValues(alpha: 0.7)),
           ),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              formatAmount(l10n, payout.net),
-              maxLines: 1,
-              textDirection: TextDirection.ltr,
-              style: theme.textTheme.displaySmall?.copyWith(
-                color: ink,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0,
-              ),
+            child: NxMoneyText(
+              payout.net,
+              colour: ink,
+              style: NxType.display.copyWith(fontSize: 42),
             ),
           ),
         ],
@@ -170,11 +154,8 @@ class _TransferPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
-    final Color accent =
-        payout.isPaid
-            ? (isDark ? AppColors.greenLight : AppColors.greenDeep)
-            : AppColors.orangeDeep;
+    final NxTokens t = context.nx;
+    final Color accent = payout.isPaid ? t.primary : t.actionText;
 
     final DateTime? paidAt = payout.paidAt;
     final String? reference = payout.reference;
@@ -190,19 +171,18 @@ class _TransferPanel extends StatelessWidget {
       message = l10n.payoutPaidNote;
     }
 
-    return SurfaceCard(
-      radius: AppSurface.radiusLarge,
+    return NxCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           // "In your bank" stays grey until the status says paid: the
           // tracker never runs ahead of the transfer.
-          StepTracker(
+          NxStepTracker(
             key: const ValueKey<String>('payout-steps'),
-            steps: <TrackerStep>[
-              TrackerStep(l10n.payoutStepWorkedOut, Icons.calculate_rounded),
-              TrackerStep(l10n.payoutStepSending, Icons.send_rounded),
-              TrackerStep(l10n.payoutStepInBank, Icons.account_balance_rounded),
+            steps: <NxStep>[
+              NxStep(l10n.payoutStepWorkedOut, Icons.calculate_rounded),
+              NxStep(l10n.payoutStepSending, Icons.send_rounded),
+              NxStep(l10n.payoutStepInBank, Icons.account_balance_rounded),
             ],
             done: payout.isPaid ? 3 : 1,
             nextIsLive: payout.status == PayoutStatus.processing,
@@ -257,8 +237,8 @@ class _Breakdown extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
 
-    return SurfaceCard(
-      radius: AppSurface.radiusLarge,
+    return NxCard(
+      key: const ValueKey<String>('payout-receipt'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
@@ -279,7 +259,7 @@ class _Breakdown extends StatelessWidget {
               amount: formatAmount(l10n, payout.carriedIn),
               note: l10n.payoutCarriedInNote,
             ),
-          const Divider(height: 24),
+          const _Perforation(),
           _Line(
             label: l10n.payoutGross,
             amount: formatAmount(l10n, payout.gross),
@@ -302,7 +282,7 @@ class _Breakdown extends StatelessWidget {
                 colour: theme.colorScheme.error,
               ),
           ],
-          const Divider(height: 24),
+          const _Perforation(),
           _Line(
             label: l10n.payoutNetLabel,
             amount: formatAmount(l10n, payout.net),
@@ -369,4 +349,35 @@ class _Line extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A dashed line across the receipt, between earned, taken out and payable.
+class _Perforation extends StatelessWidget {
+  const _Perforation();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        height: NxSpace.xl,
+        child: CustomPaint(painter: _DashLine(context.nx.border)),
+      );
+}
+
+class _DashLine extends CustomPainter {
+  const _DashLine(this.colour);
+
+  final Color colour;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint p = Paint()
+      ..color = colour
+      ..strokeWidth = 1.5;
+    final double y = size.height / 2;
+    for (double x = 0; x < size.width; x += 9) {
+      canvas.drawLine(Offset(x, y), Offset((x + 5).clamp(0, size.width), y), p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashLine old) => old.colour != colour;
 }

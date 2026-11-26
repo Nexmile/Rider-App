@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/motion/app_motion.dart';
-import '../../../../core/theme/app_surface.dart';
+import '../../../../core/design/design.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/kyc_models.dart';
 import '../../data/location_service.dart';
@@ -130,7 +129,6 @@ class _OrderBoardScreenState extends State<OrderBoardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final OrderController orders = context.watch<OrderController>();
     final RiderProfile? profile = context.watch<RiderController>().profile;
@@ -140,26 +138,26 @@ class _OrderBoardScreenState extends State<OrderBoardScreen>
     return RefreshIndicator(
       onRefresh: () => orders.refreshBoard(),
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+        padding: const EdgeInsets.fromLTRB(
+          NxSpace.screen,
+          NxSpace.sm,
+          NxSpace.screen,
+          NxSpace.xxl,
+        ),
         physics: const AlwaysScrollableScrollPhysics(),
         children: <Widget>[
           ...entranceGroup(<Widget>[
             Text(
               l10n.orderBoardTitle,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                letterSpacing: 0,
-              ),
+              style: NxType.headline.copyWith(color: context.nx.ink),
             ),
-            const Padding(
-              padding: EdgeInsets.only(top: 10, bottom: 10),
-              child: BrandRule(width: 38),
-            ),
+            const SizedBox(height: NxSpace.xxs),
             Row(
               children: <Widget>[
                 Expanded(
                   child: Text(
                     l10n.orderBoardSubtitle,
-                    style: theme.textTheme.bodyMedium,
+                    style: NxType.body.copyWith(color: context.nx.inkMuted),
                   ),
                 ),
                 // A quiet sign that the list is refreshing itself, so a rider
@@ -175,7 +173,7 @@ class _OrderBoardScreenState extends State<OrderBoardScreen>
               ],
             ),
           ]),
-          const SizedBox(height: 18),
+          const SizedBox(height: NxSpace.md),
 
           // Order alerts depend on phone settings an app cannot assume, so a
           // missing one is shown above everything else on the board.
@@ -203,15 +201,7 @@ class _OrderBoardScreenState extends State<OrderBoardScreen>
           ],
 
           if (orders.isLoadingBoard && available.isEmpty)
-            // Skeletons rather than a spinner: they say what is coming as well
-            // as that something is, so the first real card lands in a shape
-            // the eye has already accepted.
-            ...<Widget>[
-              for (int i = 0; i < 2; i++) ...<Widget>[
-                const _OrderSkeleton(),
-                const SizedBox(height: 14),
-              ],
-            ]
+            const NxSkeletonList(count: 2, height: 220)
           else if (available.isEmpty)
             EntranceFade(
               index: 3,
@@ -346,64 +336,6 @@ class _LocationBanner extends StatelessWidget {
         child: Text(
           askable ? l10n.enableLocationButton : l10n.locationSettingsButton,
         ),
-      ),
-    );
-  }
-}
-
-/// The shape of an order card, while the real one is on its way.
-///
-/// Traced from [OrderCard] rather than being a generic grey block: the point
-/// is that the rider's eye is already in the right place when the content
-/// arrives.
-class _OrderSkeleton extends StatelessWidget {
-  const _OrderSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return SurfaceCard(
-      radius: AppSurface.radiusLarge,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: const <Widget>[
-              Shimmer(width: 110, height: 15),
-              Spacer(),
-              Shimmer(width: 78, height: 20, radius: 999),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Shimmer(width: 11, height: 74, radius: 6),
-              const SizedBox(width: 19),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const <Widget>[
-                    Shimmer(width: 96, height: 11),
-                    SizedBox(height: 7),
-                    Shimmer(height: 13),
-                    SizedBox(height: 18),
-                    Shimmer(width: 82, height: 11),
-                    SizedBox(height: 7),
-                    Shimmer(height: 13),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: const <Widget>[
-              Expanded(child: Shimmer(width: 62, height: 26)),
-              Expanded(child: Shimmer(width: 62, height: 26)),
-              Expanded(child: Shimmer(width: 48, height: 26)),
-            ],
-          ),
-        ],
       ),
     );
   }
