@@ -52,22 +52,28 @@ class CompassReading {
   }
 }
 
-/// The phone's compass, from `MainActivity`'s `nexmile/compass` channel.
+/// The phone's compass, from the `nexmile/compass` channel: `CompassStream.kt`
+/// on Android, the `CompassStream` in `AppDelegate.swift` on iOS.
 ///
-/// Safe anywhere: off Android, in a test, or on a phone with no compass, the
-/// stream simply never says anything and the arrow keeps following the GPS
-/// direction of travel, as it did before there was a compass.
+/// Safe anywhere: on another platform, in a test, or on a phone with no
+/// compass, the stream simply never says anything and the arrow keeps
+/// following the GPS direction of travel, as it did before there was a
+/// compass.
 class Compass {
   const Compass();
 
   static const EventChannel _events = EventChannel('nexmile/compass');
   static const MethodChannel _device = MethodChannel('nexmile/device');
 
+  static bool get _supported =>
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+
   /// Readings for as long as they are listened to. The sensors run only
   /// while someone is listening, so the navigation screen pays for them and
   /// nothing else does.
   Stream<CompassReading> readings() async* {
-    if (defaultTargetPlatform != TargetPlatform.android) return;
+    if (!_supported) return;
     // Asked first through the ordinary channel, whose absence is a caught
     // exception: listening to an event channel nobody answers reports an
     // error instead of simply staying quiet.
@@ -88,7 +94,7 @@ class Compass {
   /// Where the rider is, so the compass can turn magnetic north into true
   /// north. Once per navigation is plenty.
   Future<void> setLocation(double latitude, double longitude) async {
-    if (defaultTargetPlatform != TargetPlatform.android) return;
+    if (!_supported) return;
     try {
       await _device.invokeMethod<void>(
         'compassLocation',
