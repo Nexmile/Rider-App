@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/motion/app_motion.dart';
+import '../../../core/design/design.dart';
 import '../../../core/router/app_router.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/brand_mark.dart';
-import '../../../core/widgets/gradient_button.dart';
 import '../../../generated/l10n/app_localizations.dart';
 import '../../auth/data/auth_user.dart';
 import '../../auth/state/auth_controller.dart';
@@ -187,12 +185,11 @@ class _GateLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
-    final bool isDark = theme.brightness == Brightness.dark;
-
     return Scaffold(
+      backgroundColor: t.ground,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -206,24 +203,58 @@ class _GateLoading extends StatelessWidget {
               child: Stack(
                 alignment: Alignment.center,
                 children: <Widget>[
-                  BreathingDot(
-                    colour: isDark
-                        ? AppColors.greenLight
-                        : AppColors.greenDeep,
-                    size: 64,
-                    spread: 62,
-                  ),
+                  BreathingDot(colour: t.primaryBright, size: 64, spread: 62),
                   const BrandMark(size: 64, radius: 20),
                 ],
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: NxSpace.xl),
             Text(
               l10n.checkingYourAccount,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium,
+              style: NxType.body.copyWith(color: t.inkMuted),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A dead end said kindly, centred, with its one or two ways out.
+class _GateMessage extends StatelessWidget {
+  const _GateMessage({
+    required this.icon,
+    required this.title,
+    required this.actions,
+    this.body,
+    this.tone = NxTone.neutral,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? body;
+  final NxTone tone;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: context.nx.ground,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: NxEmptyState(
+              icon: icon,
+              title: title,
+              body: body,
+              tone: tone,
+              action: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: actions,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -243,7 +274,6 @@ class _GateWrongAccount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     // Naming the role beats a generic line: a merchant who downloaded the
@@ -256,42 +286,20 @@ class _GateWrongAccount extends StatelessWidget {
       UserRole.rider || UserRole.unknown => null,
     };
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(
-                Icons.person_off_outlined,
-                size: 46,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                l10n.notARiderAccountTitle,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleLarge,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                roleName == null
-                    ? l10n.notARiderAccount
-                    : l10n.notARiderAccountFor(roleName),
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 28),
-              GradientButton(
-                label: l10n.useAnotherAccount,
-                icon: Icons.logout_rounded,
-                onPressed: () => signOutToLogin(context),
-              ),
-            ],
-          ),
+    return _GateMessage(
+      icon: Icons.person_off_rounded,
+      tone: NxTone.action,
+      title: l10n.notARiderAccountTitle,
+      body: roleName == null
+          ? l10n.notARiderAccount
+          : l10n.notARiderAccountFor(roleName),
+      actions: <Widget>[
+        NxPrimaryButton(
+          label: l10n.useAnotherAccount,
+          icon: Icons.logout_rounded,
+          onPressed: () => signOutToLogin(context),
         ),
-      ),
+      ],
     );
   }
 }
@@ -309,7 +317,6 @@ class _GateUnavailable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final bool offline = failure == RiderFailure.network;
 
@@ -318,62 +325,45 @@ class _GateUnavailable extends StatelessWidget {
     // again" would be a button that is guaranteed to fail; the only thing that
     // helps is a different identifier.
     final bool wrongAccount = failure == RiderFailure.notARider;
+    final String message = failure?.message(l10n) ?? l10n.couldNotLoadAccount;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(
-                offline
-                    ? Icons.cloud_off_rounded
-                    : wrongAccount
-                        ? Icons.person_off_outlined
-                        : Icons.error_outline_rounded,
-                size: 46,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: 20),
-              if (wrongAccount) ...<Widget>[
-                Text(
-                  l10n.notARiderAccountTitle,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleLarge,
-                ),
-                const SizedBox(height: 10),
-              ],
-              Text(
-                failure?.message(l10n) ?? l10n.couldNotLoadAccount,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 28),
-              if (wrongAccount)
-                GradientButton(
-                  label: l10n.useAnotherAccount,
-                  icon: Icons.logout_rounded,
-                  onPressed: () => signOutToLogin(context),
-                )
-              else ...<Widget>[
-                GradientButton(label: l10n.retry, onPressed: onRetry),
-                const SizedBox(height: 10),
-                // The escape hatch. Without it a rider whose session is valid
-                // but whose profile will not load is stuck on this screen with
-                // no way back to sign-in.
-                TextButton(
-                  onPressed: () => signOutToLogin(context),
-                  child: Text(l10n.signOut),
-                ),
-              ],
-            ],
+    if (wrongAccount) {
+      return _GateMessage(
+        icon: Icons.person_off_rounded,
+        tone: NxTone.action,
+        title: l10n.notARiderAccountTitle,
+        body: message,
+        actions: <Widget>[
+          NxPrimaryButton(
+            label: l10n.useAnotherAccount,
+            icon: Icons.logout_rounded,
+            onPressed: () => signOutToLogin(context),
           ),
+        ],
+      );
+    }
+
+    return _GateMessage(
+      icon: offline ? Icons.cloud_off_rounded : Icons.error_outline_rounded,
+      tone: offline ? NxTone.info : NxTone.danger,
+      title: message,
+      actions: <Widget>[
+        NxPrimaryButton(
+          label: l10n.retry,
+          icon: Icons.refresh_rounded,
+          onPressed: onRetry,
         ),
-      ),
+        const SizedBox(height: NxSpace.xs),
+        // The escape hatch. Without it a rider whose session is valid but
+        // whose profile will not load is stuck on this screen with no way
+        // back to sign-in.
+        TextButton(
+          onPressed: () => signOutToLogin(context),
+          child: Text(l10n.signOut),
+        ),
+      ],
     );
   }
-
 }
 
 /// Revokes the session server-side, drops the cached rider, and returns to

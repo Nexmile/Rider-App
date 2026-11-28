@@ -42,6 +42,12 @@
     <!-- Vibration with the incoming-order ring. -->
     <uses-permission
         android:name="android.permission.VIBRATE"/>
+    <!-- "Display over other apps": lets a new order bring the app to the
+         front with its card while the rider is in another app. Asked for on
+         the first-run pages and in phone setup; without it the ringing
+         notification is the alert. -->
+    <uses-permission
+        android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <application
         android:label="Nexmile Rider"
         android:name="${applicationName}"

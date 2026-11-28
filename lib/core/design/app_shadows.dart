@@ -36,5 +36,10 @@ abstract final class NxShadows {
         ),
       ];
 
+  /// Under a bar pinned to the foot of the screen, cast upwards.
+  static const List<BoxShadow> bar = <BoxShadow>[
+    BoxShadow(color: Color(0x14111511), blurRadius: 18, offset: Offset(0, -4)),
+  ];
+
   static const List<BoxShadow> none = <BoxShadow>[];
 }

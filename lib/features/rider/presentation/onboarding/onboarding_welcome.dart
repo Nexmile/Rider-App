@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import '../../../../core/motion/app_motion.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/gradient_button.dart';
+import '../../../../core/design/design.dart';
+import '../../../../core/widgets/brand_mark.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import 'onboarding_scaffold.dart';
 
@@ -20,7 +20,7 @@ class OnboardingWelcome extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     final List<(IconData, String)> needs = <(IconData, String)>[
@@ -31,103 +31,103 @@ class OnboardingWelcome extends StatelessWidget {
       (Icons.account_balance_outlined, l10n.onboardingNeedBank),
     ];
 
-    return Scaffold(
-      backgroundColor: onboardingPageColour(theme),
-      body: Column(
-        children: <Widget>[
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: <Widget>[
-                _Hero(
-                  title: l10n.onboardingWelcomeTitle,
-                  subtitle: l10n.onboardingWelcomeSubtitle,
-                  time: l10n.onboardingWelcomeTime,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: theme.colorScheme.outlineVariant.withValues(
-                          alpha: 0.6,
-                        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: t.ground,
+        body: Column(
+          children: <Widget>[
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: <Widget>[
+                  _Hero(
+                    title: l10n.onboardingWelcomeTitle,
+                    subtitle: l10n.onboardingWelcomeSubtitle,
+                    time: l10n.onboardingWelcomeTime,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      NxSpace.screen,
+                      NxSpace.lg,
+                      NxSpace.screen,
+                      NxSpace.lg,
+                    ),
+                    child: NxCard(
+                      padding: const EdgeInsets.fromLTRB(
+                        NxSpace.md + 2,
+                        NxSpace.md + 2,
+                        NxSpace.md + 2,
+                        NxSpace.md,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            l10n.onboardingWelcomeNeed,
+                            style: NxType.titleSmall.copyWith(
+                              color: t.ink,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: NxSpace.xs),
+                          ...entranceGroup(
+                            <Widget>[
+                              for (int i = 0; i < needs.length; i++)
+                                _NeedRow(
+                                  number: i + 1,
+                                  icon: needs[i].$1,
+                                  label: needs[i].$2,
+                                  last: i == needs.length - 1,
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: NxSpace.sm),
+                          // For the riders the list above mostly does not
+                          // apply to, said where they will be looking.
+                          Container(
+                            padding: const EdgeInsets.all(NxSpace.sm),
+                            decoration: BoxDecoration(
+                              color: t.infoSoft,
+                              borderRadius: NxRadius.controlAll,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Icon(
+                                  Icons.pedal_bike_rounded,
+                                  size: 20,
+                                  color: t.infoInk,
+                                ),
+                                const SizedBox(width: NxSpace.sm),
+                                Expanded(
+                                  child: Text(
+                                    l10n.onboardingNeedNote,
+                                    style: NxType.bodySmall.copyWith(
+                                      color: t.infoInk,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          l10n.onboardingWelcomeNeed,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ...entranceGroup(
-                          <Widget>[
-                            for (final (IconData icon, String label) in needs)
-                              _NeedRow(icon: icon, label: label),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Icon(
-                              Icons.pedal_bike_rounded,
-                              size: 20,
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                l10n.onboardingNeedNote,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 18,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-                child: GradientButton(
-                  label: l10n.onboardingGetStarted,
-                  icon: Icons.arrow_forward_rounded,
-                  onPressed: onStart,
-                ),
+                ],
               ),
             ),
-          ),
-        ],
+            OnboardingBottomBar(
+              child: NxPrimaryButton(
+                label: l10n.onboardingGetStarted,
+                icon: Icons.arrow_forward_rounded,
+                onPressed: onStart,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -146,105 +146,168 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
+    final AppLocalizations l10n = AppLocalizations.of(context);
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+      borderRadius: const BorderRadius.vertical(
+        bottom: Radius.circular(NxRadius.sheet + 4),
+      ),
       child: DecoratedBox(
-        decoration: const BoxDecoration(gradient: kOnboardingHeaderGradient),
-        child: Stack(
-          children: <Widget>[
-            Positioned(
-              right: -60,
-              top: -40,
-              child: _Disc(size: 220, alpha: 0.07),
-            ),
-            Positioned(
-              left: -50,
-              bottom: -70,
-              child: _Disc(size: 180, alpha: 0.06),
-            ),
-            SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 30),
-                child: Column(
-                  children: <Widget>[
-                    // A delivery rider in a ring of light: the one picture of
-                    // what this app is for.
-                    Container(
-                      width: 128,
-                      height: 128,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.16),
-                      ),
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                        child: const Icon(
-                          Icons.delivery_dining_rounded,
-                          size: 56,
-                          color: AppColors.orangeDeep,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      subtitle,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          const Icon(
-                            Icons.schedule_rounded,
-                            size: 18,
+        decoration: BoxDecoration(gradient: t.heroGradient),
+        child: CustomPaint(
+          painter: const NxHeroPattern(),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                NxSpace.lg,
+                NxSpace.sm,
+                NxSpace.lg,
+                NxSpace.xl + 4,
+              ),
+              child: Column(
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const BrandMark(size: 34, radius: 10),
+                      const SizedBox(width: NxSpace.xs + 2),
+                      Expanded(
+                        child: Text(
+                          l10n.appName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textDirection: TextDirection.ltr,
+                          style: NxType.titleSmall.copyWith(
                             color: Colors.white,
+                            fontWeight: FontWeight.w800,
                           ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              time,
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: NxSpace.lg),
+                  const _RiderBadge(),
+                  const SizedBox(height: NxSpace.lg),
+                  Text(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: NxType.headline.copyWith(
+                      color: Colors.white,
+                      fontSize: 26,
+                    ),
+                  ),
+                  const SizedBox(height: NxSpace.xs + 2),
+                  Text(
+                    subtitle,
+                    textAlign: TextAlign.center,
+                    style: NxType.body.copyWith(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: NxSpace.md + 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: NxSpace.sm + 2,
+                      vertical: NxSpace.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: t.lime,
+                      borderRadius: NxRadius.pillAll,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(Icons.schedule_rounded, size: 18, color: t.onLime),
+                        const SizedBox(width: NxSpace.xs),
+                        Flexible(
+                          child: Text(
+                            time,
+                            style: NxType.caption.copyWith(
+                              fontSize: 13,
+                              color: t.onLime,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A rider in a ring of light, with the two things the job pays in — money
+/// and freedom over hours — orbiting it. Drawn in code; plays once.
+class _RiderBadge extends StatelessWidget {
+  const _RiderBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
+    final bool still = AppMotion.reduced(context);
+
+    Widget satellite(IconData icon, Color fill, Color ink) => Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: fill,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white, width: 2.5),
+            boxShadow: NxShadows.card,
+          ),
+          child: Icon(icon, size: 20, color: ink),
+        );
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: still ? 1 : 0, end: 1),
+      duration: const Duration(milliseconds: 700),
+      curve: AppMotion.emphasise,
+      builder: (BuildContext context, double v, Widget? child) =>
+          Transform.scale(scale: 0.85 + 0.15 * v, child: child),
+      child: SizedBox(
+        width: 168,
+        height: 132,
+        child: Stack(
+          alignment: Alignment.center,
+          children: <Widget>[
+            Container(
+              width: 132,
+              height: 132,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.12),
+              ),
+            ),
+            Container(
+              width: 100,
+              height: 100,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: Icon(
+                Icons.delivery_dining_rounded,
+                size: 54,
+                color: t.action,
+              ),
+            ),
+            PositionedDirectional(
+              top: 6,
+              end: 4,
+              child: satellite(Icons.currency_rupee_rounded, t.lime, t.onLime),
+            ),
+            PositionedDirectional(
+              bottom: 8,
+              start: 6,
+              child: satellite(Icons.schedule_rounded, Colors.white, t.primary),
             ),
           ],
         ),
@@ -253,63 +316,71 @@ class _Hero extends StatelessWidget {
   }
 }
 
+/// One thing to have in hand: a numbered icon well and its name, hairlines
+/// between.
 class _NeedRow extends StatelessWidget {
-  const _NeedRow({required this.icon, required this.label});
+  const _NeedRow({
+    required this.number,
+    required this.icon,
+    required this.label,
+    required this.last,
+  });
 
+  final int number;
   final IconData icon;
   final String label;
+  final bool last;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.greenDeep.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
+    final NxTokens t = context.nx;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: last ? null : Border(bottom: BorderSide(color: t.hairline)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: NxSpace.sm - 2),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: t.primarySoft,
+                borderRadius: NxRadius.smallAll,
+              ),
+              child: Icon(icon, size: 21, color: t.primary),
             ),
-            child: Icon(icon, size: 21, color: AppColors.greenDeep),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              label,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
+            const SizedBox(width: NxSpace.sm + 2),
+            Expanded(
+              child: Text(
+                label,
+                style: NxType.body.copyWith(
+                  color: t.ink,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
-          ),
-          Icon(
-            Icons.check_circle_outline_rounded,
-            size: 20,
-            color: theme.colorScheme.outline,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Disc extends StatelessWidget {
-  const _Disc({required this.size, required this.alpha});
-
-  final double size;
-  final double alpha;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withValues(alpha: alpha),
+            const SizedBox(width: NxSpace.xs),
+            Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: t.border, width: 1.5),
+              ),
+              child: Text(
+                '$number',
+                textDirection: TextDirection.ltr,
+                style: NxType.caption.copyWith(
+                  fontSize: 11,
+                  color: t.inkMuted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

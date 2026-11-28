@@ -55,6 +55,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nexmile_rider/features/rider/data/navigation_models.dart';
 import 'package:nexmile_rider/features/rider/presentation/navigation/navigation_screen.dart';
 import 'package:nexmile_rider/features/rider/data/offer_models.dart';
+import 'package:nexmile_rider/core/push/push_service.dart';
 import 'package:nexmile_rider/features/rider/state/offer_controller.dart';
 import 'package:nexmile_rider/features/rider/presentation/offers/incoming_offer_card.dart';
 
@@ -876,6 +877,7 @@ Future<void> _pumpApp(
   FakeLocationService? location,
   FakePayoutRepository? payoutRepository,
   FakePermissionGateway? permissions,
+  PushService? push,
 }) async {
   final PreferencesService preferences = await _prefs(seed);
   _controller = AuthController(
@@ -907,8 +909,27 @@ Future<void> _pumpApp(
       // Nothing missing unless a test says so: the real gateway would ask
       // plugins that never answer here.
       permissionGateway: permissions ?? FakePermissionGateway(),
+      pushService: push ?? const NoopPushService(),
     ),
   );
+}
+
+/// A push transport a test can speak through: [data] as if a message landed
+/// while the app is open, [tap] as if a notification was tapped.
+class _FakePush extends NoopPushService {
+  final StreamController<Map<String, Object?>> _data =
+      StreamController<Map<String, Object?>>.broadcast();
+  final StreamController<Map<String, Object?>> _taps =
+      StreamController<Map<String, Object?>>.broadcast();
+
+  void data(Map<String, Object?> message) => _data.add(message);
+  void tap(Map<String, Object?> message) => _taps.add(message);
+
+  @override
+  Stream<Map<String, Object?>> get onData => _data.stream;
+
+  @override
+  Stream<Map<String, Object?>> get onTap => _taps.stream;
 }
 
 /// The phone, as far as the first-run permission pages can see it.
@@ -1486,7 +1507,7 @@ void main() {
 
       // Straight after the splash: no language screen in front of them.
       expect(find.text('Turn on location'), findsOneWidget);
-      expect(find.text('1 of 4'), findsOneWidget);
+      expect(find.text('1 of 5'), findsOneWidget);
       // The reasons come before the system prompt, not after it.
       expect(find.text('Orders near you'), findsOneWidget);
       expect(gateway.requested, isEmpty);
@@ -1502,7 +1523,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Orders on your lock screen'), findsOneWidget);
-      expect(find.text('4 of 4'), findsOneWidget);
+      expect(find.text('4 of 5'), findsOneWidget);
+      await tester.tap(find.text('Open settings'));
+      await tester.pumpAndSettle();
+
+      // Last: the order card over whatever app the rider has open.
+      expect(find.text('Show orders over other apps'), findsOneWidget);
+      expect(find.text('5 of 5'), findsOneWidget);
       await tester.tap(find.text('Open settings'));
       await tester.pumpAndSettle();
 
@@ -1511,6 +1538,7 @@ void main() {
         RiderPermission.location,
         RiderPermission.notifications,
         RiderPermission.fullScreen,
+        RiderPermission.overlay,
       ]);
       expect(find.byType(LoginScreen), findsOneWidget);
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -2637,6 +2665,91 @@ void main() {
       expect(find.byType(IncomingOfferCard), findsNothing);
     });
 
+    Future<_FakePush> onBoardWithPush(
+      WidgetTester tester,
+      FakeRiderRepository rider,
+    ) async {
+      final _FakePush push = _FakePush();
+      _useTallPhone(tester);
+      await _pumpApp(
+        tester,
+        seed: _languageChosen,
+        session: _testSession(),
+        riderRepository: rider,
+        push: push,
+      );
+      await _settleSplashLive(tester);
+      return push;
+    }
+
+    // Board mode: the server sends `order.offer`, an ordinary notification
+    // naming an order on the board, instead of a ringing ORDER_OFFER. The
+    // rider still gets the card, filled from the board.
+    testWidgets('a board-mode new order gets the card too, and a swipe takes it',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider();
+      final _FakePush push = await onBoardWithPush(tester, rider);
+
+      push.data(<String, Object?>{'type': 'order.offer', 'order_id': '1001'});
+      await _pumpLive(tester);
+
+      expect(find.byType(IncomingOfferCard), findsOneWidget);
+      expect(find.text('Pickup: Amma Mess'), findsOneWidget);
+
+      await swipeToAccept(tester);
+
+      // Taken from the board: there was no offer to accept.
+      expect(rider.offerAccepts, 0);
+      expect(rider.assigned?.id, '1001');
+      expect(find.byType(IncomingOfferCard), findsNothing);
+      expect(find.byType(ActiveDeliveryScreen), findsOneWidget);
+    });
+
+    testWidgets('tapping a board-mode notification opens the card',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider();
+      final _FakePush push = await onBoardWithPush(tester, rider);
+
+      push.tap(<String, Object?>{'type': 'order.offer', 'order_id': '1001'});
+      await _pumpLive(tester);
+
+      expect(find.byType(IncomingOfferCard), findsOneWidget);
+      _offers.reset();
+      await _pumpLive(tester);
+    });
+
+    testWidgets('an order already gone from the board puts up no card',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider();
+      final _FakePush push = await onBoardWithPush(tester, rider);
+
+      push.data(<String, Object?>{'type': 'order.offer', 'order_id': '9999'});
+      await _pumpLive(tester);
+
+      expect(find.byType(IncomingOfferCard), findsNothing);
+    });
+
+    testWidgets('a ringing ORDER_OFFER push while the app is open shows the card',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider();
+      final _FakePush push = await onBoardWithPush(tester, rider);
+
+      push.data(<String, Object?>{
+        'type': 'ORDER_OFFER',
+        'offer_id': 'offer-1001',
+        'order_id': '1001',
+        'order_number': 'NX-1001',
+        'seconds_left': '30',
+        'restaurant': 'Amma Mess',
+        'earnings': '34.50',
+      });
+      await _pumpLive(tester);
+
+      expect(find.byType(IncomingOfferCard), findsOneWidget);
+      _offers.reset();
+      await _pumpLive(tester);
+    });
+
     testWidgets('reaching the restaurant is optional and one tap',
         (WidgetTester tester) async {
       final FakeRiderRepository rider = workingRider();
@@ -3049,6 +3162,56 @@ void main() {
 
       orders.stopTracking();
       expect(location.keptAlive, isFalse);
+    });
+
+    test('history is newest first, whatever order it arrives in', () async {
+      final DateTime now = DateTime.now();
+      final FakeRiderRepository rider = _approvedRider();
+      // The server sends the oldest first.
+      rider._delivered.addAll(<RiderOrder>[
+        _pastOrder(
+          id: '3001',
+          shop: 'Old Mess',
+          at: now.subtract(const Duration(days: 3)),
+        ),
+        _pastOrder(
+          id: '3002',
+          shop: 'Middle Mess',
+          at: now.subtract(const Duration(days: 1)),
+        ),
+        _pastOrder(id: '3003', shop: 'New Mess', at: now),
+      ]);
+      final OrderController orders = OrderController(
+        repository: rider,
+        location: FakeLocationService(),
+      );
+      addTearDown(orders.reset);
+
+      await orders.loadHistory();
+      expect(
+        orders.history.map((RiderOrder o) => o.id).toList(),
+        <String>['3003', '3002', '3001'],
+      );
+    });
+
+    test('without any dates, the higher order number counts as newer', () {
+      RiderOrder undated(String id) => RiderOrder(
+            id: id,
+            orderNumber: 'NX-$id',
+            status: OrderStatus.delivered,
+            statusLabel: 'delivered',
+            pickup: const OrderPickup(address: 'Madurai'),
+            orderValue: 100,
+            deliveryFee: 40,
+            collectCash: 0,
+            pickupCodeRequired: false,
+          );
+      final List<RiderOrder> list = <RiderOrder>[
+        undated('9'),
+        undated('11'),
+        undated('10'),
+      ]..sort(RiderOrder.newestFirst);
+      expect(list.map((RiderOrder o) => o.id).toList(), <String>['11', '10', '9']);
     });
 
     test('a delivered order is kept out of the history list', () async {

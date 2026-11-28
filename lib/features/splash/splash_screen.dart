@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/app_assets.dart';
 import '../../core/router/app_router.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/design/app_colors.dart';
 import '../../core/services/preferences_service.dart';
 import '../auth/state/auth_controller.dart';
 import '../permissions/permission_gateway.dart';
@@ -68,12 +68,14 @@ class _SplashScreenState extends State<SplashScreen>
         weight: 30,
       ),
       TweenSequenceItem<double>(
-        tween: Tween<double>(begin: 1.0, end: 0.16)
+        tween: Tween<double>(begin: 1.0, end: 0.10)
             .chain(CurveTween(curve: Curves.easeInOut)),
         weight: 20,
       ),
       TweenSequenceItem<double>(
-        tween: Tween<double>(begin: 0.16, end: 0.11),
+        // Low enough that the night backdrop and its green dawn read as the
+        // background, not an orange wash over everything.
+        tween: Tween<double>(begin: 0.10, end: 0.06),
         weight: 50,
       ),
     ],
@@ -169,11 +171,11 @@ class _SplashScreenState extends State<SplashScreen>
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
         statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: AppColors.black,
+        systemNavigationBarColor: NxColors.nightDeep,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.black,
+        backgroundColor: NxColors.nightDeep,
         body: LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
             final double w = constraints.maxWidth;
@@ -188,6 +190,18 @@ class _SplashScreenState extends State<SplashScreen>
             return Stack(
               fit: StackFit.expand,
               children: <Widget>[
+                // A low green dawn under everything: the night the app's dark
+                // surfaces are made of, lit from below in the brand green.
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment(0, 1.25),
+                      radius: 1.1,
+                      colors: <Color>[NxColors.green800, NxColors.nightDeep],
+                      stops: <double>[0, 0.75],
+                    ),
+                  ),
+                ),
                 // Beats 2-4.
                 RepaintBoundary(
                   child: AnimatedBuilder(
@@ -318,19 +332,19 @@ class _Tagline extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          const _TaglineDash(color: AppColors.greenLight, flip: false),
+          const _TaglineDash(color: NxColors.lime, flip: false),
           const SizedBox(width: 10),
           Text.rich(
             const TextSpan(
               children: <TextSpan>[
                 TextSpan(
                   text: 'FAST DELIVERY.',
-                  style: TextStyle(color: AppColors.greenLight),
+                  style: TextStyle(color: NxColors.lime),
                 ),
                 TextSpan(text: '   '),
                 TextSpan(
                   text: 'FRESH SMILES.',
-                  style: TextStyle(color: AppColors.orangePulse),
+                  style: TextStyle(color: NxColors.orange400),
                 ),
               ],
             ),
@@ -339,7 +353,7 @@ class _Tagline extends StatelessWidget {
             textDirection: TextDirection.ltr,
           ),
           const SizedBox(width: 10),
-          const _TaglineDash(color: AppColors.orangePulse, flip: true),
+          const _TaglineDash(color: NxColors.orange400, flip: true),
         ],
       ),
     );
@@ -394,7 +408,7 @@ class _FeatureRow extends StatelessWidget {
             Container(
               width: 1,
               height: 30,
-              color: AppColors.white.withValues(alpha: 0.14),
+              color: NxColors.white.withValues(alpha: 0.12),
             ),
           Expanded(
             child: _RiseIn(
@@ -431,7 +445,17 @@ class _Feature extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Icon(icon, size: 22, color: AppColors.white.withValues(alpha: 0.92)),
+        // Each pillar in a faint lime-ringed well, like the tab bar's icons.
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: NxColors.white.withValues(alpha: 0.06),
+            border: Border.all(color: NxColors.lime.withValues(alpha: 0.28)),
+          ),
+          child: Icon(icon, size: 21, color: NxColors.lime),
+        ),
         const SizedBox(height: 8),
         FittedBox(
           fit: BoxFit.scaleDown,
@@ -445,7 +469,7 @@ class _Feature extends StatelessWidget {
               letterSpacing: 1.0,
               height: 1.3,
               leadingDistribution: TextLeadingDistribution.even,
-              color: AppColors.white.withValues(alpha: 0.72),
+              color: NxColors.white.withValues(alpha: 0.72),
             ),
           ),
         ),

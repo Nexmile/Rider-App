@@ -5,11 +5,15 @@ import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.PixelFormat
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.view.View
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -103,6 +107,15 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
                     "manufacturer" -> result.success(Build.MANUFACTURER ?: "")
+                    "canDrawOverlays" -> result.success(canDrawOverlays())
+                    "openOverlaySettings" -> {
+                        openOverlaySettings()
+                        result.success(null)
+                    }
+                    "bringToFront" -> {
+                        bringToFront()
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }
@@ -129,6 +142,79 @@ class MainActivity : FlutterActivity() {
             if (on) window.addFlags(flags) else window.clearFlags(flags)
         }
     }
+
+    private fun canDrawOverlays(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)
+
+    private fun openOverlaySettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                startActivity(
+                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                        .setData(Uri.parse("package:$packageName"))
+                )
+                return
+            } catch (_: Exception) {
+            }
+        }
+        openAppSettings()
+    }
+
+    /**
+     * Brings the app back to the front while the rider is in another app, so
+     * a new order's card is on screen rather than in the notification shade.
+     *
+     * Android only lets an app start an activity from the background with
+     * "Display over other apps", and since Android 15 only while one of its
+     * overlay windows is actually showing. So a 1-pixel, untouchable window
+     * is put up for the moment the start takes, then removed.
+     */
+    private fun bringToFront() {
+        if (!canDrawOverlays()) return
+        val pixel = if (Build.VERSION.SDK_INT >= 35) addPixelOverlay() else null
+        try {
+            startActivity(
+                Intent(this, MainActivity::class.java).addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                )
+            )
+        } catch (_: Exception) {
+        }
+        if (pixel != null) {
+            Handler(Looper.getMainLooper()).postDelayed({ removeOverlay(pixel) }, 2_000L)
+        }
+    }
+
+    private fun addPixelOverlay(): View? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return null
+        return try {
+            val view = View(applicationContext)
+            val params = WindowManager.LayoutParams(
+                1,
+                1,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+                PixelFormat.TRANSLUCENT,
+            )
+            windowService().addView(view, params)
+            view
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun removeOverlay(view: View) {
+        try {
+            windowService().removeView(view)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun windowService(): WindowManager =
+        applicationContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
     /** Android 14 stopped granting this to apps that are not dialers or alarms. */
     private fun canUseFullScreenIntent(): Boolean {

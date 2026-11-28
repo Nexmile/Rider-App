@@ -202,9 +202,11 @@ class OrderController extends ChangeNotifier {
       // The active order comes back from the same endpoint. It has its own
       // screen, and listing it under "past deliveries" would read as though it
       // were finished.
+      // Newest first, whatever order the server sent them in.
       _history = orders
           .where((RiderOrder order) => !order.status.isActive)
-          .toList(growable: false);
+          .toList()
+        ..sort(RiderOrder.newestFirst);
       _historyFailure = null;
       return null;
     } on ApiException catch (error) {

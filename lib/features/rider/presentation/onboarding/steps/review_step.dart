@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/design/design.dart';
 import '../../../../../generated/l10n/app_localizations.dart';
 import '../../../data/kyc_models.dart';
 import '../../../data/rider_profile.dart';
@@ -196,35 +196,56 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.fromLTRB(16, 14, 8, 6),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(icon, size: 20, color: AppColors.greenDeep),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+    final NxTokens t = context.nx;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: NxSpace.sm),
+      child: NxCard(
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          NxSpace.md,
+          NxSpace.sm + 2,
+          NxSpace.xs,
+          NxSpace.xs - 2,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: t.primarySoft,
+                    borderRadius: NxRadius.smallAll,
+                  ),
+                  child: Icon(icon, size: 18, color: t.primary),
+                ),
+                const SizedBox(width: NxSpace.sm - 2),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: NxType.titleSmall.copyWith(
+                      color: t.ink,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
-              ),
+              ],
+            ),
+            const SizedBox(height: NxSpace.xs - 2),
+            for (int i = 0; i < children.length; i++) ...<Widget>[
+              if (i > 0)
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                    start: NxSpace.xl + 8,
+                    end: NxSpace.xs,
+                  ),
+                  child: Divider(height: 1, color: t.hairline),
+                ),
+              children[i],
             ],
-          ),
-          const SizedBox(height: 6),
-          ...children,
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -250,44 +271,50 @@ class _Row extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     return InkWell(
       onTap: onEdit,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: NxRadius.smallAll,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: NxSpace.sm - 2),
         child: Row(
           children: <Widget>[
             Icon(
-              done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+              done ? Icons.check_circle_rounded : Icons.error_outline_rounded,
               size: 20,
-              color: done ? AppColors.greenDeep : theme.colorScheme.outline,
+              color: done ? t.primaryBright : t.actionText,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: NxSpace.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
                     label,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    style: NxType.caption.copyWith(
+                      color: t.inkMuted,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     value,
                     textDirection: ltr ? TextDirection.ltr : null,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: NxType.body.copyWith(
+                      color: done ? t.ink : t.actionText,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
             ),
-            TextButton(onPressed: onEdit, child: Text(l10n.reviewEdit)),
+            TextButton(
+              onPressed: onEdit,
+              style: TextButton.styleFrom(foregroundColor: t.primary),
+              child: Text(l10n.reviewEdit),
+            ),
           ],
         ),
       ),
@@ -295,13 +322,14 @@ class _Row extends StatelessWidget {
   }
 }
 
-/// What submitting leads to, as three stops on a line.
+/// What submitting leads to, as three stops on a line: the first in green
+/// because it is the one the button does.
 class _WhatNext extends StatelessWidget {
   const _WhatNext();
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
     final List<(IconData, String)> steps = <(IconData, String)>[
       (Icons.send_rounded, l10n.reviewNext1),
@@ -309,24 +337,25 @@ class _WhatNext extends StatelessWidget {
       (Icons.delivery_dining_rounded, l10n.reviewNext3),
     ];
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      decoration: BoxDecoration(
-        color: AppColors.greenDeep.withValues(
-          alpha: theme.brightness == Brightness.dark ? 0.16 : 0.06,
-        ),
-        borderRadius: BorderRadius.circular(20),
+    return NxCard(
+      color: t.primarySoft,
+      padding: const EdgeInsets.fromLTRB(
+        NxSpace.md,
+        NxSpace.md,
+        NxSpace.md,
+        NxSpace.xs,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             l10n.reviewNextTitle,
-            style: theme.textTheme.titleSmall?.copyWith(
+            style: NxType.titleSmall.copyWith(
+              color: t.ink,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: NxSpace.sm),
           for (int i = 0; i < steps.length; i++)
             IntrinsicHeight(
               child: Row(
@@ -339,15 +368,13 @@ class _WhatNext extends StatelessWidget {
                         height: 34,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: i == 0
-                              ? AppColors.greenDeep
-                              : theme.colorScheme.surface,
-                          border: Border.all(color: AppColors.greenDeep),
+                          color: i == 0 ? t.primary : t.surface,
+                          border: Border.all(color: t.primary, width: 1.5),
                         ),
                         child: Icon(
                           steps[i].$1,
                           size: 17,
-                          color: i == 0 ? Colors.white : AppColors.greenDeep,
+                          color: i == 0 ? t.onPrimary : t.primary,
                         ),
                       ),
                       if (i < steps.length - 1)
@@ -355,18 +382,20 @@ class _WhatNext extends StatelessWidget {
                           child: Container(
                             width: 2,
                             margin: const EdgeInsets.symmetric(vertical: 2),
-                            color: AppColors.greenDeep.withValues(alpha: 0.3),
+                            color: t.primary.withValues(alpha: 0.3),
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: NxSpace.sm),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 7, bottom: 16),
+                      padding: const EdgeInsets.only(top: 7, bottom: NxSpace.md),
                       child: Text(
                         steps[i].$2,
-                        style: theme.textTheme.bodyMedium?.copyWith(
+                        style: NxType.bodySmall.copyWith(
+                          fontSize: 14,
+                          color: t.ink,
                           fontWeight: i == 0 ? FontWeight.w700 : FontWeight.w500,
                         ),
                       ),

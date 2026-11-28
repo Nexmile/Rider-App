@@ -2,13 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/app_colors.dart';
+import '../../../core/design/app_colors.dart';
 
 /// The orange dot that opens the splash and the glow it expands into.
 ///
 /// [expansion] drives the radius: 0 is the centred dot, 1 is a circle that has
 /// swallowed the whole screen. [intensity] drives opacity, and is faded down
-/// once the circle has filled the display so the black backdrop returns and the
+/// once the circle has filled the display so the night backdrop returns and the
 /// logo reads against it, leaving a soft residual glow behind the mark.
 class GlowBurstPainter extends CustomPainter {
   const GlowBurstPainter({
@@ -37,7 +37,7 @@ class GlowBurstPainter extends CustomPainter {
       centre,
       radius,
       Paint()
-        ..color = AppColors.orangePulse.withValues(alpha: 0.45 * intensity)
+        ..color = NxColors.orange400.withValues(alpha: 0.45 * intensity)
         ..maskFilter = MaskFilter.blur(
           BlurStyle.normal,
           8 + 46 * expansion,
@@ -51,9 +51,9 @@ class GlowBurstPainter extends CustomPainter {
       Paint()
         ..shader = RadialGradient(
           colors: <Color>[
-            AppColors.orangePulse.withValues(alpha: intensity),
-            AppColors.orangeDeep.withValues(alpha: 0.72 * intensity),
-            AppColors.orangeDeep.withValues(alpha: 0.0),
+            NxColors.orange400.withValues(alpha: intensity),
+            NxColors.orange600.withValues(alpha: 0.72 * intensity),
+            NxColors.orange600.withValues(alpha: 0.0),
           ],
           stops: const <double>[0.0, 0.62, 1.0],
         ).createShader(Rect.fromCircle(center: centre, radius: radius)),
@@ -69,7 +69,7 @@ class GlowBurstPainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2 + 10 * rim
-          ..color = AppColors.orangeLight
+          ..color = NxColors.orange100
               .withValues(alpha: 0.55 * rim * intensity)
           ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
       );

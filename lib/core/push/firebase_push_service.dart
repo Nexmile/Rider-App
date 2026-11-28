@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
+import 'dart:ui' show IsolateNameServer;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -32,6 +34,23 @@ const String _offersChannelDescription =
     'Rings like a call when a new order is offered to you.';
 const String _iosSound = 'nexmile.caf';
 
+/// The name the running app listens under for messages the background
+/// handler receives. See [FirebasePushService._listenToBackground].
+const String _appPortName = 'nexmile.push.app';
+
+/// The types the app answers with a card, or uses to take one down. Never
+/// drawn as an ordinary notification while the app is on screen: the card is
+/// the alert.
+const Set<String> _dispatchTypes = <String>{
+  'ORDER_OFFER',
+  'OFFER_CANCELLED',
+  'rider.auto_offline',
+  'order.offer',
+};
+
+bool _isDispatch(Map<String, dynamic> data) =>
+    _dispatchTypes.contains('${data['type'] ?? ''}');
+
 /// Handles a message that arrived while the app was not in the foreground.
 ///
 /// Runs in its own isolate with no access to anything this one holds, so it
@@ -42,6 +61,16 @@ const String _iosSound = 'nexmile.caf';
 /// twice.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // A minimised app is still running, but Firebase hands it nothing while it
+  // is off screen: only this handler hears the message. Passed on, so the
+  // card is already up when the rider comes back, and so the app can bring
+  // itself to the front with it. Nobody is listening when the app is not
+  // running at all, and then the notification below is the whole alert.
+  if (_isDispatch(message.data)) {
+    IsolateNameServer.lookupPortByName(_appPortName)
+        ?.send(Map<String, Object?>.from(message.data));
+  }
+
   if (message.notification != null) return;
 
   await Firebase.initializeApp();
@@ -223,6 +252,7 @@ class FirebasePushService implements PushService {
 
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
       service._listen();
+      service._listenToBackground();
 
       // The only way to send this build a test notification from the Firebase
       // console is to paste its token in, and the token is otherwise never
@@ -256,6 +286,25 @@ class FirebasePushService implements PushService {
 
   final StreamController<Map<String, Object?>> _data =
       StreamController<Map<String, Object?>>.broadcast();
+
+  /// Hears what [firebaseMessagingBackgroundHandler] passes on while the app
+  /// is minimised, and treats it as if it had arrived on screen.
+  ///
+  /// The handler runs in its own isolate in the same process, so a port
+  /// registered here by name is the one way across. Re-registered on every
+  /// start: a name left over from an earlier run points at a dead port.
+  void _listenToBackground() {
+    final ReceivePort port = ReceivePort();
+    IsolateNameServer.removePortNameMapping(_appPortName);
+    IsolateNameServer.registerPortWithName(port.sendPort, _appPortName);
+    port.listen((Object? message) {
+      if (message is! Map || _data.isClosed) return;
+      _data.add(<String, Object?>{
+        for (final MapEntry<Object?, Object?> entry in message.entries)
+          '${entry.key}': entry.value,
+      });
+    });
+  }
 
   void _listen() {
     // A tap on a notification the system drew while the app was backgrounded.
@@ -294,12 +343,6 @@ class FirebasePushService implements PushService {
       unawaited(_showForeground(message));
     });
   }
-
-  static bool _isDispatch(Map<String, dynamic> data) => const <String>{
-        'ORDER_OFFER',
-        'OFFER_CANCELLED',
-        'rider.auto_offline',
-      }.contains('${data['type'] ?? ''}');
 
   Future<void> _showForeground(RemoteMessage message) async {
     // iOS is told below to present banners itself, so drawing a second one
@@ -348,8 +391,13 @@ class FirebasePushService implements PushService {
   Stream<Map<String, Object?>> get onData => _data.stream;
 
   @override
-  Future<void> cancelOffer(String orderId) =>
-      _local.cancel(id: 0, tag: _offerTag(orderId));
+  Future<void> cancelOffer(String orderId) async {
+    await _local.cancel(id: 0, tag: _offerTag(orderId));
+    // A board-mode order arrives as the server's own notification, tagged
+    // like every other one about that order. Once the card is answered it is
+    // only a stale "new order".
+    await _local.cancel(id: 0, tag: 'order-$orderId');
+  }
 
   @override
   Future<bool> requestPermission() async {

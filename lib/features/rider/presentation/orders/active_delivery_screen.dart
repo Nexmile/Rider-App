@@ -252,7 +252,7 @@ class _MapHeader extends StatelessWidget {
             zoomGesturesEnabled: false,
             rotateGesturesEnabled: false,
             tiltGesturesEnabled: false,
-            style: dark ? kNavMapStyleDark : kNavMapStyleLight,
+            style: dark ? kNavMapStyleDark : null,
             padding: EdgeInsets.only(
               top: MediaQuery.paddingOf(context).top + 64,
               bottom: 44,

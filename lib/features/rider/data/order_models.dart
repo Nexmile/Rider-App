@@ -390,6 +390,26 @@ class RiderOrder {
 
   bool get isCashOnDelivery => collectCash > 0;
 
+  /// The latest thing known to have happened to this order: delivered,
+  /// picked up, assigned or placed, whichever the server sent last.
+  DateTime? get lastActivityAt =>
+      deliveredAt ?? pickedUpAt ?? assignedAt ?? placedAt;
+
+  /// Most recent first: by [lastActivityAt], and where either order has no
+  /// time at all, by id, which only ever grows. A list sorted with this never
+  /// shows last week's order above today's, whatever order it arrived in.
+  static int newestFirst(RiderOrder a, RiderOrder b) {
+    final DateTime? ta = a.lastActivityAt;
+    final DateTime? tb = b.lastActivityAt;
+    if (ta != null && tb != null && ta != tb) return tb.compareTo(ta);
+    if (ta != null && tb == null) return -1;
+    if (ta == null && tb != null) return 1;
+    final int? ia = int.tryParse(a.id);
+    final int? ib = int.tryParse(b.id);
+    if (ia != null && ib != null) return ib.compareTo(ia);
+    return b.id.compareTo(a.id);
+  }
+
   /// The rider's own take on this job.
   double get earnings => deliveryFee;
 
@@ -434,7 +454,9 @@ class RiderOrder {
       collectCash: _num(json['collect_cash']),
       pickupCodeRequired: json['pickup_code_required'] as bool? ?? false,
       customerNote: nullableString(json['customer_note']),
-      placedAt: DateTime.tryParse('${json['placed_at']}'),
+      // `created_at` is when an order is placed, under the name some
+      // responses use for it.
+      placedAt: DateTime.tryParse('${json['placed_at'] ?? json['created_at']}'),
       readyAt: DateTime.tryParse('${json['ready_at']}'),
       assignedAt: DateTime.tryParse('${json['assigned_at']}'),
       pickedUpAt: DateTime.tryParse('${json['picked_up_at']}'),

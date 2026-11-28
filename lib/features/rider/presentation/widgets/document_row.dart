@@ -3,8 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/info_tile.dart';
+import '../../../../core/design/design.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 import '../../data/document_catalogue.dart';
 import '../../data/kyc_models.dart';
@@ -62,8 +61,9 @@ class DocumentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
     final DocumentPresentation presentation =
         DocumentCatalogue.presentationOf(type);
@@ -79,13 +79,15 @@ class DocumentRow extends StatelessWidget {
     final bool hasFile = file != null;
     final bool rejected = file?.isRejected ?? false;
     final String? rejectionReason = rejected ? file?.rejectionReason : null;
-    final BorderRadius radius = BorderRadius.circular(20);
+    const BorderRadius radius = NxRadius.cardAll;
 
-    final Color edge = rejected
-        ? theme.colorScheme.error.withValues(alpha: 0.55)
-        : hasFile
-            ? AppColors.greenDeep.withValues(alpha: 0.35)
-            : theme.colorScheme.outlineVariant;
+    // Day: no outline unless something is wrong, the card's shadow is enough.
+    // Night: an outline always, since a shadow vanishes on a dark ground.
+    final Color? edge = rejected
+        ? t.dangerBorder
+        : isDark
+            ? t.border
+            : null;
 
     final VoidCallback? onTap = isUploading
         ? null
@@ -96,20 +98,27 @@ class DocumentRow extends StatelessWidget {
                 : (enabled ? () => _upload(context, label, presentation) : null);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: NxSpace.sm - 2),
       child: Material(
-        color: theme.colorScheme.surface,
+        color: Colors.transparent,
         borderRadius: radius,
         child: InkWell(
           onTap: onTap,
           borderRadius: radius,
           child: Ink(
             decoration: BoxDecoration(
+              color: t.surface,
               borderRadius: radius,
-              border: Border.all(color: edge, width: hasFile ? 1.4 : 1),
+              border: edge == null ? null : Border.all(color: edge, width: 1.5),
+              boxShadow: t.cardShadow,
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
+              padding: const EdgeInsets.fromLTRB(
+                NxSpace.sm,
+                NxSpace.sm,
+                NxSpace.xs - 2,
+                NxSpace.sm,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -120,7 +129,7 @@ class DocumentRow extends StatelessWidget {
                         document: file,
                         preview: preview,
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: NxSpace.sm + 2),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,8 +139,9 @@ class DocumentRow extends StatelessWidget {
                               label,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
+                              style: NxType.titleSmall.copyWith(
+                                fontSize: 15,
+                                color: t.ink,
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -161,8 +171,12 @@ class DocumentRow extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsetsDirectional.only(end: 6),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: const LinearProgressIndicator(minHeight: 4),
+                        borderRadius: NxRadius.pillAll,
+                        child: LinearProgressIndicator(
+                          minHeight: 5,
+                          color: t.primaryBright,
+                          backgroundColor: t.surfaceMuted,
+                        ),
                       ),
                     ),
                   ],
@@ -170,10 +184,10 @@ class DocumentRow extends StatelessWidget {
                     const SizedBox(height: 12),
                     Container(
                       margin: const EdgeInsetsDirectional.only(end: 6),
-                      padding: const EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(NxSpace.sm - 2),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.error.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
+                        color: t.dangerSoft,
+                        borderRadius: NxRadius.smallAll,
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,14 +195,14 @@ class DocumentRow extends StatelessWidget {
                           Icon(
                             Icons.error_outline_rounded,
                             size: 18,
-                            color: theme.colorScheme.error,
+                            color: t.danger,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: NxSpace.xs),
                           Expanded(
                             child: Text(
                               rejectionReason,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.error,
+                              style: NxType.bodySmall.copyWith(
+                                color: t.danger,
                               ),
                             ),
                           ),
@@ -220,10 +234,10 @@ class DocumentRow extends StatelessWidget {
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: const EdgeInsets.all(12),
+        backgroundColor: dialogContext.nx.nightDeep,
+        insetPadding: const EdgeInsets.all(NxSpace.sm),
         clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: const RoundedRectangleBorder(borderRadius: NxRadius.cardAll),
         child: Stack(
           children: <Widget>[
             Positioned.fill(
@@ -240,10 +254,7 @@ class DocumentRow extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(dialogContext)
-                    .textTheme
-                    .titleSmall
-                    ?.copyWith(color: Colors.white),
+                style: NxType.titleSmall.copyWith(color: Colors.white),
               ),
             ),
             Positioned(
@@ -276,7 +287,8 @@ class DocumentRow extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: context.nx.surface,
+      shape: const RoundedRectangleBorder(borderRadius: NxRadius.sheetTop),
       builder: (BuildContext sheetContext) => _UploadGuide(
         label: label,
         icon: presentation.icon,
@@ -333,10 +345,10 @@ class _Thumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final KycDocument? file = document;
     final PickedDocument? local = preview;
-    final BorderRadius radius = BorderRadius.circular(14);
+    const BorderRadius radius = NxRadius.controlAll;
 
     final Widget body;
     if (local != null && local.mimeType.startsWith('image/')) {
@@ -357,26 +369,26 @@ class _Thumbnail extends StatelessWidget {
         width: _size,
         height: _size,
         decoration: BoxDecoration(
-          color: (pdf ? const Color(0xFFE5484D) : AppColors.greenDeep)
-              .withValues(alpha: 0.10),
+          color: pdf ? t.dangerSoft : t.primarySoft,
           borderRadius: radius,
         ),
         child: Icon(
           pdf ? Icons.picture_as_pdf_rounded : icon,
           size: 28,
-          color: pdf ? const Color(0xFFE5484D) : AppColors.greenDeep,
+          color: pdf ? t.danger : t.primary,
         ),
       );
     } else {
       body = CustomPaint(
-        painter: _DashedBorder(
-          colour: theme.colorScheme.outline,
-          radius: 14,
-        ),
-        child: SizedBox(
+        painter: _DashedBorder(colour: t.inkFaint, radius: NxRadius.control),
+        child: Container(
           width: _size,
           height: _size,
-          child: Icon(icon, size: 26, color: theme.colorScheme.onSurfaceVariant),
+          decoration: BoxDecoration(
+            color: t.ground,
+            borderRadius: radius,
+          ),
+          child: Icon(icon, size: 26, color: t.inkMuted),
         ),
       );
     }
@@ -385,11 +397,8 @@ class _Thumbnail extends StatelessWidget {
     final Widget? badge = file == null
         ? null
         : file.isRejected
-            ? const _Badge(
-                icon: Icons.priority_high_rounded,
-                colour: Color(0xFFE5484D),
-              )
-            : const _Badge(icon: Icons.check_rounded, colour: AppColors.greenDeep);
+            ? _Badge(icon: Icons.priority_high_rounded, colour: t.danger)
+            : _Badge(icon: Icons.check_rounded, colour: t.primaryBright);
 
     return SizedBox(
       width: _size + 6,
@@ -418,10 +427,7 @@ class _Badge extends StatelessWidget {
       decoration: BoxDecoration(
         color: colour,
         shape: BoxShape.circle,
-        border: Border.all(
-          color: Theme.of(context).colorScheme.surface,
-          width: 2,
-        ),
+        border: Border.all(color: context.nx.surface, width: 2),
       ),
       child: Icon(icon, size: 13, color: Colors.white),
     );
@@ -476,15 +482,15 @@ class _Status extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
     final KycDocument? file = document;
 
     if (isUploading) {
       return Text(
         l10n.docUploading,
-        style: theme.textTheme.bodySmall?.copyWith(
-          color: theme.colorScheme.primary,
+        style: NxType.bodySmall.copyWith(
+          color: t.primary,
           fontWeight: FontWeight.w700,
         ),
       );
@@ -498,15 +504,13 @@ class _Status extends StatelessWidget {
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: <Widget>[
-          StatusChip(
+          NxStatusChip(
             label: isRequired ? l10n.documentRequired : l10n.documentOptional,
-            tone: isRequired ? StatusTone.warning : StatusTone.neutral,
+            tone: isRequired ? NxTone.action : NxTone.neutral,
           ),
           Text(
             l10n.docTapToAdd,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            style: NxType.bodySmall.copyWith(color: t.inkMuted),
           ),
         ],
       );
@@ -519,18 +523,20 @@ class _Status extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: <Widget>[
         if (file.isRejected)
-          StatusChip(label: l10n.documentRejected, tone: StatusTone.negative)
+          NxStatusChip(label: l10n.documentRejected, tone: NxTone.danger)
         else if (file.isApproved)
-          StatusChip(label: l10n.documentApproved, tone: StatusTone.positive)
+          NxStatusChip(
+            label: l10n.documentApproved,
+            tone: NxTone.success,
+            icon: Icons.verified_rounded,
+          )
         else
-          StatusChip(label: l10n.documentUploaded, tone: StatusTone.positive),
+          NxStatusChip(label: l10n.documentUploaded, tone: NxTone.success),
         if (size != null)
           Text(
             size,
             textDirection: TextDirection.ltr,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            style: NxType.bodySmall.copyWith(color: t.inkFaint),
           ),
       ],
     );
@@ -566,32 +572,39 @@ class _Trailing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     if (isUploading) {
-      return const Padding(
-        padding: EdgeInsets.all(12),
+      return Padding(
+        padding: const EdgeInsets.all(NxSpace.sm),
         child: SizedBox.square(
           dimension: 20,
-          child: CircularProgressIndicator(strokeWidth: 2.2),
+          child: CircularProgressIndicator(strokeWidth: 2.2, color: t.primary),
         ),
       );
     }
 
     if (!hasFile) {
-      if (!enabled) return const SizedBox(width: 8);
-      return IconButton.filledTonal(
-        onPressed: onAdd,
-        tooltip: l10n.uploadDocument,
-        icon: const Icon(Icons.add_rounded),
+      if (!enabled) return const SizedBox(width: NxSpace.xs);
+      return Padding(
+        padding: const EdgeInsetsDirectional.only(end: NxSpace.xxs),
+        child: IconButton(
+          onPressed: onAdd,
+          tooltip: l10n.uploadDocument,
+          style: IconButton.styleFrom(
+            backgroundColor: t.primary,
+            foregroundColor: t.onPrimary,
+          ),
+          icon: const Icon(Icons.add_rounded),
+        ),
       );
     }
 
-    if (!enabled && !canView) return const SizedBox(width: 8);
+    if (!enabled && !canView) return const SizedBox(width: NxSpace.xs);
 
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert_rounded, color: theme.colorScheme.onSurfaceVariant),
+      icon: Icon(Icons.more_vert_rounded, color: t.inkMuted),
       onSelected: (String action) => switch (action) {
         'view' => onView(),
         'replace' => onReplace(),
@@ -616,7 +629,7 @@ class _Trailing extends StatelessWidget {
             child: _MenuRow(
               icon: Icons.delete_outline_rounded,
               label: l10n.removeDocument,
-              colour: theme.colorScheme.error,
+              colour: t.danger,
             ),
           ),
         ],
@@ -661,7 +674,7 @@ class _UploadGuide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     final List<String> tips = portrait
@@ -690,49 +703,50 @@ class _UploadGuide extends StatelessWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        padding: const EdgeInsets.fromLTRB(
+          NxSpace.lg,
+          0,
+          NxSpace.lg,
+          NxSpace.lg,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text(
-              label,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 4),
+            Text(label, style: NxType.title.copyWith(color: t.ink)),
+            const SizedBox(height: NxSpace.xxs),
             Text(
               l10n.docSheetSubtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: NxType.body.copyWith(color: t.inkMuted),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: NxSpace.md),
             _GuideFrame(icon: icon, portrait: portrait),
-            const SizedBox(height: 16),
+            const SizedBox(height: NxSpace.md),
             for (final String tip in tips)
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(bottom: NxSpace.sm - 2),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Icon(
+                    Icon(
                       Icons.check_circle_rounded,
                       size: 20,
-                      color: AppColors.greenDeep,
+                      color: t.primaryBright,
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: NxSpace.sm - 2),
                     Expanded(
-                      child: Text(tip, style: theme.textTheme.bodyMedium),
+                      child: Text(
+                        tip,
+                        style: NxType.body.copyWith(color: t.ink),
+                      ),
                     ),
                   ],
                 ),
               ),
-            const SizedBox(height: 10),
+            const SizedBox(height: NxSpace.sm - 2),
             Row(
               children: <Widget>[
                 for (int i = 0; i < order.length; i++) ...<Widget>[
-                  if (i > 0) const SizedBox(width: 10),
+                  if (i > 0) const SizedBox(width: NxSpace.sm - 2),
                   Expanded(
                     child: _SourceTile(
                       source: order[i],
@@ -759,8 +773,7 @@ class _GuideFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool dark = theme.brightness == Brightness.dark;
+    final NxTokens t = context.nx;
 
     final Widget subject = portrait
         ? Container(
@@ -768,29 +781,19 @@ class _GuideFrame extends StatelessWidget {
             height: 96,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: theme.colorScheme.surface,
-              border: Border.all(color: AppColors.greenDeep, width: 2),
+              color: t.surface,
+              border: Border.all(color: t.primary, width: 2),
             ),
-            child: Icon(
-              Icons.face_rounded,
-              size: 56,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            child: Icon(Icons.face_rounded, size: 56, color: t.inkMuted),
           )
         : Container(
             width: 190,
             height: 110,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: <BoxShadow>[
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              color: t.surface,
+              borderRadius: NxRadius.smallAll,
+              boxShadow: NxShadows.floating,
             ),
             child: Row(
               children: <Widget>[
@@ -798,10 +801,10 @@ class _GuideFrame extends StatelessWidget {
                   width: 44,
                   height: 54,
                   decoration: BoxDecoration(
-                    color: AppColors.greenDeep.withValues(alpha: 0.12),
+                    color: t.primarySoft,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(icon, color: AppColors.greenDeep),
+                  child: Icon(icon, color: t.primary),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -817,8 +820,8 @@ class _GuideFrame extends StatelessWidget {
                             child: Container(
                               height: 7,
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.outlineVariant,
-                                borderRadius: BorderRadius.circular(4),
+                                color: t.surfaceMuted,
+                                borderRadius: NxRadius.pillAll,
                               ),
                             ),
                           ),
@@ -833,12 +836,12 @@ class _GuideFrame extends StatelessWidget {
     return Container(
       height: 168,
       decoration: BoxDecoration(
-        color: AppColors.greenDeep.withValues(alpha: dark ? 0.16 : 0.07),
-        borderRadius: BorderRadius.circular(20),
+        color: t.primarySoft,
+        borderRadius: NxRadius.cardAll,
       ),
       child: Center(
         child: CustomPaint(
-          foregroundPainter: _Brackets(colour: AppColors.greenDeep),
+          foregroundPainter: _Brackets(colour: t.primary),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: subject,
@@ -887,7 +890,7 @@ class _SourceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     final (IconData icon, String label) = switch (source) {
@@ -895,13 +898,11 @@ class _SourceTile extends StatelessWidget {
       _PickSource.gallery => (Icons.photo_library_rounded, l10n.docSourceGallery),
       _PickSource.file => (Icons.upload_file_rounded, l10n.docSourceFile),
     };
-    final BorderRadius radius = BorderRadius.circular(18);
-    final Color accent = AppColors.greenDeep;
+    const BorderRadius radius = NxRadius.cardAll;
+    final Color accent = t.primary;
 
     return Material(
-      color: highlighted
-          ? accent.withValues(alpha: 0.08)
-          : theme.colorScheme.surfaceContainerLow,
+      color: highlighted ? t.primarySoft : t.ground,
       borderRadius: radius,
       child: InkWell(
         borderRadius: radius,
@@ -910,8 +911,8 @@ class _SourceTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: radius,
             border: Border.all(
-              color: highlighted ? accent : theme.colorScheme.outlineVariant,
-              width: highlighted ? 1.6 : 1,
+              color: highlighted ? accent : t.border,
+              width: highlighted ? 1.8 : 1.2,
             ),
           ),
           child: Padding(
@@ -930,7 +931,7 @@ class _SourceTile extends StatelessWidget {
                   ),
                   child: Icon(
                     icon,
-                    color: highlighted ? Colors.white : accent,
+                    color: highlighted ? t.onPrimary : accent,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -939,7 +940,9 @@ class _SourceTile extends StatelessWidget {
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.labelLarge?.copyWith(
+                  style: NxType.caption.copyWith(
+                    fontSize: 13,
+                    color: t.ink,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

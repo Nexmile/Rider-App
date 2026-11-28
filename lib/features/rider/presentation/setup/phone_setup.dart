@@ -5,9 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/push/push_service.dart';
+import '../../../../core/design/design.dart';
 import '../../../../core/services/device_setup.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 
 /// Phone brands that close background apps unless Autostart is switched on,
@@ -32,6 +31,7 @@ class PhoneSetupStatus {
   const PhoneSetupStatus({
     required this.notifications,
     required this.fullScreen,
+    this.overlay = true,
     required this.location,
     required this.battery,
     required this.brand,
@@ -40,6 +40,10 @@ class PhoneSetupStatus {
 
   final bool notifications;
   final bool fullScreen;
+
+  /// "Display over other apps", which lets a new order bring the app to the
+  /// front. Defaults to done so a status built without it asks for nothing.
+  final bool overlay;
   final bool location;
   final bool battery;
 
@@ -54,6 +58,7 @@ class PhoneSetupStatus {
   int get missing => <bool>[
         notifications,
         fullScreen,
+        overlay,
         location,
         battery,
         if (needsAutostart) autostartConfirmed,
@@ -71,6 +76,7 @@ class PhoneSetupStatus {
     return PhoneSetupStatus(
       notifications: await _safe(push.notificationsAllowed, false),
       fullScreen: await device.canUseFullScreenIntent(),
+      overlay: await device.canDrawOverApps(),
       location: permission == LocationPermission.whileInUse ||
           permission == LocationPermission.always,
       battery: await device.isIgnoringBatteryOptimizations(),
@@ -142,19 +148,32 @@ class _PhoneSetupScreenState extends State<PhoneSetupScreen>
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final PhoneSetupStatus? s = _status;
     final PushService push = context.read<PushService>();
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.setupTitle)),
+      backgroundColor: t.ground,
+      appBar: AppBar(
+        title: Text(l10n.setupTitle),
+        backgroundColor: t.ground,
+        surfaceTintColor: Colors.transparent,
+      ),
       body: s == null
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: CircularProgressIndicator(color: t.primary))
           : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              padding: const EdgeInsets.fromLTRB(
+                NxSpace.screen,
+                NxSpace.xs,
+                NxSpace.screen,
+                NxSpace.xxl,
+              ),
               children: <Widget>[
-                Text(l10n.setupIntro, style: theme.textTheme.bodyLarge),
-                const SizedBox(height: 20),
+                Text(
+                  l10n.setupIntro,
+                  style: NxType.body.copyWith(color: t.inkMuted, height: 1.45),
+                ),
+                const SizedBox(height: NxSpace.lg),
                 _Step(
                   icon: Icons.notifications_active_outlined,
                   title: l10n.setupNotifications,
@@ -170,6 +189,14 @@ class _PhoneSetupScreenState extends State<PhoneSetupScreen>
                   done: s.fullScreen,
                   actionLabel: l10n.setupOpenSettings,
                   onAction: () => _then(_device.openFullScreenIntentSettings()),
+                ),
+                _Step(
+                  icon: Icons.layers_outlined,
+                  title: l10n.setupOverlay,
+                  body: l10n.setupOverlayBody,
+                  done: s.overlay,
+                  actionLabel: l10n.setupOpenSettings,
+                  onAction: () => _then(_device.openDrawOverAppsSettings()),
                 ),
                 _Step(
                   icon: Icons.my_location_rounded,
@@ -245,77 +272,95 @@ class _Step extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: done
-            ? AppColors.greenDeep.withValues(alpha: 0.06)
-            : theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.radius),
-        border: Border.all(
-          color: done
-              ? AppColors.greenDeep.withValues(alpha: 0.35)
-              : theme.colorScheme.outlineVariant,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(
-            done ? Icons.check_circle_rounded : icon,
-            color: done ? AppColors.greenDeep : theme.colorScheme.onSurface,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 2),
-                Text(body, style: theme.textTheme.bodyMedium),
-                if (!done) ...<Widget>[
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: <Widget>[
-                      FilledButton(
-                        onPressed: onAction,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.greenDeep,
-                        ),
-                        child: Text(actionLabel),
-                      ),
-                      if (secondaryLabel != null)
-                        OutlinedButton(
-                          onPressed: onSecondary,
-                          child: Text(secondaryLabel!),
-                        ),
-                    ],
-                  ),
-                ] else
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      l10n.setupDoneStep,
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: AppColors.greenDeep,
-                        fontWeight: FontWeight.w700,
-                      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: NxSpace.sm - 2),
+      child: NxCard(
+        color: done ? t.primarySoft : null,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: done ? t.primaryBright : t.surfaceMuted,
+                borderRadius: NxRadius.smallAll,
+              ),
+              child: Icon(
+                done ? Icons.check_rounded : icon,
+                size: 22,
+                color: done ? t.onPrimary : t.ink,
+              ),
+            ),
+            const SizedBox(width: NxSpace.sm + 2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    title,
+                    style: NxType.titleSmall.copyWith(
+                      color: t.ink,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    body,
+                    style: NxType.bodySmall.copyWith(
+                      fontSize: 14,
+                      color: t.inkMuted,
+                      height: 1.4,
+                    ),
+                  ),
+                  if (!done) ...<Widget>[
+                    const SizedBox(height: NxSpace.sm - 2),
+                    Wrap(
+                      spacing: NxSpace.xs,
+                      runSpacing: NxSpace.xs,
+                      children: <Widget>[
+                        FilledButton(
+                          onPressed: onAction,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: t.primary,
+                            foregroundColor: t.onPrimary,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: NxRadius.controlAll,
+                            ),
+                          ),
+                          child: Text(actionLabel),
+                        ),
+                        if (secondaryLabel != null)
+                          OutlinedButton(
+                            onPressed: onSecondary,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: t.ink,
+                              side: BorderSide(color: t.border, width: 1.4),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: NxRadius.controlAll,
+                              ),
+                            ),
+                            child: Text(secondaryLabel!),
+                          ),
+                      ],
+                    ),
+                  ] else
+                    Padding(
+                      padding: const EdgeInsets.only(top: NxSpace.xs - 2),
+                      child: NxStatusChip(
+                        label: l10n.setupDoneStep,
+                        tone: NxTone.success,
+                        icon: Icons.check_rounded,
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -364,43 +409,44 @@ class _PhoneSetupBannerState extends State<PhoneSetupBanner>
   Widget build(BuildContext context) {
     if (_missing == 0) return const SizedBox.shrink();
     final AppLocalizations l10n = AppLocalizations.of(context);
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: NxSpace.md),
       child: Material(
-        color: AppColors.orangeDeep.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(AppTheme.radius),
+        color: t.actionSoft,
+        borderRadius: NxRadius.cardAll,
         child: InkWell(
-          borderRadius: BorderRadius.circular(AppTheme.radius),
+          borderRadius: NxRadius.cardAll,
           onTap: () async {
             await PhoneSetupScreen.open(context);
             await _refresh();
           },
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(NxSpace.sm + 2),
             child: Row(
               children: <Widget>[
-                const Icon(Icons.phonelink_setup_rounded,
-                    color: AppColors.orangeDeep),
-                const SizedBox(width: 12),
+                Icon(Icons.phonelink_setup_rounded, color: t.actionText),
+                const SizedBox(width: NxSpace.sm),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
                         l10n.setupBannerTitle,
-                        style: theme.textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        style: NxType.titleSmall.copyWith(
+                          color: t.ink,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       Text(
                         l10n.setupBannerBody('$_missing'),
-                        style: theme.textTheme.bodySmall,
+                        style: NxType.bodySmall.copyWith(color: t.inkMuted),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded),
+                Icon(Icons.chevron_right_rounded, color: t.inkMuted),
               ],
             ),
           ),

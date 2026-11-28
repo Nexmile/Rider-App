@@ -38,6 +38,21 @@ class _OfferRepository implements RiderRepository {
     });
   }
 
+  int boardAccepts = 0;
+
+  @override
+  Future<RiderOrder> acceptOrder(String orderId) async {
+    boardAccepts++;
+    final Object? error = acceptError;
+    if (error != null) throw error;
+    return RiderOrder.fromJson(<String, dynamic>{
+      'id': orderId,
+      'order_number': 'NX-$orderId',
+      'status': 'rider_assigned',
+      'pickup': <String, dynamic>{'address': 'Amma Mess'},
+    });
+  }
+
   @override
   Future<void> rejectOffer(String offerId, {String? reason}) async {
     rejects++;
@@ -278,6 +293,70 @@ void main() {
 
       await offers.sync();
       expect(offers.offer, isNotNull);
+    });
+
+    group('a board card', () {
+      final RiderOrder board = RiderOrder.fromJson(<String, dynamic>{
+        'id': '1001',
+        'order_number': 'NX-1001',
+        'status': 'ready_for_pickup',
+        'delivery_fee': 46,
+        'collect_cash': 0,
+        'pickup': <String, dynamic>{
+          'name': 'Amma Mess',
+          'address': '4 West Masi Street, Madurai',
+          'distance_metres': 450,
+        },
+      });
+
+      test('goes up from a board order and rings', () {
+        expect(offers.presentFromBoard(board), isTrue);
+        expect(offers.offer?.fromBoard, isTrue);
+        expect(offers.offer?.orderId, '1001');
+        expect(offers.offer?.restaurant, 'Amma Mess');
+        expect(offers.offer?.restaurantArea, '4 West Masi Street, Madurai');
+        expect(offers.remaining, OrderOffer.boardWindow);
+        expect(alert.rings, 1);
+      });
+
+      test('accepts through the board, not the offer endpoint', () async {
+        offers.presentFromBoard(board);
+        final AcceptOutcome outcome = await offers.accept();
+        expect(outcome, isA<OfferWon>());
+        expect(repository.boardAccepts, 1);
+        expect(repository.accepts, 0);
+        expect(offers.offer, isNull);
+      });
+
+      test('declining tells the server nothing', () async {
+        offers.presentFromBoard(board);
+        await offers.reject(reason: 'Too far');
+        expect(offers.offer, isNull);
+        expect(repository.rejects, 0);
+        expect(alert.silences, 1);
+      });
+
+      test('survives a resume that finds no server offer', () async {
+        offers.presentFromBoard(board);
+        repository.live = null;
+        await offers.sync();
+        expect(offers.offer?.fromBoard, isTrue);
+      });
+
+      test('gives way to a real offer from the server', () async {
+        offers.presentFromBoard(board);
+        repository.live = OrderOffer.fromData(_push(), receivedAt: _now);
+        await offers.sync();
+        expect(offers.offer?.fromBoard, isFalse);
+        expect(offers.offer?.offerId, '01JCQ2W8XK3N4P5Q6R7S8T9V0W');
+      });
+
+      test('goes when its half-minute is up', () async {
+        offers.presentFromBoard(board);
+        clock = clock.add(OrderOffer.boardWindow);
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        expect(offers.offer, isNull);
+      });
     });
 
     test('sync clears a card the server no longer has', () async {

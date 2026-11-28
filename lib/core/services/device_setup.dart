@@ -47,4 +47,16 @@ class DeviceSetup {
   Future<void> openAppSettings() => _call<void>('openAppSettings', null);
 
   Future<String> manufacturer() => _call<String>('manufacturer', '');
+
+  /// Whether the rider allowed "Display over other apps", which is what lets
+  /// a new order bring the app to the front while another app is open.
+  Future<bool> canDrawOverApps() => _call<bool>('canDrawOverlays', true);
+
+  Future<void> openDrawOverAppsSettings() =>
+      _call<void>('openOverlaySettings', null);
+
+  /// Brings the app to the front, over whatever the rider has open, so a new
+  /// order's card is on screen rather than only in the notification shade.
+  /// Does nothing without "Display over other apps".
+  Future<void> bringToFront() => _call<void>('bringToFront', null);
 }

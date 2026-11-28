@@ -117,6 +117,11 @@ class OfferController extends ChangeNotifier {
     return true;
   }
 
+  /// Puts up the card for an order on the board, for a board-mode
+  /// `order.offer` push. Same rules as [present].
+  bool presentFromBoard(RiderOrder order) =>
+      present(OrderOffer.fromBoardOrder(order, now: _clock()));
+
   /// A push. Routes the dispatch types and ignores the rest. Returns true for
   /// `rider.auto_offline`, which the caller turns into flipping duty off.
   bool handleMessage(Map<String, Object?> data) {
@@ -150,7 +155,9 @@ class OfferController extends ChangeNotifier {
     try {
       final OrderOffer? live = await _repository.currentOffer();
       if (live == null) {
-        _dismiss();
+        // A board card is not the server's offer, so "no offer" says nothing
+        // about it. It goes when its window closes or the rider answers.
+        if (!(_offer?.fromBoard ?? false)) _dismiss();
         return;
       }
       if (_offer != null && _offer!.offerId != live.offerId) _dismiss();
@@ -171,7 +178,11 @@ class OfferController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final RiderOrder order = await _repository.acceptOffer(offer.offerId);
+      // A board card has no offer behind it: Accept takes the order from the
+      // board, which answers with the same full order and the same codes.
+      final RiderOrder order = offer.fromBoard
+          ? await _repository.acceptOrder(offer.orderId)
+          : await _repository.acceptOffer(offer.offerId);
       _dismiss();
       return OfferWon(order);
     } on ApiException catch (error) {
@@ -199,6 +210,12 @@ class OfferController extends ChangeNotifier {
   Future<void> reject({String? reason}) async {
     final OrderOffer? offer = _offer;
     if (offer == null || _isRejecting) return;
+    if (offer.fromBoard) {
+      // Nothing to tell the server: the order was never this rider's alone,
+      // and it stays on the board for them or anyone else.
+      _dismiss();
+      return;
+    }
     _isRejecting = true;
     // Gone from the screen at once: declining should feel instant, and the
     // server's answer changes nothing the rider can act on.

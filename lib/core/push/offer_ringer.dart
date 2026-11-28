@@ -40,7 +40,14 @@ class AppOfferAlert implements OfferAlert {
 
     final bool onScreen = WidgetsBinding.instance.lifecycleState ==
         AppLifecycleState.resumed;
-    if (!onScreen) return;
+    if (!onScreen) {
+      // Another app is open: come to the front with the card, the way a call
+      // does. Allowed only with "Display over other apps"; without it the
+      // ringing notification is the alert, and the card is waiting when the
+      // rider opens the app.
+      unawaited(_device.bringToFront());
+      return;
+    }
 
     _buzz?.cancel();
     _buzz = Timer.periodic(

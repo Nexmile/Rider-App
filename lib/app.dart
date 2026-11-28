@@ -162,8 +162,32 @@ class _NexmileRiderAppState extends State<NexmileRiderApp>
   /// A dispatch message while the app is open.
   void _onData(Map<String, Object?> data) {
     if (!widget.authController.isSignedIn) return;
+    if (OfferMessage.typeOf(data) == OfferMessage.boardOffer) {
+      unawaited(_offerFromBoard(data));
+      return;
+    }
     final bool setOffline = offerController.handleMessage(data);
     if (setOffline) _wentOffline();
+  }
+
+  /// A board-mode new order (`order.offer`) as the same card a real offer
+  /// gets.
+  ///
+  /// The push carries only the order id, so the board is fetched and the
+  /// card filled from the board's copy of the order. An order no longer on
+  /// the board — taken already, or the rider is carrying one — puts nothing
+  /// up, which is right: there is nothing left to accept.
+  Future<void> _offerFromBoard(Map<String, Object?> data) async {
+    final String orderId = '${data['order_id'] ?? ''}'.trim();
+    if (orderId.isEmpty) return;
+    await orderController.refreshBoard(silent: true);
+    if (!widget.authController.isSignedIn) return;
+    for (final RiderOrder order in orderController.board.orders) {
+      if (order.id == orderId) {
+        offerController.presentFromBoard(order);
+        return;
+      }
+    }
   }
 
   /// The server took the rider off duty for letting three offers ring out.
@@ -232,9 +256,9 @@ class _NexmileRiderAppState extends State<NexmileRiderApp>
     // time the rider is looking at it, and the board's own poll can be a
     // minute behind. Fired before the navigation so the fetch and the route
     // animation overlap.
-    if (destination.refreshBoard) {
-      unawaited(widget.orderController.refreshBoard(silent: true));
-    }
+    // A board-mode new order also gets its card, which fetches the board on
+    // the way.
+    if (destination.refreshBoard) unawaited(_offerFromBoard(data));
 
     final NavigatorState? navigator = _navigator.currentState;
     if (navigator == null) return;

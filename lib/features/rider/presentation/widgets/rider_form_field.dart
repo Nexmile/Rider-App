@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/design/design.dart';
 import '../../../../generated/l10n/app_localizations.dart';
 
 /// Text field for the onboarding wizard.
@@ -51,22 +52,14 @@ class RiderTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: NxSpace.md + 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsetsDirectional.only(start: 4, bottom: 7),
-            child: Text(
-              label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
+          _FieldLabel(label),
           TextFormField(
             controller: controller,
             enabled: enabled,
@@ -82,9 +75,7 @@ class RiderTextField extends StatelessWidget {
             // approximation of it.
             validator: (String? value) =>
                 serverError ?? validator?.call(value),
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.onSurface,
-            ),
+            style: NxType.body.copyWith(color: t.ink),
             decoration: InputDecoration(
               hintText: hint,
               hintMaxLines: 1,
@@ -159,27 +150,19 @@ class RiderDateField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
     final String? error = serverError ?? errorText;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: NxSpace.md + 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsetsDirectional.only(start: 4, bottom: 7),
-            child: Text(
-              label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
+          _FieldLabel(label),
           InkWell(
             onTap: enabled ? () => _pick(context) : null,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: NxRadius.controlAll,
             child: InputDecorator(
               isEmpty: value == null,
               decoration: InputDecoration(
@@ -192,10 +175,8 @@ class RiderDateField extends StatelessWidget {
               ),
               child: Text(
                 value == null ? l10n.selectDate : formatDate(value!),
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: value == null
-                      ? theme.colorScheme.onSurfaceVariant
-                      : theme.colorScheme.onSurface,
+                style: NxType.body.copyWith(
+                  color: value == null ? t.inkFaint : t.ink,
                 ),
               ),
             ),
@@ -231,11 +212,12 @@ String formatDate(DateTime date) {
   return '$day ${months[date.month - 1]} ${date.year}';
 }
 
-/// Single-choice picker rendered as a wrap of pills.
+/// Single-choice picker: a grid of tiles when each option has an icon (the
+/// vehicle), a wrap of pills when it does not.
 ///
-/// A `DropdownButton` would be the obvious choice, but four options fit on one
-/// or two rows, and a pill row is one tap instead of two — which matters on a
-/// form the rider fills in once, standing next to their bike.
+/// A `DropdownButton` would be the obvious choice, but five options fit on two
+/// rows, and a tile is one tap instead of two — which matters on a form the
+/// rider fills in once, standing next to their bike.
 class RiderChoiceField<T> extends StatelessWidget {
   const RiderChoiceField({
     super.key,
@@ -260,50 +242,188 @@ class RiderChoiceField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final bool isDark = theme.brightness == Brightness.dark;
+    final NxTokens t = context.nx;
+    final IconData Function(T)? icon = iconOf;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: NxSpace.md + 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsetsDirectional.only(start: 4, bottom: 9),
-            child: Text(
-              label,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+          _FieldLabel(label),
+          if (icon != null)
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints box) {
+                // Three to a row on a phone, two when the text is large
+                // enough that a label would not fit a third of the width.
+                final bool roomy = MediaQuery.textScalerOf(context).scale(1) < 1.3;
+                final int perRow = roomy ? 3 : 2;
+                const double gap = NxSpace.xs + 2;
+                final double width = (box.maxWidth - gap * (perRow - 1)) / perRow;
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: <Widget>[
+                    for (final T option in options)
+                      SizedBox(
+                        width: width,
+                        child: _ChoiceTile(
+                          label: labelOf(option),
+                          icon: icon(option),
+                          selected: option == value,
+                          enabled: enabled,
+                          onTap: () => onChanged(option),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            )
+          else
+            Wrap(
+              spacing: NxSpace.xs + 2,
+              runSpacing: NxSpace.xs + 2,
+              children: <Widget>[
+                for (final T option in options)
+                  _ChoicePill(
+                    label: labelOf(option),
+                    selected: option == value,
+                    enabled: enabled,
+                    onTap: () => onChanged(option),
+                  ),
+              ],
             ),
-          ),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: <Widget>[
-              for (final T option in options)
-                _ChoicePill(
-                  label: labelOf(option),
-                  icon: iconOf?.call(option),
-                  selected: option == value,
-                  enabled: enabled,
-                  onTap: () => onChanged(option),
-                ),
-            ],
-          ),
           if (errorText != null)
             Padding(
-              padding: const EdgeInsetsDirectional.only(start: 4, top: 8),
+              padding: const EdgeInsetsDirectional.only(
+                start: NxSpace.xxs,
+                top: NxSpace.xs,
+              ),
               child: Text(
                 errorText!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: isDark
-                      ? theme.colorScheme.error
-                      : theme.colorScheme.error,
-                ),
+                style: NxType.bodySmall.copyWith(color: t.danger),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// The label over a field: small, bold, muted. Static rather than floating,
+/// for the Indic vowel marks a floating label crushes.
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(
+        start: NxSpace.xxs,
+        bottom: NxSpace.xs,
+      ),
+      child: Text(
+        text,
+        style: NxType.caption.copyWith(
+          fontSize: 13,
+          color: context.nx.inkMuted,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+/// One option as a tile: the icon large, the name under it, a tick in the
+/// corner once chosen.
+class _ChoiceTile extends StatelessWidget {
+  const _ChoiceTile({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
+    return Material(
+      color: selected ? t.primarySoft : t.surface,
+      borderRadius: NxRadius.controlAll,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: NxRadius.controlAll,
+        child: AnimatedContainer(
+          duration: AppMotion.quick,
+          curve: AppMotion.change,
+          constraints: const BoxConstraints(minHeight: 92),
+          padding: const EdgeInsets.fromLTRB(
+            NxSpace.xs,
+            NxSpace.sm + 2,
+            NxSpace.xs,
+            NxSpace.sm,
+          ),
+          decoration: BoxDecoration(
+            borderRadius: NxRadius.controlAll,
+            border: Border.all(
+              color: selected ? t.primary : t.border,
+              width: selected ? 1.8 : 1.2,
+            ),
+          ),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topCenter,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(
+                      icon,
+                      size: 28,
+                      color: selected ? t.primary : t.inkMuted,
+                    ),
+                    const SizedBox(height: NxSpace.xs),
+                    Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: NxType.caption.copyWith(
+                        fontSize: 13,
+                        color: selected ? t.primary : t.ink,
+                        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (selected)
+                PositionedDirectional(
+                  top: -6,
+                  end: -2,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: t.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.check_rounded, size: 14, color: t.onPrimary),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -315,62 +435,42 @@ class _ChoicePill extends StatelessWidget {
     required this.selected,
     required this.enabled,
     required this.onTap,
-    this.icon,
   });
 
   final String label;
-  final IconData? icon;
   final bool selected;
   final bool enabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final Color accent = theme.colorScheme.primary;
-    final BorderRadius radius = BorderRadius.circular(999);
-
+    final NxTokens t = context.nx;
     return Material(
-      color: selected
-          ? accent.withValues(alpha: theme.brightness == Brightness.dark
-              ? 0.18
-              : 0.10)
-          : theme.colorScheme.surfaceContainerLow,
-      borderRadius: radius,
+      color: selected ? t.primarySoft : t.surface,
+      borderRadius: NxRadius.pillAll,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: radius,
+        borderRadius: NxRadius.pillAll,
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: radius,
+            borderRadius: NxRadius.pillAll,
             border: Border.all(
-              color: selected ? accent : theme.colorScheme.outline,
-              width: selected ? 1.6 : 1,
+              color: selected ? t.primary : t.border,
+              width: selected ? 1.6 : 1.2,
             ),
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                if (icon != null) ...<Widget>[
-                  Icon(
-                    icon,
-                    size: 19,
-                    color: selected
-                        ? accent
-                        : theme.colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Text(
-                  label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: selected ? accent : theme.colorScheme.onSurface,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(
+              horizontal: NxSpace.md,
+              vertical: NxSpace.sm - 2,
+            ),
+            child: Text(
+              label,
+              style: NxType.caption.copyWith(
+                fontSize: 14,
+                color: selected ? t.primary : t.ink,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              ),
             ),
           ),
         ),
@@ -392,17 +492,15 @@ class RiderNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.only(bottom: NxSpace.md + 2),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(NxSpace.sm + 2),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: theme.brightness == Brightness.dark ? 0.5 : 0.7,
-          ),
-          borderRadius: BorderRadius.circular(16),
+          color: t.infoSoft,
+          borderRadius: NxRadius.controlAll,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -410,14 +508,15 @@ class RiderNote extends StatelessWidget {
             Icon(
               icon ?? Icons.info_outline_rounded,
               size: 20,
-              color: theme.colorScheme.onSurfaceVariant,
+              color: t.infoInk,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: NxSpace.sm),
             Expanded(
               child: Text(
                 text,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: NxType.bodySmall.copyWith(
+                  fontSize: 14,
+                  color: t.infoInk,
                   height: 1.45,
                 ),
               ),

@@ -2618,6 +2618,54 @@ abstract class AppLocalizations {
   /// **'Nothing else ever appears over your lock screen.'**
   String get permFullScreenOnlyBody;
 
+  /// No description provided for @permOverlayTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Show orders over other apps'**
+  String get permOverlayTitle;
+
+  /// No description provided for @permOverlayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When a new order comes in while you are using another app, Nexmile Rider comes to the front with the order card, so you can accept it straight away.'**
+  String get permOverlayBody;
+
+  /// No description provided for @permOverlayCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The full order card'**
+  String get permOverlayCardTitle;
+
+  /// No description provided for @permOverlayCardBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay, distance and pickup at a glance, not just a notification.'**
+  String get permOverlayCardBody;
+
+  /// No description provided for @permOverlayFastTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept in one swipe'**
+  String get permOverlayFastTitle;
+
+  /// No description provided for @permOverlayFastBody.
+  ///
+  /// In en, this message translates to:
+  /// **'No hunting for the notification and opening the app first.'**
+  String get permOverlayFastBody;
+
+  /// No description provided for @permOverlayOnlyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Only for new orders'**
+  String get permOverlayOnlyTitle;
+
+  /// No description provided for @permOverlayOnlyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nexmile Rider never opens over your apps for anything else.'**
+  String get permOverlayOnlyBody;
+
   /// Title of the guided permissions screen.
   ///
   /// In en, this message translates to:
@@ -2653,6 +2701,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shows a new order over your lock screen, like a call.'**
   String get setupFullScreenBody;
+
+  /// No description provided for @setupOverlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Show over other apps'**
+  String get setupOverlay;
+
+  /// No description provided for @setupOverlayBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens the new order card on top of whatever app you are using.'**
+  String get setupOverlayBody;
 
   /// Setup step for battery optimisation exemption.
   ///

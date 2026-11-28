@@ -92,7 +92,7 @@ class NxHeroCard extends StatelessWidget {
     final Widget body = ClipRRect(
       borderRadius: NxRadius.heroAll,
       child: CustomPaint(
-        painter: const _HeroPattern(),
+        painter: const NxHeroPattern(),
         child: Padding(
           padding: padding,
           child: DefaultTextStyle.merge(
@@ -123,8 +123,10 @@ class NxHeroCard extends StatelessWidget {
 
 /// A ring off the top corner and a soft lime disc at the foot: enough
 /// texture to lift the gradient, never enough to fight the numbers on it.
-class _HeroPattern extends CustomPainter {
-  const _HeroPattern();
+/// Also behind the full-width green headers, so they read as the same family
+/// as the hero cards.
+class NxHeroPattern extends CustomPainter {
+  const NxHeroPattern();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -144,7 +146,7 @@ class _HeroPattern extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_HeroPattern oldDelegate) => false;
+  bool shouldRepaint(NxHeroPattern oldDelegate) => false;
 }
 
 /// A small heading over a group of cards, with an optional action at the end.

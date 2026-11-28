@@ -1391,6 +1391,14 @@
 
   "permFullScreenOnlyBody": "Nothing else ever appears over your lock screen.",
   "@permFullScreenOnlyBody": {"description":"Supporting line for the third full-screen reason."},
+  "permOverlayTitle": "Show orders over other apps",
+  "permOverlayBody": "When a new order comes in while you are using another app, Nexmile Rider comes to the front with the order card, so you can accept it straight away.",
+  "permOverlayCardTitle": "The full order card",
+  "permOverlayCardBody": "Pay, distance and pickup at a glance, not just a notification.",
+  "permOverlayFastTitle": "Accept in one swipe",
+  "permOverlayFastBody": "No hunting for the notification and opening the app first.",
+  "permOverlayOnlyTitle": "Only for new orders",
+  "permOverlayOnlyBody": "Nexmile Rider never opens over your apps for anything else.",
 
   "setupTitle": "Phone setup",
   "@setupTitle": {"description": "Title of the guided permissions screen."},
@@ -1409,6 +1417,8 @@
 
   "setupFullScreenBody": "Shows a new order over your lock screen, like a call.",
   "@setupFullScreenBody": {"description": "Why the full-screen step matters."},
+  "setupOverlay": "Show over other apps",
+  "setupOverlayBody": "Opens the new order card on top of whatever app you are using.",
 
   "setupBattery": "Battery: don't optimise",
   "@setupBattery": {"description": "Setup step for battery optimisation exemption."},

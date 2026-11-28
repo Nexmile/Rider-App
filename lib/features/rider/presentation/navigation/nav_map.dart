@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:latlong2/latlong.dart' show LatLng;
 
+import '../../../../core/design/app_colors.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/navigation_models.dart';
 import 'map_styles.dart';
@@ -13,8 +14,8 @@ import 'route_geometry.dart';
 
 gm.LatLng _g(LatLng p) => gm.LatLng(p.latitude, p.longitude);
 
-const Color _routeCasing = Color(0xFF1F6A08);
-const Color _routeCore = Color(0xFF3FA514);
+const Color _routeCasing = NxColors.routeBlueEdge;
+const Color _routeCore = NxColors.routeBlue;
 
 /// The map half of navigation.
 ///
@@ -218,7 +219,10 @@ class _NavMapState extends State<NavMap> with SingleTickerProviderStateMixin {
         tilt: at == null ? 0 : _followTilt,
         bearing: _bearing,
       ),
-      style: dark ? kNavMapStyleDark : kNavMapStyleLight,
+      // Google's own map by day, street names, landmarks and all, so it reads
+      // exactly like the Google Maps the rider already knows. Night keeps a
+      // dark style: the default is a white map that dazzles at 11 pm.
+      style: dark ? kNavMapStyleDark : null,
       padding: widget.padding,
       onMapCreated: (gm.GoogleMapController controller) {
         _controller.complete(controller);
@@ -292,7 +296,7 @@ class _NavMapState extends State<NavMap> with SingleTickerProviderStateMixin {
   }
 }
 
-/// A navigation chevron: an orange arrowhead on a white disc, pointing north
+/// A navigation chevron: a blue arrowhead on a white disc, pointing north
 /// before rotation.
 Future<gm.BitmapDescriptor> _paintChevron(double ratio) {
   const double logical = 54;
@@ -320,7 +324,8 @@ Future<gm.BitmapDescriptor> _paintChevron(double ratio) {
         ..shader = ui.Gradient.linear(
           c.translate(0, -14 * s),
           c.translate(0, 12 * s),
-          const <Color>[AppColors.orangeLight, AppColors.orangeDeep],
+          // Google's navigation blue, so the arrow is the one riders know.
+          const <Color>[NxColors.routeBlue, NxColors.routeBlueEdge],
         ),
     );
   });

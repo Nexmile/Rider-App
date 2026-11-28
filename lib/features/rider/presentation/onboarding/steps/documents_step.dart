@@ -2,8 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../../../core/motion/app_motion.dart';
-import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/design/design.dart';
 import '../../../../../generated/l10n/app_localizations.dart';
 import '../../../data/document_catalogue.dart';
 import '../../../data/kyc_models.dart';
@@ -28,7 +27,6 @@ class DocumentsStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext buildContext) {
-    final ThemeData theme = Theme.of(buildContext);
     final AppLocalizations l10n = AppLocalizations.of(buildContext);
     final OnboardingStepContext step = context;
     final RiderController rider = step.rider;
@@ -85,15 +83,10 @@ class DocumentsStep extends StatelessWidget {
                 ),
           ],
         if (types.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 32),
-            child: Center(
-              child: Text(
-                l10n.couldNotLoadAccount,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium,
-              ),
-            ),
+          NxEmptyState(
+            icon: Icons.cloud_off_rounded,
+            title: l10n.couldNotLoadAccount,
+            tone: NxTone.neutral,
           ),
       ],
     );
@@ -151,27 +144,16 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
     final double fraction = total == 0 ? 0 : (done / total).clamp(0.0, 1.0);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: allDone
-            ? AppColors.greenDeep.withValues(alpha: 0.08)
-            : theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: allDone
-              ? AppColors.greenDeep.withValues(alpha: 0.4)
-              : theme.colorScheme.outlineVariant,
-        ),
-      ),
+    return NxCard(
+      color: allDone ? t.primarySoft : null,
       child: Row(
         children: <Widget>[
           SizedBox.square(
-            dimension: 62,
+            dimension: 64,
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(end: fraction),
               duration: AppMotion.medium,
@@ -179,42 +161,44 @@ class _Summary extends StatelessWidget {
               builder: (BuildContext context, double value, _) => CustomPaint(
                 painter: _RingPainter(
                   fraction: value,
-                  track: theme.colorScheme.outlineVariant,
+                  track: allDone ? t.surface : t.surfaceMuted,
+                  fill: t.primaryBright,
                 ),
                 child: Center(
                   child: allDone
-                      ? const Icon(
-                          Icons.check_rounded,
-                          color: AppColors.greenDeep,
-                          size: 28,
-                        )
+                      ? Icon(Icons.check_rounded, color: t.primary, size: 30)
                       : Text(
                           '$done/$total',
                           textDirection: TextDirection.ltr,
-                          style: theme.textTheme.titleSmall?.copyWith(
+                          style: NxType.titleSmall.copyWith(
+                            color: t.ink,
                             fontWeight: FontWeight.w800,
+                            fontFeatures: const <FontFeature>[
+                              FontFeature.tabularFigures(),
+                            ],
                           ),
                         ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: NxSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
                   l10n.documentsProgress(done, total),
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: NxType.titleSmall.copyWith(
+                    color: allDone ? t.primary : t.ink,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: NxSpace.xxs),
                 Text(
                   allDone ? l10n.docsAllDone : l10n.docsTip,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: NxType.bodySmall.copyWith(
+                    color: t.inkMuted,
                     height: 1.4,
                   ),
                 ),
@@ -228,14 +212,19 @@ class _Summary extends StatelessWidget {
 }
 
 class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.fraction, required this.track});
+  const _RingPainter({
+    required this.fraction,
+    required this.track,
+    required this.fill,
+  });
 
   final double fraction;
   final Color track;
+  final Color fill;
 
   @override
   void paint(Canvas canvas, Size size) {
-    const double stroke = 6;
+    const double stroke = 7;
     final Rect rect = (Offset.zero & size).deflate(stroke / 2);
     canvas.drawArc(
       rect,
@@ -254,7 +243,7 @@ class _RingPainter extends CustomPainter {
       math.pi * 2 * fraction,
       false,
       Paint()
-        ..color = AppColors.greenDeep
+        ..color = fill
         ..style = PaintingStyle.stroke
         ..strokeWidth = stroke
         ..strokeCap = StrokeCap.round,
@@ -263,7 +252,7 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter old) =>
-      old.fraction != fraction || old.track != track;
+      old.fraction != fraction || old.track != track || old.fill != fill;
 }
 
 class _GroupHeading extends StatelessWidget {
@@ -273,7 +262,6 @@ class _GroupHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final AppLocalizations l10n = AppLocalizations.of(context);
     final String title = switch (group) {
       DocumentGroup.identity => l10n.docGroupIdentity,
@@ -281,14 +269,8 @@ class _GroupHeading extends StatelessWidget {
       DocumentGroup.more => l10n.docGroupMore,
     };
     return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 4, top: 22, bottom: 10),
-      child: Text(
-        title,
-        style: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w800,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
+      padding: const EdgeInsets.only(top: NxSpace.lg + 2),
+      child: NxSectionHeader(title: title),
     );
   }
 }

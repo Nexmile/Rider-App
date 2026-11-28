@@ -8,8 +8,10 @@ import '../../core/services/preferences_service.dart';
 /// A permission the first-run pages ask for, in the order they ask.
 ///
 /// Location first, because it decides whether a rider can go online at all;
-/// then the three things that decide whether an order actually reaches them.
-enum RiderPermission { location, notifications, battery, fullScreen }
+/// then the four things that decide whether an order actually reaches them.
+/// Showing over other apps comes last: it is the one a rider can most easily
+/// do without, since the ringing notification still gets through.
+enum RiderPermission { location, notifications, battery, fullScreen, overlay }
 
 /// What the first-run pages need from the phone, behind one seam so a test
 /// can stand in for it.
@@ -60,6 +62,9 @@ class DevicePermissionGateway implements PermissionGateway {
     if (_android && !await _device.canUseFullScreenIntent()) {
       missing.add(RiderPermission.fullScreen);
     }
+    if (_android && !await _device.canDrawOverApps()) {
+      missing.add(RiderPermission.overlay);
+    }
     return missing;
   }
 
@@ -75,6 +80,8 @@ class DevicePermissionGateway implements PermissionGateway {
           await _device.requestIgnoreBatteryOptimizations();
         case RiderPermission.fullScreen:
           await _device.openFullScreenIntentSettings();
+        case RiderPermission.overlay:
+          await _device.openDrawOverAppsSettings();
       }
     } catch (_) {
       // Whatever went wrong, the rider moves on. The phone setup screen on

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/motion/app_motion.dart';
+import '../../core/design/design.dart';
 import '../../core/router/app_router.dart';
 import '../../core/services/preferences_service.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/widgets/gradient_button.dart';
 import '../../generated/l10n/app_localizations.dart';
 import 'permission_gateway.dart';
 
@@ -74,12 +72,18 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
         if (!didPop && _index > 0 && !_busy) setState(() => _index--);
       },
       child: Scaffold(
+        backgroundColor: context.nx.ground,
         body: SafeArea(
           child: Column(
             children: <Widget>[
               if (_steps.length > 1)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                  padding: const EdgeInsets.fromLTRB(
+                    NxSpace.xl,
+                    NxSpace.md,
+                    NxSpace.xl,
+                    0,
+                  ),
                   child: _Progress(index: _index, total: _steps.length),
                 ),
               Expanded(
@@ -106,10 +110,15 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+                padding: const EdgeInsets.fromLTRB(
+                  NxSpace.xl,
+                  NxSpace.xs,
+                  NxSpace.xl,
+                  NxSpace.sm,
+                ),
                 child: Column(
                   children: <Widget>[
-                    GradientButton(
+                    NxPrimaryButton(
                       label: content.allowLabel,
                       icon: content.allowIcon,
                       onPressed: _busy ? null : _allow,
@@ -119,8 +128,8 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
                       onPressed: _busy ? null : _next,
                       style: TextButton.styleFrom(
                         minimumSize: const Size.fromHeight(48),
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onSurfaceVariant,
+                        foregroundColor: context.nx.inkMuted,
+                        textStyle: NxType.button.copyWith(fontSize: 15),
                       ),
                       child: Text(l10n.permNotNow),
                     ),
@@ -141,8 +150,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
       switch (step) {
         RiderPermission.location => _PageContent(
             icon: Icons.location_on_rounded,
-            colour: AppColors.green,
-            colourDeep: AppColors.greenDeep,
+            tone: NxTone.success,
             title: l10n.permLocationTitle,
             body: l10n.permLocationBody,
             reasons: <_Reason>[
@@ -167,8 +175,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
           ),
         RiderPermission.notifications => _PageContent(
             icon: Icons.notifications_active_rounded,
-            colour: AppColors.orange,
-            colourDeep: AppColors.orangeDeep,
+            tone: NxTone.action,
             title: l10n.permNotifyTitle,
             body: l10n.permNotifyBody,
             reasons: <_Reason>[
@@ -193,8 +200,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
           ),
         RiderPermission.battery => _PageContent(
             icon: Icons.battery_charging_full_rounded,
-            colour: AppColors.green,
-            colourDeep: AppColors.greenDeep,
+            tone: NxTone.success,
             title: l10n.permBatteryTitle,
             body: l10n.permBatteryBody,
             reasons: <_Reason>[
@@ -219,8 +225,7 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
           ),
         RiderPermission.fullScreen => _PageContent(
             icon: Icons.screen_lock_portrait_rounded,
-            colour: AppColors.orange,
-            colourDeep: AppColors.orangeDeep,
+            tone: NxTone.action,
             title: l10n.permFullScreenTitle,
             body: l10n.permFullScreenBody,
             reasons: <_Reason>[
@@ -243,6 +248,31 @@ class _PermissionsScreenState extends State<PermissionsScreen> {
             allowLabel: l10n.setupOpenSettings,
             allowIcon: Icons.open_in_new_rounded,
           ),
+        RiderPermission.overlay => _PageContent(
+            icon: Icons.layers_rounded,
+            tone: NxTone.success,
+            title: l10n.permOverlayTitle,
+            body: l10n.permOverlayBody,
+            reasons: <_Reason>[
+              _Reason(
+                Icons.delivery_dining_rounded,
+                l10n.permOverlayCardTitle,
+                l10n.permOverlayCardBody,
+              ),
+              _Reason(
+                Icons.bolt_rounded,
+                l10n.permOverlayFastTitle,
+                l10n.permOverlayFastBody,
+              ),
+              _Reason(
+                Icons.verified_user_outlined,
+                l10n.permOverlayOnlyTitle,
+                l10n.permOverlayOnlyBody,
+              ),
+            ],
+            allowLabel: l10n.setupOpenSettings,
+            allowIcon: Icons.open_in_new_rounded,
+          ),
       };
 }
 
@@ -257,8 +287,7 @@ class _Reason {
 class _PageContent {
   const _PageContent({
     required this.icon,
-    required this.colour,
-    required this.colourDeep,
+    required this.tone,
     required this.title,
     required this.body,
     required this.reasons,
@@ -267,8 +296,9 @@ class _PageContent {
   });
 
   final IconData icon;
-  final Color colour;
-  final Color colourDeep;
+
+  /// Green for what the job runs on, orange for what makes an order ring.
+  final NxTone tone;
   final String title;
   final String body;
   final List<_Reason> reasons;
@@ -283,178 +313,125 @@ class _Page extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
+    final Color tint = content.tone.colour(t);
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+      padding: const EdgeInsets.fromLTRB(
+        NxSpace.screen,
+        NxSpace.md,
+        NxSpace.screen,
+        NxSpace.sm,
+      ),
       children: <Widget>[
-        Center(
-          child: _Illustration(
-            icon: content.icon,
-            colour: content.colour,
-            colourDeep: content.colourDeep,
-          ),
-        ),
-        const SizedBox(height: 26),
-        Text(
-          content.title,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          content.body,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.6),
-            ),
-          ),
+        _Illustration(icon: content.icon, tone: content.tone),
+        const SizedBox(height: NxSpace.xl),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: NxSpace.xs),
           child: Column(
             children: <Widget>[
-              for (int i = 0; i < content.reasons.length; i++) ...<Widget>[
-                if (i > 0) const Divider(height: 1),
-                _ReasonRow(
-                  reason: content.reasons[i],
-                  colour: content.colourDeep,
-                ),
-              ],
+              Text(
+                content.title,
+                textAlign: TextAlign.center,
+                style: NxType.headline.copyWith(color: t.ink),
+              ),
+              const SizedBox(height: NxSpace.sm - 2),
+              Text(
+                content.body,
+                textAlign: TextAlign.center,
+                style: NxType.body.copyWith(color: t.inkMuted, height: 1.45),
+              ),
             ],
           ),
+        ),
+        const SizedBox(height: NxSpace.xl),
+        NxListGroup(
+          children: <Widget>[
+            for (final _Reason reason in content.reasons)
+              NxListTile(
+                icon: reason.icon,
+                iconColor: tint,
+                title: reason.title,
+                subtitle: reason.body,
+              ),
+          ],
         ),
       ],
     );
   }
 }
 
-class _ReasonRow extends StatelessWidget {
-  const _ReasonRow({required this.reason, required this.colour});
-
-  final _Reason reason;
-  final Color colour;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: colour.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(reason.icon, size: 21, color: colour),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  reason.title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  reason.body,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The page's picture: the permission's icon in rings of its colour. It
-/// settles in once rather than pulsing, so the page is still while the rider
-/// reads it.
+/// The page's picture: a panel in the permission's colour, the icon on a
+/// white disc in two soft rings, and a lime spark. It settles in once rather
+/// than pulsing, so the page is still while the rider reads it.
 class _Illustration extends StatelessWidget {
-  const _Illustration({
-    required this.icon,
-    required this.colour,
-    required this.colourDeep,
-  });
+  const _Illustration({required this.icon, required this.tone});
 
   final IconData icon;
-  final Color colour;
-  final Color colourDeep;
+  final NxTone tone;
 
   @override
   Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 650),
-      curve: AppMotion.emphasise,
-      builder: (BuildContext context, double t, Widget? child) =>
-          Transform.scale(
-        scale: 0.8 + 0.2 * t,
-        child: Opacity(opacity: t.clamp(0.0, 1.0), child: child),
+    final NxTokens t = context.nx;
+    final Gradient panel = tone == NxTone.success
+        ? t.heroGradient
+        : LinearGradient(
+            begin: const Alignment(-0.9, -1),
+            end: const Alignment(0.9, 1),
+            colors: <Color>[t.actionText, t.action],
+          );
+    final bool still = AppMotion.reduced(context);
+
+    return Container(
+      height: 208,
+      decoration: BoxDecoration(
+        gradient: panel,
+        borderRadius: NxRadius.heroAll,
       ),
-      child: SizedBox(
-        width: 184,
-        height: 184,
-        child: Stack(
-          alignment: Alignment.center,
-          children: <Widget>[
-            _disc(184, colour.withValues(alpha: 0.07)),
-            _disc(140, colour.withValues(alpha: 0.12)),
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: <Color>[colour, colourDeep],
-                ),
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: colourDeep.withValues(alpha: 0.35),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+      child: ClipRRect(
+        borderRadius: NxRadius.heroAll,
+        child: CustomPaint(
+          painter: const NxHeroPattern(),
+          child: Center(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: still ? 1 : 0, end: 1),
+              duration: const Duration(milliseconds: 650),
+              curve: AppMotion.emphasise,
+              builder: (BuildContext context, double v, Widget? child) =>
+                  Transform.scale(
+                scale: 0.8 + 0.2 * v,
+                child: Opacity(opacity: v.clamp(0.0, 1.0), child: child),
               ),
-              child: Icon(icon, size: 46, color: Colors.white),
+              child: SizedBox(
+                width: 168,
+                height: 168,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: <Widget>[
+                    _disc(168, Colors.white.withValues(alpha: 0.08)),
+                    _disc(128, Colors.white.withValues(alpha: 0.14)),
+                    Container(
+                      width: 92,
+                      height: 92,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        boxShadow: NxShadows.floating,
+                      ),
+                      child: Icon(icon, size: 44, color: tone.colour(t)),
+                    ),
+                    // A lime spark and a white one, for depth.
+                    Positioned(top: 18, right: 22, child: _disc(16, t.lime)),
+                    Positioned(
+                      bottom: 26,
+                      left: 18,
+                      child: _disc(10, Colors.white.withValues(alpha: 0.7)),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            // Two small satellites, for depth.
-            Positioned(
-              top: 22,
-              right: 26,
-              child: _disc(14, colour.withValues(alpha: 0.55)),
-            ),
-            Positioned(
-              bottom: 30,
-              left: 20,
-              child: _disc(10, AppColors.orangeLight.withValues(alpha: 0.7)),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -476,7 +453,7 @@ class _Progress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final NxTokens t = context.nx;
     final AppLocalizations l10n = AppLocalizations.of(context);
 
     return Row(
@@ -489,25 +466,31 @@ class _Progress extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: AppMotion.quick,
                     curve: AppMotion.enter,
-                    height: 5,
+                    height: i == index ? 6 : 5,
                     margin: const EdgeInsetsDirectional.only(end: 6),
                     decoration: BoxDecoration(
-                      color: i <= index
-                          ? AppColors.greenDeep
-                          : theme.colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(100),
+                      color: i <= index ? t.primaryBright : t.border,
+                      borderRadius: NxRadius.pillAll,
                     ),
                   ),
                 ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        Text(
-          l10n.permStepCount(index + 1, total),
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w700,
+        const SizedBox(width: NxSpace.xs),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: t.surface,
+            borderRadius: NxRadius.pillAll,
+            border: Border.all(color: t.border),
+          ),
+          child: Text(
+            l10n.permStepCount(index + 1, total),
+            style: NxType.caption.copyWith(
+              color: t.ink,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ],

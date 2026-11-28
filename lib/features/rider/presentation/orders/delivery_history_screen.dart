@@ -406,13 +406,7 @@ class _Day {
       for (final MapEntry<DateTime?, List<RiderOrder>> e in byDay.entries)
         _Day(
           e.key,
-          e.value
-            ..sort((RiderOrder a, RiderOrder b) {
-              final DateTime? ta = when(a);
-              final DateTime? tb = when(b);
-              if (ta == null || tb == null) return 0;
-              return tb.compareTo(ta);
-            }),
+          e.value..sort(RiderOrder.newestFirst),
         ),
     ];
     days.sort((_Day a, _Day b) {

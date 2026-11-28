@@ -1416,6 +1416,34 @@ class AppLocalizationsTa extends AppLocalizations {
       'உங்கள் பூட்டுத் திரையின் மேல் வேறு எதுவும் ஒருபோதும் தோன்றாது.';
 
   @override
+  String get permOverlayTitle => 'Show orders over other apps';
+
+  @override
+  String get permOverlayBody =>
+      'When a new order comes in while you are using another app, Nexmile Rider comes to the front with the order card, so you can accept it straight away.';
+
+  @override
+  String get permOverlayCardTitle => 'The full order card';
+
+  @override
+  String get permOverlayCardBody =>
+      'Pay, distance and pickup at a glance, not just a notification.';
+
+  @override
+  String get permOverlayFastTitle => 'Accept in one swipe';
+
+  @override
+  String get permOverlayFastBody =>
+      'No hunting for the notification and opening the app first.';
+
+  @override
+  String get permOverlayOnlyTitle => 'Only for new orders';
+
+  @override
+  String get permOverlayOnlyBody =>
+      'Nexmile Rider never opens over your apps for anything else.';
+
+  @override
   String get setupTitle => 'ஃபோன் அமைப்பு';
 
   @override
@@ -1434,6 +1462,13 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get setupFullScreenBody =>
       'புதிய ஆர்டரை அழைப்பு போல உங்கள் பூட்டுத் திரையில் காட்டும்.';
+
+  @override
+  String get setupOverlay => 'Show over other apps';
+
+  @override
+  String get setupOverlayBody =>
+      'Opens the new order card on top of whatever app you are using.';
 
   @override
   String get setupBattery => 'பேட்டரி: ஆப்டிமைஸ் செய்ய வேண்டாம்';

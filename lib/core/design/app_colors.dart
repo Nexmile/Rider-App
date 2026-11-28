@@ -74,6 +74,12 @@ abstract final class NxColors {
   static const Color nightInkMuted = Color(0xFFB2BAAE);
   static const Color nightInkFaint = Color(0xFF8C9488);
 
+  /// The route on a map, in the blue riders know from Google Maps, with a
+  /// darker edge so it reads over any road colour. The same pair the
+  /// customer's tracking map uses.
+  static const Color routeBlue = Color(0xFF4A8DF6);
+  static const Color routeBlueEdge = Color(0xFF1967D2);
+
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
 }

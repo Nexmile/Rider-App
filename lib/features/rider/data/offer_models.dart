@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import 'order_models.dart';
+
 /// One order offered to this rider, with a window to accept it.
 ///
 /// Arrives two ways with the same fields: as a data-only FCM message, where
@@ -27,6 +29,7 @@ class OrderOffer {
     this.collectCash = 0,
     this.estimatedPrepMinutes,
     this.wave,
+    this.fromBoard = false,
   });
 
   final String offerId;
@@ -64,6 +67,40 @@ class OrderOffer {
   final int? estimatedPrepMinutes;
 
   final int? wave;
+
+  /// True for a card put up from the order board rather than offered to this
+  /// rider by the server: a board-mode `order.offer` push names an order, not
+  /// an offer. There is no offer to accept or reject, so Accept takes the
+  /// order from the board and Decline only puts the card away. The order
+  /// stays on the board either way.
+  final bool fromBoard;
+
+  /// How long a board card stays up. The server sets no window for a board
+  /// order; this is the same half-minute a real offer rings for, after which
+  /// the card goes and the order is still on the board.
+  static const Duration boardWindow = Duration(seconds: 30);
+
+  /// The card for an order on the board, for a board-mode push.
+  static OrderOffer fromBoardOrder(RiderOrder order, {DateTime? now}) {
+    final String? name = order.pickup.name?.trim();
+    final bool named = name != null && name.isNotEmpty;
+    return OrderOffer(
+      offerId: 'board-${order.id}',
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      deadline: (now ?? DateTime.now()).add(boardWindow),
+      restaurant: named ? name : order.pickup.address,
+      restaurantArea: named ? order.pickup.address : null,
+      restaurantLatitude: order.pickup.latitude,
+      restaurantLongitude: order.pickup.longitude,
+      pickupDistanceMetres: order.pickup.distanceMetres,
+      deliveryDistanceMetres: order.deliveryDistanceMetres,
+      itemCount: order.itemCount,
+      earnings: order.earnings,
+      collectCash: order.collectCash,
+      fromBoard: true,
+    );
+  }
 
   Duration remaining([DateTime? now]) {
     final Duration left = deadline.difference(now ?? DateTime.now());
@@ -126,6 +163,20 @@ abstract final class OfferMessage {
   static const String offer = 'ORDER_OFFER';
   static const String cancelled = 'OFFER_CANCELLED';
   static const String autoOffline = 'rider.auto_offline';
+
+  /// Board mode: a new order is on the board for every nearby rider, rather
+  /// than offered to a few. Sent as an ordinary notification with an
+  /// `order_id`. Not the same message as [offer], though the app answers both
+  /// with the same card.
+  static const String boardOffer = 'order.offer';
+
+  /// Every type the app turns into a card or uses to take one down.
+  static const Set<String> dispatch = <String>{
+    offer,
+    cancelled,
+    autoOffline,
+    boardOffer,
+  };
 
   static String typeOf(Map<String, Object?> data) =>
       _string(data['type']) ?? '';
