@@ -1138,6 +1138,13 @@ class AppLocalizationsPa extends AppLocalizations {
       'ਸੜਕ ਦਾ ਰਸਤਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਸਿੱਧੀ ਲਕੀਰ ਵਾਲੀ ਦੂਰੀ ਦਿਖਾ ਰਹੇ ਹਾਂ।';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'ਤੁਹਾਡਾ ਟਿਕਾਣਾ ਲੱਭ ਰਹੇ ਹਾਂ…';
 
   @override

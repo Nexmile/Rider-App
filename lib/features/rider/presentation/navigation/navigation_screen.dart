@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart' show LatLng;
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../../../core/design/design.dart';
+import '../../../../core/services/compass.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../generated/l10n/app_localizations.dart';
+import '../../data/location_service.dart';
 import '../../data/navigation_models.dart';
 import '../../data/order_models.dart';
 import '../../state/navigation_controller.dart';
@@ -80,17 +84,46 @@ class _NavigationScreenState extends State<NavigationScreen> {
   /// brings the camera back behind them.
   bool _follow = true;
 
+  /// The phone's compass, which turns the arrow while the rider is standing
+  /// still or walking, the way Google Maps does.
+  StreamSubscription<CompassReading>? _compassReadings;
+  CompassReading? _compass;
+  bool _compassLocated = false;
+
+  /// Closed by the rider: not shown again on this trip.
+  bool _calibrationDismissed = false;
+
   @override
   void initState() {
     super.initState();
     // A sat-nav that lets the screen sleep is useless. Best effort: a
     // platform without the plugin just behaves as before.
     unawaited(WakelockPlus.enable().catchError((Object _) {}));
+    _compassReadings = context.read<Compass>().readings().listen(
+      (CompassReading reading) {
+        if (mounted) setState(() => _compass = reading);
+      },
+      onError: (Object _) {},
+    );
+    _nav.addListener(_locateCompass);
+  }
+
+  /// Hands the first fix to the compass, so it can point at true north
+  /// rather than magnetic north.
+  void _locateCompass() {
+    final LatLng? here = _nav.here;
+    if (_compassLocated || here == null) return;
+    _compassLocated = true;
+    unawaited(
+      context.read<Compass>().setLocation(here.latitude, here.longitude),
+    );
   }
 
   @override
   void dispose() {
     unawaited(WakelockPlus.disable().catchError((Object _) {}));
+    unawaited(_compassReadings?.cancel());
+    _nav.removeListener(_locateCompass);
     _nav.dispose();
     super.dispose();
   }
@@ -115,6 +148,15 @@ class _NavigationScreenState extends State<NavigationScreen> {
       value: _nav,
       child: Consumer<NavigationController>(
         builder: (BuildContext context, NavigationController nav, _) {
+          final RiderPosition? fix = nav.position;
+          final bool riding =
+              (fix?.speedMetresPerSecond ?? 0) >= ridingSpeed;
+          // The compass only steers the arrow off the bike's pace, so it is
+          // only worth calibrating then.
+          final bool calibrate = !_calibrationDismissed &&
+              !riding &&
+              (_compass?.needsCalibration ?? false);
+          final double fabLift = calibrate ? 96 : 0;
           return Scaffold(
             body: Stack(
               children: <Widget>[
@@ -125,7 +167,11 @@ class _NavigationScreenState extends State<NavigationScreen> {
                     },
                     child: NavMap(
                       here: nav.here,
-                      heading: nav.position?.headingDegrees,
+                      heading: arrowHeading(
+                        speedMetresPerSecond: fix?.speedMetresPerSecond,
+                        course: fix?.headingDegrees,
+                        compass: _compass,
+                      ),
                       destination: _destination,
                       target: widget.target,
                       path: nav.path,
@@ -144,9 +190,19 @@ class _NavigationScreenState extends State<NavigationScreen> {
                   right: 12,
                   child: _TurnBanner(nav: nav, placeName: _placeName),
                 ),
+                if (calibrate)
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: 196 + media.padding.bottom,
+                    child: _CalibrateCard(
+                      onClose: () =>
+                          setState(() => _calibrationDismissed = true),
+                    ),
+                  ),
                 Positioned(
                   right: 16,
-                  bottom: 196 + media.padding.bottom,
+                  bottom: 196 + media.padding.bottom + fabLift,
                   child: AnimatedScale(
                     scale: _follow ? 0 : 1,
                     duration: const Duration(milliseconds: 220),
@@ -178,6 +234,166 @@ class _NavigationScreenState extends State<NavigationScreen> {
       ),
     );
   }
+}
+
+/// "Compass needs calibrating", with the figure 8 drawn and a dot tracing
+/// it: the same ask Google Maps makes, shown only while the compass is
+/// steering the arrow and unsure of itself.
+class _CalibrateCard extends StatelessWidget {
+  const _CalibrateCard({required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    return Material(
+      key: const ValueKey<String>('compass-calibrate'),
+      color: t.surface,
+      elevation: 6,
+      shadowColor: t.ink.withValues(alpha: 0.25),
+      borderRadius: NxRadius.cardAll,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          NxSpace.sm,
+          NxSpace.sm,
+          NxSpace.xxs,
+          NxSpace.sm,
+        ),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 64,
+              height: 52,
+              decoration: BoxDecoration(
+                color: t.infoSoft,
+                borderRadius: NxRadius.smallAll,
+              ),
+              child: const _FigureEight(),
+            ),
+            const SizedBox(width: NxSpace.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    l10n.navCalibrateTitle,
+                    style: NxType.titleSmall.copyWith(color: t.ink),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.navCalibrateBody,
+                    style: NxType.bodySmall.copyWith(color: t.inkMuted),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: onClose,
+              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+              icon: Icon(Icons.close_rounded, color: t.inkMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A figure 8 with a dot travelling round it, the movement that calibrates a
+/// compass. Still, dot at rest, when the platform asks for less motion.
+class _FigureEight extends StatefulWidget {
+  const _FigureEight();
+
+  @override
+  State<_FigureEight> createState() => _FigureEightState();
+}
+
+class _FigureEightState extends State<_FigureEight>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (AppMotion.reduced(context)) {
+      _c.stop();
+    } else if (!_c.isAnimating) {
+      _c.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final NxTokens t = context.nx;
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (BuildContext context, _) => CustomPaint(
+        painter: _FigureEightPainter(
+          progress: _c.value,
+          track: t.info.withValues(alpha: 0.35),
+          dot: t.info,
+        ),
+      ),
+    );
+  }
+}
+
+class _FigureEightPainter extends CustomPainter {
+  const _FigureEightPainter({
+    required this.progress,
+    required this.track,
+    required this.dot,
+  });
+
+  final double progress;
+  final Color track;
+  final Color dot;
+
+  /// A lemniscate across the box, [t] from 0 to 1 once round.
+  Offset _at(Size size, double t) {
+    final double a = t * 2 * math.pi;
+    final double d = 1 + math.pow(math.sin(a), 2).toDouble();
+    final double x = math.cos(a) / d;
+    final double y = math.sin(a) * math.cos(a) / d;
+    return Offset(
+      size.width / 2 + x * size.width * 0.38,
+      size.height / 2 + y * size.height * 0.7,
+    );
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Path path = Path()..moveTo(_at(size, 0).dx, _at(size, 0).dy);
+    for (int i = 1; i <= 64; i++) {
+      final Offset p = _at(size, i / 64);
+      path.lineTo(p.dx, p.dy);
+    }
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = track
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawCircle(_at(size, progress), 4.5, Paint()..color = dot);
+  }
+
+  @override
+  bool shouldRepaint(_FigureEightPainter old) =>
+      old.progress != progress || old.track != track || old.dot != dot;
 }
 
 /// The next turn: maneuver, distance, street, and a preview of the turn after.

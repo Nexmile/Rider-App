@@ -1135,6 +1135,13 @@ class AppLocalizationsGu extends AppLocalizations {
       'રસ્તાની દિશા ઉપલબ્ધ નથી. સીધી લીટીનું અંતર બતાવી રહ્યા છીએ.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'તમારું લોકેશન શોધી રહ્યા છીએ…';
 
   @override

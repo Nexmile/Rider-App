@@ -125,6 +125,24 @@ class _NavMapState extends State<NavMap> with SingleTickerProviderStateMixin {
     final LatLng? next = widget.here;
     if (next != null && next != oldWidget.here) _driveTo(next);
     if (widget.follow && !oldWidget.follow) unawaited(_moveCamera(animate: true));
+    // A compass turn while standing still: there is no fix gliding in to
+    // carry it, so the arrow and the camera turn here instead.
+    final double? heading = widget.heading;
+    if (heading != null &&
+        heading != oldWidget.heading &&
+        !_motion.isAnimating) {
+      _turnTo(heading);
+    }
+  }
+
+  /// Eases the arrow halfway to [heading] per reading. The compass is
+  /// already smoothed on the phone; this only takes the edge off its steps.
+  void _turnTo(double heading) {
+    _bearing = _hasBearing ? lerpBearing(_bearing, heading, 0.5) : heading;
+    _hasBearing = true;
+    if (_sinceFrame.elapsedMilliseconds < 33) return;
+    _sinceFrame.reset();
+    unawaited(_moveCamera());
   }
 
   @override
@@ -328,6 +346,25 @@ Future<gm.BitmapDescriptor> _paintChevron(double ratio) {
           const <Color>[NxColors.routeBlue, NxColors.routeBlueEdge],
         ),
     );
+  });
+}
+
+/// The rider as a Google-style location dot: blue, in a white ring, with a
+/// soft shadow. For maps that show where the rider is without a direction,
+/// such as the delivery screen's preview.
+Future<gm.BitmapDescriptor> riderDotIcon(double ratio) {
+  const double logical = 28;
+  return _draw(logical, logical, ratio, (Canvas canvas, double s) {
+    final Offset c = Offset(logical * s / 2, logical * s / 2);
+    canvas.drawCircle(
+      c.translate(0, 1.5 * s),
+      10 * s,
+      Paint()
+        ..color = Colors.black.withValues(alpha: 0.28)
+        ..maskFilter = ui.MaskFilter.blur(ui.BlurStyle.normal, 3 * s),
+    );
+    canvas.drawCircle(c, 10 * s, Paint()..color = Colors.white);
+    canvas.drawCircle(c, 7 * s, Paint()..color = NxColors.routeBlue);
   });
 }
 

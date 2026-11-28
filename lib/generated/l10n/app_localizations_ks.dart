@@ -1143,6 +1143,13 @@ class AppLocalizationsKs extends AppLocalizations {
       'سڑکہِ ہٕنٛز وَتھ چھےٚ نہ دستیاب۔ سیود فاصلہٕ چھُ ہاونہٕ یِوان۔';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'توہنٛز جاے ژھانڈان…';
 
   @override

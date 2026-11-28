@@ -1139,6 +1139,13 @@ class AppLocalizationsUr extends AppLocalizations {
       'سڑک کا راستہ دستیاب نہیں۔ سیدھی لکیر کا فاصلہ دکھایا جا رہا ہے۔';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'آپ کا مقام معلوم کیا جا رہا ہے…';
 
   @override

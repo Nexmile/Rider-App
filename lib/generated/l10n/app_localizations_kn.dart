@@ -1140,6 +1140,13 @@ class AppLocalizationsKn extends AppLocalizations {
       'ರಸ್ತೆ ದಾರಿ ಲಭ್ಯವಿಲ್ಲ. ನೇರ ರೇಖೆಯ ದೂರ ತೋರಿಸಲಾಗುತ್ತಿದೆ.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'ನಿಮ್ಮ ಸ್ಥಳ ಹುಡುಕುತ್ತಿದ್ದೇವೆ…';
 
   @override

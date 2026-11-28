@@ -17,6 +17,7 @@ import android.view.View
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodChannel
 
 /**
@@ -26,6 +27,9 @@ import io.flutter.plugin.common.MethodChannel
  * autostart step. All on one channel, `nexmile/device`.
  */
 class MainActivity : FlutterActivity() {
+
+    /** The compass behind the navigation arrow; see [CompassStream]. */
+    private val compass by lazy { CompassStream(this) }
 
     /**
      * Opened by a new-order alert while the phone is locked: over the lock
@@ -80,6 +84,8 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, "nexmile/compass")
+            .setStreamHandler(compass)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "nexmile/device")
             .setMethodCallHandler { call, result ->
                 when (call.method) {
@@ -107,6 +113,13 @@ class MainActivity : FlutterActivity() {
                         result.success(null)
                     }
                     "manufacturer" -> result.success(Build.MANUFACTURER ?: "")
+                    "hasCompass" -> result.success(compass.isAvailable)
+                    "compassLocation" -> {
+                        val lat = call.argument<Double>("latitude")
+                        val lng = call.argument<Double>("longitude")
+                        if (lat != null && lng != null) compass.setLocation(lat, lng)
+                        result.success(null)
+                    }
                     "canDrawOverlays" -> result.success(canDrawOverlays())
                     "openOverlaySettings" -> {
                         openOverlaySettings()

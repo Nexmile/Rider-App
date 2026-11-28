@@ -1141,6 +1141,13 @@ class AppLocalizationsTe extends AppLocalizations {
       'రోడ్డు దారి అందుబాటులో లేదు. నేరుగా ఉన్న దూరాన్ని చూపిస్తున్నాం.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'మీ లొకేషన్ కనుగొంటున్నాం…';
 
   @override

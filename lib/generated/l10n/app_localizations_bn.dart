@@ -1136,6 +1136,13 @@ class AppLocalizationsBn extends AppLocalizations {
       'রাস্তার দিকনির্দেশ পাওয়া যাচ্ছে না। সোজাসুজি দূরত্ব দেখানো হচ্ছে।';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'আপনার লোকেশন খোঁজা হচ্ছে…';
 
   @override

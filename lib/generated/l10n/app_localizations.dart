@@ -2156,6 +2156,18 @@ abstract class AppLocalizations {
   /// **'Road directions aren\'t available. Showing the straight-line distance.'**
   String get navNoRoute;
 
+  /// Navigation: card shown while the phone compass is inaccurate.
+  ///
+  /// In en, this message translates to:
+  /// **'Compass needs calibrating'**
+  String get navCalibrateTitle;
+
+  /// Navigation: how to calibrate the compass.
+  ///
+  /// In en, this message translates to:
+  /// **'Move your phone in a figure 8 a few times so the arrow points the right way.'**
+  String get navCalibrateBody;
+
   /// Before the first GPS fix.
   ///
   /// In en, this message translates to:

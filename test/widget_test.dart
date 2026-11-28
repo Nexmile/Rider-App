@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:nexmile_rider/app.dart';
@@ -56,6 +57,8 @@ import 'package:nexmile_rider/features/rider/data/navigation_models.dart';
 import 'package:nexmile_rider/features/rider/presentation/navigation/navigation_screen.dart';
 import 'package:nexmile_rider/features/rider/data/offer_models.dart';
 import 'package:nexmile_rider/core/push/push_service.dart';
+import 'package:nexmile_rider/core/services/compass.dart';
+import 'package:nexmile_rider/features/rider/presentation/navigation/nav_map.dart';
 import 'package:nexmile_rider/features/rider/state/offer_controller.dart';
 import 'package:nexmile_rider/features/rider/presentation/offers/incoming_offer_card.dart';
 
@@ -878,6 +881,7 @@ Future<void> _pumpApp(
   FakePayoutRepository? payoutRepository,
   FakePermissionGateway? permissions,
   PushService? push,
+  Compass? compass,
 }) async {
   final PreferencesService preferences = await _prefs(seed);
   _controller = AuthController(
@@ -910,8 +914,30 @@ Future<void> _pumpApp(
       // plugins that never answer here.
       permissionGateway: permissions ?? FakePermissionGateway(),
       pushService: push ?? const NoopPushService(),
+      compass: compass ?? const Compass(),
     ),
   );
+}
+
+/// A compass the test turns by hand.
+class _FakeCompass implements Compass {
+  final StreamController<CompassReading> _readings =
+      StreamController<CompassReading>.broadcast();
+  (double, double)? located;
+
+  void turn(double heading, {int accuracy = 3}) => _readings.add(
+        CompassReading.fromEvent(<String, Object>{
+          'heading': heading,
+          'accuracy': accuracy,
+        })!,
+      );
+
+  @override
+  Stream<CompassReading> readings() => _readings.stream;
+
+  @override
+  Future<void> setLocation(double latitude, double longitude) async =>
+      located = (latitude, longitude);
 }
 
 /// A push transport a test can speak through: [data] as if a message landed
@@ -2788,7 +2814,9 @@ void main() {
       await _pumpLive(tester);
 
       expect(find.byType(NavigationScreen), findsOneWidget);
-      expect(rider.routeCalls, 1);
+      // Once for the map preview on the delivery screen, once for the
+      // turn-by-turn screen.
+      expect(rider.routeCalls, 2);
       expect(find.text('To the customer'), findsOneWidget);
       expect(find.text('Head towards Anand R'), findsOneWidget);
       expect(find.textContaining('straight-line distance'), findsOneWidget);
@@ -2797,6 +2825,162 @@ void main() {
       await _pumpLive(tester);
       expect(find.byType(NavigationScreen), findsNothing);
       expect(find.byType(ActiveDeliveryScreen), findsOneWidget);
+    });
+
+    Future<_FakeCompass> navigateWithCompass(WidgetTester tester) async {
+      final _FakeCompass compass = _FakeCompass();
+      _useTallPhone(tester);
+      await _pumpApp(
+        tester,
+        seed: _languageChosen,
+        session: _testSession(),
+        riderRepository: workingRider(),
+        compass: compass,
+      );
+      await _settleSplashLive(tester);
+      await tester.tap(find.text('Orders'));
+      await _pumpLive(tester);
+      await tester.tap(find.text('Accept'));
+      await _pumpLive(tester);
+      final Finder toCustomer = find.byKey(const ValueKey<String>('nav-next'));
+      await tester.ensureVisible(toCustomer);
+      await _pumpLive(tester);
+      await tester.tap(toCustomer);
+      await _pumpLive(tester);
+      expect(find.byType(NavigationScreen), findsOneWidget);
+      return compass;
+    }
+
+    double? arrow(WidgetTester tester) =>
+        tester.widget<NavMap>(find.byType(NavMap)).heading;
+
+    testWidgets('standing still, the arrow turns with the compass',
+        (WidgetTester tester) async {
+      final _FakeCompass compass = await navigateWithCompass(tester);
+      // The first fix went to the compass, for true north.
+      expect(compass.located, (9.9195, 78.1193));
+
+      compass.turn(135);
+      await _pumpLive(tester);
+      expect(arrow(tester), 135);
+
+      compass.turn(250);
+      await _pumpLive(tester);
+      expect(arrow(tester), 250);
+
+      await tester.tap(find.byTooltip('End navigation'));
+      await _pumpLive(tester);
+    });
+
+    testWidgets('riding, the arrow follows the road instead',
+        (WidgetTester tester) async {
+      final _FakeCompass compass = await navigateWithCompass(tester);
+      compass.turn(250);
+      _location.position = const RiderPosition(
+        latitude: 9.9195,
+        longitude: 78.1193,
+        accuracyMetres: 8,
+        headingDegrees: 90,
+        speedMetresPerSecond: 6,
+      );
+      await _pumpLive(tester, const Duration(milliseconds: 2600));
+      expect(arrow(tester), 90);
+
+      await tester.tap(find.byTooltip('End navigation'));
+      await _pumpLive(tester);
+    });
+
+    testWidgets('an unsure compass asks for a figure 8, once',
+        (WidgetTester tester) async {
+      final _FakeCompass compass = await navigateWithCompass(tester);
+      final Finder card = find.byKey(const ValueKey<String>('compass-calibrate'));
+
+      compass.turn(40);
+      await _pumpLive(tester);
+      expect(card, findsNothing);
+
+      compass.turn(42, accuracy: 0);
+      await _pumpLive(tester);
+      expect(card, findsOneWidget);
+      expect(find.text('Compass needs calibrating'), findsOneWidget);
+
+      // Calibrated: it goes on its own.
+      compass.turn(44);
+      await _pumpLive(tester);
+      expect(card, findsNothing);
+
+      // Closed by the rider, it stays closed for the trip.
+      compass.turn(46, accuracy: 1);
+      await _pumpLive(tester);
+      await tester.tap(
+        find.descendant(of: card, matching: find.byIcon(Icons.close_rounded)),
+      );
+      await _pumpLive(tester);
+      compass.turn(48, accuracy: 0);
+      await _pumpLive(tester);
+      expect(card, findsNothing);
+
+      await tester.tap(find.byTooltip('End navigation'));
+      await _pumpLive(tester);
+    });
+
+    Set<String> previewLines(WidgetTester tester) => tester
+        .widget<gm.GoogleMap>(find.byType(gm.GoogleMap))
+        .polylines
+        .map((gm.Polyline line) => line.polylineId.value)
+        .toSet();
+
+    testWidgets('the delivery map previews the way, before any navigation',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider();
+      await onBoard(tester, rider);
+      await tester.tap(find.text('Accept'));
+      await _pumpLive(tester);
+
+      expect(find.byType(ActiveDeliveryScreen), findsOneWidget);
+      expect(find.byType(NavigationScreen), findsNothing);
+      // Asked for on its own, without opening turn-by-turn.
+      expect(rider.routeCalls, 1);
+      final gm.GoogleMap map = tester.widget(find.byType(gm.GoogleMap));
+      expect(
+        map.markers.map((gm.Marker m) => m.markerId.value),
+        containsAll(<String>['rider', 'pickup', 'dropoff']),
+      );
+      // No road from this server: a dotted line to the restaurant, and the
+      // leg after it, faint.
+      expect(previewLines(tester), contains('preview-direct'));
+      expect(previewLines(tester), contains('preview-next-leg'));
+      expect(previewLines(tester), isNot(contains('preview-core')));
+    });
+
+    testWidgets('with a road from the server, the preview draws the road',
+        (WidgetTester tester) async {
+      final FakeRiderRepository rider = workingRider()
+        ..navRoute = const NavRoute(
+          target: NavTarget.pickup,
+          points: <(double, double)>[
+            (9.9150, 78.1150),
+            (9.9170, 78.1150),
+            (9.9170, 78.1193),
+            (9.9195, 78.1193),
+          ],
+          distanceMetres: 760,
+          durationSeconds: 180,
+        );
+      await onBoard(tester, rider);
+      await tester.tap(find.text('Accept'));
+      await _pumpLive(tester);
+
+      expect(previewLines(tester), containsAll(<String>[
+        'preview-core',
+        'preview-casing',
+      ]));
+      expect(previewLines(tester), isNot(contains('preview-direct')));
+      final gm.Polyline road = tester
+          .widget<gm.GoogleMap>(find.byType(gm.GoogleMap))
+          .polylines
+          .firstWhere((gm.Polyline l) => l.polylineId.value == 'preview-core');
+      expect(road.points, hasLength(4));
     });
 
     testWidgets('standing at the restaurant reads as arrived',

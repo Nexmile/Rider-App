@@ -1140,6 +1140,13 @@ class AppLocalizationsDoi extends AppLocalizations {
       'सड़क दा रस्ता उपलब्ध नेईं ऐ। सिद्धी लकीर दी दूरी दस्सी जा करदी ऐ।';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'तुंदी थाह्र तोपा करदे आं…';
 
   @override

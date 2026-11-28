@@ -1140,6 +1140,13 @@ class AppLocalizationsMl extends AppLocalizations {
   String get navNoRoute => 'റോഡ് വഴി ലഭ്യമല്ല. നേർരേഖാ ദൂരം കാണിക്കുന്നു.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'നിങ്ങളുടെ ലൊക്കേഷൻ കണ്ടെത്തുന്നു…';
 
   @override

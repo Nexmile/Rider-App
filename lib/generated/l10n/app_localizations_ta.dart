@@ -1149,6 +1149,13 @@ class AppLocalizationsTa extends AppLocalizations {
       'சாலை வழி கிடைக்கவில்லை. நேர்கோட்டுத் தூரம் காட்டப்படுகிறது.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'உங்கள் இருப்பிடத்தைக் கண்டறிகிறோம்…';
 
   @override

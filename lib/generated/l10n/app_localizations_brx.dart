@@ -1139,6 +1139,13 @@ class AppLocalizationsBrx extends AppLocalizations {
       'लामा दिन्थिनाय दानो मोनाकै। सोजा लाइनाव गोजानखौ दिन्थिगासिनो दङ।';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'नोंथांनि जायगा नागिरगासिनो दङ…';
 
   @override

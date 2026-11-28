@@ -1139,6 +1139,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Road directions aren\'t available. Showing the straight-line distance.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'Finding your location…';
 
   @override

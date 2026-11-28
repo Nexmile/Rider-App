@@ -101,6 +101,19 @@ class NavStep {
       );
 }
 
+/// What the delivery screen's map preview shows: where the rider is, and the
+/// road from there to the next stop when the server could route it.
+@immutable
+class RoutePreview {
+  const RoutePreview({this.here, this.route});
+
+  /// Null when location is off or refused: the preview shows the stops only.
+  final (double, double)? here;
+
+  /// Null until the server can route: a dotted direction line instead.
+  final NavRoute? route;
+}
+
 /// `GET /v1/rider/orders/{order}/route` — the road from where the rider is
 /// to where they are going next.
 @immutable

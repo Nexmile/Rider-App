@@ -1139,6 +1139,13 @@ class AppLocalizationsSd extends AppLocalizations {
       'سڙڪ جو رستو موجود ناهي. سڌي لڪير وارو فاصلو ڏيکاري رهيا آهيون.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'توهان جو مقام ڳولي رهيا آهيون…';
 
   @override

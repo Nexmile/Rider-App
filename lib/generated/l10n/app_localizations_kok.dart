@@ -1138,6 +1138,13 @@ class AppLocalizationsKok extends AppLocalizations {
       'रस्त्याची दिशा उपलब्ध ना. सरळ रेषेंतलें अंतर दाखयतां.';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'तुमची सुवात सोदतां…';
 
   @override

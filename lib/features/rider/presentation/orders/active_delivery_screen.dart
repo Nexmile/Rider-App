@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gm;
@@ -11,6 +13,7 @@ import '../../data/rider_failure.dart';
 import '../../state/order_controller.dart';
 import '../../state/rider_controller.dart';
 import '../navigation/map_styles.dart';
+import '../navigation/nav_map.dart' show riderDotIcon;
 import '../navigation/navigation_screen.dart';
 import '../widgets/dropoff_details.dart';
 import 'order_formatting.dart';
@@ -194,42 +197,142 @@ class ActiveDeliveryScreen extends StatelessWidget {
   }
 }
 
-/// The two stops on a map, with the order number floating over it. A
-/// preview, not a navigator: it does not pan or zoom, and a tap opens the
-/// turn-by-turn screen for the stop the rider is riding to.
-class _MapHeader extends StatelessWidget {
+/// The job on a map: where the rider is, the road to the next stop, and the
+/// two stops, with the order number floating over it. A preview, not a
+/// navigator: it does not pan or zoom, and a tap opens the turn-by-turn
+/// screen for the stop the rider is riding to.
+///
+/// The route is the same one turn-by-turn asks for, fetched when the screen
+/// opens and again when the next stop changes at pickup, so a glance here
+/// shows the way before the rider commits to full-screen navigation.
+class _MapHeader extends StatefulWidget {
   const _MapHeader({required this.order});
 
   final RiderOrder order;
 
+  @override
+  State<_MapHeader> createState() => _MapHeaderState();
+}
+
+class _MapHeaderState extends State<_MapHeader> {
+  RoutePreview? _preview;
+  gm.GoogleMapController? _map;
+  gm.BitmapDescriptor? _dot;
+  bool _dotRequested = false;
+
+  /// Bumped per fetch, so an answer for the old leg that lands after the
+  /// rider has picked up is thrown away.
+  int _fetch = 0;
+
+  RiderOrder get _order => widget.order;
+
   NavTarget get _target =>
-      order.status.isCollected ? NavTarget.dropoff : NavTarget.pickup;
+      _order.status.isCollected ? NavTarget.dropoff : NavTarget.pickup;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_load());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_dotRequested) return;
+    _dotRequested = true;
+    riderDotIcon(MediaQuery.devicePixelRatioOf(context)).then(
+      (gm.BitmapDescriptor icon) {
+        if (mounted) setState(() => _dot = icon);
+      },
+    );
+  }
+
+  @override
+  void didUpdateWidget(_MapHeader old) {
+    super.didUpdateWidget(old);
+    // Picked up: the next stop is now the customer, and so is the road.
+    if (old.order.id != _order.id ||
+        old.order.status.isCollected != _order.status.isCollected) {
+      unawaited(_load());
+    }
+  }
+
+  Future<void> _load() async {
+    final int fetch = ++_fetch;
+    if (!NavigationScreen.canNavigate(_order, _target)) return;
+    final RoutePreview preview =
+        await context.read<OrderController>().previewRoute(_order, _target);
+    if (!mounted || fetch != _fetch) return;
+    setState(() => _preview = preview);
+    _frame();
+  }
+
+  gm.LatLng? get _shop {
+    final OrderPickup p = _order.pickup;
+    return p.latitude != null && p.longitude != null
+        ? gm.LatLng(p.latitude!, p.longitude!)
+        : null;
+  }
+
+  gm.LatLng? get _home {
+    final OrderDropoff? d = _order.dropoff;
+    return d?.latitude != null && d?.longitude != null
+        ? gm.LatLng(d!.latitude!, d.longitude!)
+        : null;
+  }
+
+  gm.LatLng? get _here {
+    final (double, double)? at = _preview?.here;
+    return at == null ? null : gm.LatLng(at.$1, at.$2);
+  }
+
+  List<gm.LatLng> get _road => <gm.LatLng>[
+        for (final (double lat, double lng)
+            in _preview?.route?.points ?? const <(double, double)>[])
+          gm.LatLng(lat, lng),
+      ];
+
+  /// Everything worth seeing at once: the rider, the road, both stops.
+  List<gm.LatLng> get _framed => <gm.LatLng>[
+        if (_here != null) _here!,
+        ..._road,
+        if (_shop != null) _shop!,
+        if (_home != null) _home!,
+      ];
+
+  void _frame() {
+    final gm.GoogleMapController? map = _map;
+    final List<gm.LatLng> points = _framed;
+    if (map == null || points.length < 2) return;
+    try {
+      unawaited(
+        map.moveCamera(gm.CameraUpdate.newLatLngBounds(_bounds(points), 40)),
+      );
+    } catch (_) {
+      // Before the first layout the map can refuse bounds; the next answer
+      // frames it again.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final NxTokens t = context.nx;
     final bool dark = Theme.of(context).brightness == Brightness.dark;
-    final bool collected = order.status.isCollected;
+    final bool collected = _order.status.isCollected;
 
-    final gm.LatLng? shop =
-        order.pickup.latitude != null && order.pickup.longitude != null
-            ? gm.LatLng(order.pickup.latitude!, order.pickup.longitude!)
-            : null;
-    final OrderDropoff? drop = order.dropoff;
-    final gm.LatLng? home = drop?.latitude != null && drop?.longitude != null
-        ? gm.LatLng(drop!.latitude!, drop.longitude!)
-        : null;
-    final List<gm.LatLng> points = <gm.LatLng>[
-      if (shop != null) shop,
-      if (home != null) home,
-    ];
-    final bool canNavigate = NavigationScreen.canNavigate(order, _target);
-    void navigate() => NavigationScreen.open(context, order, _target);
+    final gm.LatLng? shop = _shop;
+    final gm.LatLng? home = _home;
+    final gm.LatLng? here = _here;
+    final gm.LatLng? next = collected ? home : shop;
+    final List<gm.LatLng> road = _road;
+    final List<gm.LatLng> points = _framed;
+    final bool canNavigate = NavigationScreen.canNavigate(_order, _target);
+    void navigate() => NavigationScreen.open(context, _order, _target);
 
     final String? distance = formatDistance(
       l10n,
-      collected ? order.deliveryDistanceMetres : order.pickup.distanceMetres,
+      collected ? _order.deliveryDistanceMetres : _order.pickup.distanceMetres,
     );
 
     return Stack(
@@ -259,6 +362,58 @@ class _MapHeader extends StatelessWidget {
               left: 32,
               right: 32,
             ),
+            polylines: <gm.Polyline>{
+              // The road to the next stop, Google blue with a darker edge.
+              if (road.length >= 2) ...<gm.Polyline>{
+                gm.Polyline(
+                  polylineId: const gm.PolylineId('preview-casing'),
+                  points: road,
+                  width: 8,
+                  color: NxColors.routeBlueEdge,
+                  jointType: gm.JointType.round,
+                  startCap: gm.Cap.roundCap,
+                  endCap: gm.Cap.roundCap,
+                  zIndex: 2,
+                ),
+                gm.Polyline(
+                  polylineId: const gm.PolylineId('preview-core'),
+                  points: road,
+                  width: 5,
+                  color: NxColors.routeBlue,
+                  jointType: gm.JointType.round,
+                  startCap: gm.Cap.roundCap,
+                  endCap: gm.Cap.roundCap,
+                  zIndex: 3,
+                ),
+              }
+              // No road from the server yet: a dotted line says which way,
+              // and does not pretend to be a street.
+              else if (here != null && next != null)
+                gm.Polyline(
+                  polylineId: const gm.PolylineId('preview-direct'),
+                  points: <gm.LatLng>[here, next],
+                  width: 4,
+                  color: NxColors.routeBlueEdge.withValues(alpha: 0.8),
+                  patterns: <gm.PatternItem>[
+                    gm.PatternItem.dot,
+                    gm.PatternItem.gap(10),
+                  ],
+                  zIndex: 2,
+                ),
+              // Before pickup, the leg after it, faint: where the food goes.
+              if (!collected && shop != null && home != null)
+                gm.Polyline(
+                  polylineId: const gm.PolylineId('preview-next-leg'),
+                  points: <gm.LatLng>[shop, home],
+                  width: 3,
+                  color: t.inkFaint.withValues(alpha: 0.8),
+                  patterns: <gm.PatternItem>[
+                    gm.PatternItem.dash(14),
+                    gm.PatternItem.gap(10),
+                  ],
+                  zIndex: 1,
+                ),
+            },
             markers: <gm.Marker>{
               if (shop != null)
                 gm.Marker(
@@ -276,12 +431,24 @@ class _MapHeader extends StatelessWidget {
                     gm.BitmapDescriptor.hueGreen,
                   ),
                 ),
+              if (here != null)
+                gm.Marker(
+                  markerId: const gm.MarkerId('rider'),
+                  position: here,
+                  // Google's own blue pin for the moment before the dot is
+                  // painted, which on a phone is over before the position
+                  // arrives.
+                  icon: _dot ??
+                      gm.BitmapDescriptor.defaultMarkerWithHue(
+                        gm.BitmapDescriptor.hueAzure,
+                      ),
+                  anchor: const Offset(0.5, 0.5),
+                  zIndexInt: 3,
+                ),
             },
             onMapCreated: (gm.GoogleMapController map) {
-              if (points.length < 2) return;
-              map.moveCamera(
-                gm.CameraUpdate.newLatLngBounds(_bounds(points), 40),
-              );
+              _map = map;
+              _frame();
             },
           ),
         // The whole map is one button: to turn-by-turn for this stop.
@@ -311,7 +478,7 @@ class _MapHeader extends StatelessWidget {
                   ),
                   child: Text(
                     <String>[
-                      l10n.orderNumberLabel(order.orderNumber),
+                      l10n.orderNumberLabel(_order.orderNumber),
                       if (distance != null) distance,
                     ].join(' · '),
                     maxLines: 1,

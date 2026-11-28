@@ -1138,6 +1138,13 @@ class AppLocalizationsAs extends AppLocalizations {
       'পথৰ নিৰ্দেশনা উপলব্ধ নহয়। পোনপটীয়া দূৰত্ব দেখুওৱা হৈছে।';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'আপোনাৰ অৱস্থান বিচাৰি আছোঁ…';
 
   @override

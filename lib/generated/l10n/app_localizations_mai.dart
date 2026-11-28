@@ -1131,6 +1131,13 @@ class AppLocalizationsMai extends AppLocalizations {
       'सड़कक रास्ता उपलब्ध नहि अछि। सीधा दूरी देखाओल जा रहल अछि।';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'अहाँक स्थान ताकि रहल छी…';
 
   @override

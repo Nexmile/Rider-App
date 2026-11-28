@@ -10,6 +10,7 @@ import 'core/localization/locale_controller.dart';
 import 'core/push/push_destination.dart';
 import 'core/push/push_service.dart';
 import 'core/router/app_router.dart';
+import 'core/services/compass.dart';
 import 'core/services/preferences_service.dart';
 import 'core/design/app_theme.dart';
 import 'core/theme/app_typography.dart';
@@ -36,6 +37,7 @@ class NexmileRiderApp extends StatefulWidget {
     required this.offerController,
     this.pushService = const NoopPushService(),
     this.permissionGateway,
+    this.compass = const Compass(),
   });
 
   final PreferencesService preferences;
@@ -68,6 +70,10 @@ class NexmileRiderApp extends StatefulWidget {
   /// phone, through [pushService]. Off a device every check reports nothing
   /// to ask, so a test that does not pass one never meets the pages.
   final PermissionGateway? permissionGateway;
+
+  /// The phone's compass, for the navigation arrow. A test hands in one it
+  /// can turn by hand.
+  final Compass compass;
 
   @override
   State<NexmileRiderApp> createState() => _NexmileRiderAppState();
@@ -288,6 +294,7 @@ class _NexmileRiderAppState extends State<NexmileRiderApp>
         ),
         ChangeNotifierProvider<OfferController>.value(value: offerController),
         Provider<PushService>.value(value: widget.pushService),
+        Provider<Compass>.value(value: widget.compass),
         Provider<PreferencesService>.value(value: preferences),
         Provider<PermissionGateway>.value(
           value: widget.permissionGateway ??

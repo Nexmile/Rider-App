@@ -430,6 +430,36 @@ class OrderController extends ChangeNotifier {
 
   /// Turn-by-turn for one leg of [order], sharing this controller's API
   /// client and location source. The caller owns it and disposes it.
+  /// Where the rider is now and the road from there to [target], for the
+  /// map preview on the delivery screen. The same route the turn-by-turn
+  /// screen asks for, so the preview and the navigation agree.
+  ///
+  /// Never throws: without a position the preview shows the two stops, and
+  /// without a route it shows a dotted line to the next one.
+  Future<RoutePreview> previewRoute(RiderOrder order, NavTarget target) async {
+    final RiderPosition position;
+    try {
+      position = await _location.current();
+    } catch (_) {
+      return const RoutePreview();
+    }
+    NavRoute? route;
+    try {
+      route = await _repository.route(
+        order.id,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        target: target,
+      );
+    } catch (_) {
+      // Network trouble: the dotted line still says which way.
+    }
+    return RoutePreview(
+      here: (position.latitude, position.longitude),
+      route: route,
+    );
+  }
+
   NavigationController navigate(
     RiderOrder order, {
     required NavTarget target,

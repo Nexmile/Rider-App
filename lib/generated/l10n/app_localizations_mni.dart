@@ -1135,6 +1135,13 @@ class AppLocalizationsMni extends AppLocalizations {
   String get navNoRoute => 'লম্বী উৎপা ফংদে। চুম্না লাপ্পা খক্তা উৎলি।';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'নহাক কদাইদা লৈবগে থিরি…';
 
   @override

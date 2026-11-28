@@ -1141,6 +1141,13 @@ class AppLocalizationsSat extends AppLocalizations {
       'ᱦᱚᱨ ᱨᱮᱭᱟᱜ ᱠᱷᱚᱵᱚᱨ ᱵᱟᱝ ᱧᱟᱢᱚᱜ ᱠᱟᱱᱟ᱾ ᱥᱚᱡᱷᱮ ᱞᱟᱭᱤᱱ ᱨᱮᱭᱟᱜ ᱥᱟᱹᱝᱜᱤᱧ ᱩᱫᱩᱜ ᱠᱟᱱᱟ᱾';
 
   @override
+  String get navCalibrateTitle => 'Compass needs calibrating';
+
+  @override
+  String get navCalibrateBody =>
+      'Move your phone in a figure 8 a few times so the arrow points the right way.';
+
+  @override
   String get navFindingLocation => 'ᱟᱢᱟᱜ ᱡᱟᱭᱜᱟ ᱯᱟᱱᱛᱮ ᱠᱟᱱᱟ…';
 
   @override

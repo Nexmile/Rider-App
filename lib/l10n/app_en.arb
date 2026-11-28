@@ -1160,6 +1160,10 @@
 
   "navNoRoute": "Road directions aren't available. Showing the straight-line distance.",
   "@navNoRoute": {"description": "When the server cannot route; the map shows a dotted line."},
+  "navCalibrateTitle": "Compass needs calibrating",
+  "@navCalibrateTitle": {"description": "Navigation: card shown while the phone compass is inaccurate."},
+  "navCalibrateBody": "Move your phone in a figure 8 a few times so the arrow points the right way.",
+  "@navCalibrateBody": {"description": "Navigation: how to calibrate the compass."},
 
   "navFindingLocation": "Finding your location…",
   "@navFindingLocation": {"description": "Before the first GPS fix."},
